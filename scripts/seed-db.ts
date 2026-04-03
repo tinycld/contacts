@@ -17,7 +17,11 @@
 import PocketBase from 'pocketbase'
 import { addonSeeds } from '../lib/generated/addon-seeds'
 
-process.loadEnvFile()
+try {
+    process.loadEnvFile()
+} catch {
+    // .env may not exist in CI
+}
 
 interface SeedConfig {
     url: string

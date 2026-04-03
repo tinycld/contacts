@@ -1,6 +1,10 @@
 import { defineConfig, devices } from '@playwright/test'
 
-process.loadEnvFile()
+try {
+    process.loadEnvFile()
+} catch {
+    // .env may not exist in CI
+}
 
 const TEST_PB_PORT = 7091
 const TEST_EXPO_PORT = 7101
