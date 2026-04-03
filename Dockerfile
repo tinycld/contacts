@@ -65,8 +65,8 @@ COPY react-native.config.cjs ./
 COPY --from=addon-generator /app/lib/generated/ ./lib/generated/
 COPY --from=addon-generator /app/app/app/ ./app/app/
 
-# Build web app (addons already generated)
-RUN npm run build:web
+# Build web app directly (skip prebuild:web which re-runs addons:generate)
+RUN npx one build
 
 
 # Final runtime stage
