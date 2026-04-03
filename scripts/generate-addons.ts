@@ -146,6 +146,15 @@ function generateRoutes(
     return generated
 }
 
+function symlinkOrFileExists(p: string): boolean {
+    try {
+        fs.lstatSync(p)
+        return true
+    } catch {
+        return false
+    }
+}
+
 function createSymlinks(manifest: AddonManifest, packageDir: string): string[] {
     const created: string[] = []
 
@@ -155,7 +164,7 @@ function createSymlinks(manifest: AddonManifest, packageDir: string): string[] {
             for (const file of fs.readdirSync(migrationsSource)) {
                 const target = path.join(MIGRATIONS_DIR, file)
                 const source = path.join(migrationsSource, file)
-                if (!fs.existsSync(target)) {
+                if (!symlinkOrFileExists(target)) {
                     fs.symlinkSync(source, target)
                     created.push(target)
                 }
@@ -170,7 +179,7 @@ function createSymlinks(manifest: AddonManifest, packageDir: string): string[] {
             for (const file of fs.readdirSync(hooksSource)) {
                 const target = path.join(HOOKS_DIR, file)
                 const source = path.join(hooksSource, file)
-                if (!fs.existsSync(target)) {
+                if (!symlinkOrFileExists(target)) {
                     fs.symlinkSync(source, target)
                     created.push(target)
                 }
