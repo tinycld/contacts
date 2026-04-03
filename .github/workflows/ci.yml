@@ -16,8 +16,18 @@ jobs:
         with:
           node-version-file: .node-version
           cache: npm
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: server/go.mod
+          cache-dependency-path: server/go.sum
       - run: npm ci
       - run: npm run addons:generate
+      - name: Generate PB schema types
+        run: |
+          cd server && go build -o tinycld .
+          ./tinycld --dev serve &
+          sleep 3
+          kill %1 2>/dev/null || true
       - run: npm run checks
 
   e2e:
