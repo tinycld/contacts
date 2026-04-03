@@ -8,11 +8,8 @@ COPY packages/ ./packages/
 RUN npm ci
 
 COPY scripts/ ./scripts/
+COPY server/ ./server/
 COPY tinycld.addons.ts ./
-
-# Create directories the generator expects for symlinks
-RUN mkdir -p server/pb_migrations server/pb_hooks
-
 RUN npm run addons:generate
 
 
