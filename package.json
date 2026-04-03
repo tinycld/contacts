@@ -2,6 +2,7 @@
     "name": "@tinycld/core",
     "version": "1.13.7",
     "private": true,
+    "license": "AGPL-3.0-only",
     "type": "module",
     "workspaces": [
         "packages/*"
