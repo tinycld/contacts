@@ -1,3 +1,17 @@
+# Generate addon wiring (produces server/addon_extensions.go and other generated files)
+FROM node:24-trixie AS addon-generator
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+COPY packages/ ./packages/
+RUN npm ci
+
+COPY scripts/ ./scripts/
+COPY tinycld.addons.ts ./
+RUN npm run addons:generate
+
+
 # Build stage for Go server
 FROM golang:1.25-trixie AS go-builder
 
@@ -13,6 +27,9 @@ RUN go mod download
 
 # Copy server source code
 COPY server/ ./
+
+# Copy generated addon extensions from generator stage
+COPY --from=addon-generator /app/server/addon_extensions.go ./addon_extensions.go
 
 # Build the server binary
 RUN CGO_ENABLED=0 GOOS=linux go build -o tinycld .
@@ -39,7 +56,11 @@ COPY scripts/ ./scripts/
 COPY tinycld.addons.ts ./
 COPY react-native.config.cjs ./
 
-# Generate addon wiring and build web app
+# Copy generated addon wiring from generator stage
+COPY --from=addon-generator /app/lib/generated/ ./lib/generated/
+COPY --from=addon-generator /app/app/app/ ./app/app/
+
+# Build web app (addons already generated)
 RUN npm run build:web
 
 
@@ -70,6 +91,6 @@ COPY server/pb_migrations ./pb_migrations
 # Create necessary directories
 RUN mkdir -p pb_data types
 
-EXPOSE 8080
+EXPOSE 7090
 
-CMD ["./tinycld", "serve", "--http=0.0.0.0:8080"]
+CMD ["./tinycld", "serve", "--http=0.0.0.0:7090"]
