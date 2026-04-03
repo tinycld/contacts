@@ -3,7 +3,7 @@ FROM node:24-trixie AS addon-generator
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json vite.config.ts ./
 COPY packages/ ./packages/
 RUN npm ci
 
@@ -49,12 +49,12 @@ FROM node:24-trixie AS web-builder
 WORKDIR /app
 
 # Copy package files for better caching
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json vite.config.ts ./
 COPY packages/ ./packages/
 RUN npm ci
 
 # Copy source files needed for the web build
-COPY app.json tsconfig.json vite.config.ts ./
+COPY app.json tsconfig.json ./
 COPY app/ ./app/
 COPY components/ ./components/
 COPY lib/ ./lib/
