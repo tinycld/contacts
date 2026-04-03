@@ -89,7 +89,7 @@ WORKDIR /app
 COPY --from=go-builder /build/tinycld ./tinycld
 
 # Copy built web app, rename index.html to app.html for SPA fallback
-COPY --from=web-builder /app/dist ./public
+COPY --from=web-builder /app/dist/client ./public
 RUN mv ./public/index.html ./public/app.html
 
 # Copy PocketBase migrations and hooks from the original context
