@@ -72,9 +72,9 @@ test.describe('Contacts', () => {
         await page.goto(`/app/${ORG_SLUG}/contacts`)
 
         const searchInput = page.getByPlaceholder('Search contacts...')
-        await searchInput.fill('alice')
+        await searchInput.fill('carol')
 
-        await expect(page.getByRole('link', { name: /Alice Johnson/ })).toBeVisible()
+        await expect(page.getByRole('link', { name: /Carol Williams/ })).toBeVisible()
         await expect(page.getByRole('link', { name: /Bob Smith/ })).not.toBeVisible()
     })
 })
