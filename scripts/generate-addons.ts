@@ -472,7 +472,11 @@ function updateGoMod(
 }
 
 function runGoModTidy() {
-    execSync('go mod tidy', { cwd: SERVER_DIR, stdio: 'inherit' })
+    try {
+        execSync('go mod tidy', { cwd: SERVER_DIR, stdio: 'inherit' })
+    } catch {
+        // go may not be available (e.g. Docker Node-only stage)
+    }
 }
 
 async function main() {
