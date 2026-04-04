@@ -148,7 +148,7 @@ func (b *CardDAVBackend) PutAddressObject(ctx context.Context, path string, card
 	}
 
 	// Create new contact
-	orgSlug := extractOrgSlug(path)
+	orgSlug := b.orgSlugFromContext(ctx, path)
 	userOrg, err := b.findUserOrg(user.Id, orgSlug)
 	if err != nil {
 		return nil, fmt.Errorf("cannot find org membership: %w", err)
@@ -234,7 +234,7 @@ func (b *CardDAVBackend) resolveContactByPath(ctx context.Context, path string) 
 		return nil, "", fmt.Errorf("invalid contact path")
 	}
 
-	orgSlug := extractOrgSlug(path)
+	orgSlug := b.orgSlugFromContext(ctx, path)
 	userOrg, err := b.findUserOrg(user.Id, orgSlug)
 	if err != nil {
 		return nil, "", err
@@ -255,7 +255,7 @@ func (b *CardDAVBackend) resolveAddressBookOwner(ctx context.Context, path strin
 	if err != nil {
 		return nil, err
 	}
-	orgSlug := extractOrgSlug(path)
+	orgSlug := b.orgSlugFromContext(ctx, path)
 	return b.findUserOrg(user.Id, orgSlug)
 }
 
@@ -273,6 +273,16 @@ func (b *CardDAVBackend) findUserOrg(userId, orgSlug string) (*core.Record, erro
 	}
 
 	return userOrgs[0], nil
+}
+
+// orgSlugFromContext tries the Host header subdomain first, then falls back to path-based extraction.
+func (b *CardDAVBackend) orgSlugFromContext(ctx context.Context, path string) string {
+	if r, ok := ctx.Value(httpRequestKey).(*http.Request); ok {
+		if slug := extractOrgSlugFromHost(r.Host); slug != "" {
+			return slug
+		}
+	}
+	return extractOrgSlug(path)
 }
 
 // extractBookPath returns the address book portion of a path (up to and including the orgSlug).
@@ -294,12 +304,31 @@ func extractOrgSlug(path string) string {
 	return ""
 }
 
+// extractOrgSlugFromHost parses the subdomain from a Host header.
+// e.g. "acme.localhost:8100" → "acme", "acme.tinycld.com" → "acme"
+func extractOrgSlugFromHost(host string) string {
+	// Strip port
+	if idx := strings.LastIndex(host, ":"); idx != -1 {
+		host = host[:idx]
+	}
+	// acme.localhost → acme
+	if strings.HasSuffix(host, ".localhost") {
+		return strings.TrimSuffix(host, ".localhost")
+	}
+	// acme.tinycld.com → acme
+	parts := strings.Split(host, ".")
+	if len(parts) >= 3 {
+		return parts[0]
+	}
+	return ""
+}
+
 // extractVCardUID gets the vcard UID from /carddav/u/ab/{orgSlug}/{vcard_uid}.vcf
 func extractVCardUID(path string) string {
 	parts := strings.Split(strings.Trim(path, "/"), "/")
 	// parts: carddav / u / ab / {orgSlug} / {uid}.vcf
 	if len(parts) >= 5 {
-		return strings.TrimSuffix(parts[2], ".vcf")
+		return strings.TrimSuffix(parts[4], ".vcf")
 	}
 	return ""
 }
