@@ -1,18 +1,32 @@
 import { Link2, Paperclip, Trash2 } from 'lucide-react-native'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native'
 import { useTheme } from 'tamagui'
 
 interface ComposeToolbarProps {
     onDiscard: () => void
+    onSend: () => void
+    isPending: boolean
 }
 
-export function ComposeToolbar({ onDiscard }: ComposeToolbarProps) {
+export function ComposeToolbar({ onDiscard, onSend, isPending }: ComposeToolbarProps) {
     const theme = useTheme()
 
     return (
         <View style={[styles.toolbar, { borderTopColor: theme.borderColor.val }]}>
-            <Pressable style={[styles.sendButton, { backgroundColor: theme.accentBackground.val }]}>
-                <Text style={[styles.sendText, { color: theme.accentColor.val }]}>Send</Text>
+            <Pressable
+                style={[
+                    styles.sendButton,
+                    { backgroundColor: theme.accentBackground.val },
+                    isPending && styles.sendButtonDisabled,
+                ]}
+                onPress={onSend}
+                disabled={isPending}
+            >
+                {isPending ? (
+                    <ActivityIndicator size="small" color={theme.accentColor.val} />
+                ) : (
+                    <Text style={[styles.sendText, { color: theme.accentColor.val }]}>Send</Text>
+                )}
             </Pressable>
             <View style={styles.formatActions}>
                 <Pressable style={styles.iconButton}>
@@ -43,6 +57,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingVertical: 6,
         borderRadius: 20,
+        minWidth: 72,
+        alignItems: 'center',
+    },
+    sendButtonDisabled: {
+        opacity: 0.6,
     },
     sendText: {
         fontSize: 14,

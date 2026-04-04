@@ -24,7 +24,7 @@ export default function MailDetailScreen() {
                     recordId={email.id}
                     filename={email.body_html}
                 />
-                <InlineReply />
+                <InlineReply email={email} />
             </ScrollView>
         </YStack>
     )

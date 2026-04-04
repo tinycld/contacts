@@ -7,7 +7,32 @@ import type { MockEmail, MockLabel } from './mockData'
 import { mockLabels } from './mockData'
 
 interface EmailHeaderProps {
-    email: MockEmail
+    email: MockEmail & {
+        delivery_status?: string
+        bounce_reason?: string
+    }
+}
+
+function DeliveryStatusBadge({ status, bounceReason }: { status?: string; bounceReason?: string }) {
+    const theme = useTheme()
+
+    if (!status || status === 'sent' || status === 'delivered' || status === 'sending') return null
+
+    const isBounce = status === 'bounced'
+    const backgroundColor = isBounce ? theme.red3.val : theme.orange3.val
+    const textColor = isBounce ? theme.red10.val : theme.orange10.val
+    const label = isBounce ? 'Bounced' : 'Spam complaint'
+
+    return (
+        <View style={[styles.statusBadge, { backgroundColor }]}>
+            <Text style={[styles.statusBadgeText, { color: textColor }]}>{label}</Text>
+            {bounceReason ? (
+                <Text style={[styles.statusBadgeReason, { color: textColor }]} numberOfLines={1}>
+                    {bounceReason}
+                </Text>
+            ) : null}
+        </View>
+    )
 }
 
 export function EmailHeader({ email }: EmailHeaderProps) {
@@ -44,6 +69,11 @@ export function EmailHeader({ email }: EmailHeaderProps) {
                     ))}
                 </View>
             </View>
+
+            <DeliveryStatusBadge
+                status={email.delivery_status}
+                bounceReason={email.bounce_reason}
+            />
 
             <View style={[styles.senderRow, { borderBottomColor: theme.borderColor.val }]}>
                 <View style={[styles.avatar, { backgroundColor: theme.accentBackground.val }]}>
@@ -107,6 +137,25 @@ const styles = StyleSheet.create({
     labelRow: {
         flexDirection: 'row',
         gap: 4,
+    },
+    statusBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        marginHorizontal: 16,
+        marginBottom: 8,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 4,
+        alignSelf: 'flex-start',
+    },
+    statusBadgeText: {
+        fontSize: 12,
+        fontWeight: '600',
+    },
+    statusBadgeReason: {
+        fontSize: 11,
+        flexShrink: 1,
     },
     senderRow: {
         flexDirection: 'row',

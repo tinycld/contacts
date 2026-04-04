@@ -1,43 +1,46 @@
 import { Forward, Reply, ReplyAll } from 'lucide-react-native'
-import { useState } from 'react'
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { useTheme } from 'tamagui'
 import { useBreakpoint } from '~/components/workspace/useBreakpoint'
+import { useCompose } from '../hooks/useComposeState'
+import type { MockEmail } from './mockData'
 
-export function InlineReply() {
+interface InlineReplyProps {
+    email: MockEmail
+}
+
+export function InlineReply({ email }: InlineReplyProps) {
     const theme = useTheme()
-    const [isExpanded, setIsExpanded] = useState(false)
     const breakpoint = useBreakpoint()
     const isMobile = breakpoint === 'mobile'
+    const { openReply } = useCompose()
 
-    if (isExpanded) {
-        return (
-            <View
-                style={[
-                    styles.replyBox,
-                    {
-                        borderColor: theme.borderColor.val,
-                        backgroundColor: theme.background.val,
-                    },
-                ]}
-            >
-                <TextInput
-                    style={[styles.replyInput, { color: theme.color.val }]}
-                    placeholder="Click here to Reply"
-                    placeholderTextColor={theme.placeholderColor.val}
-                    multiline
-                />
-                <View style={styles.replyActions}>
-                    <Pressable
-                        style={[styles.sendButton, { backgroundColor: theme.accentBackground.val }]}
-                    >
-                        <Text style={[styles.sendText, { color: theme.accentColor.val }]}>
-                            Send
-                        </Text>
-                    </Pressable>
-                </View>
-            </View>
-        )
+    const handleReply = () => {
+        openReply({
+            messageId: email.id,
+            threadId: email.id,
+            subject: email.subject,
+            to: [{ name: email.sender, email: email.senderEmail }],
+        })
+    }
+
+    // TODO: include Cc and other To recipients when real data replaces MockEmail
+    const handleReplyAll = () => {
+        openReply({
+            messageId: email.id,
+            threadId: email.id,
+            subject: email.subject,
+            to: [{ name: email.sender, email: email.senderEmail }],
+        })
+    }
+
+    const handleForward = () => {
+        openReply({
+            messageId: email.id,
+            threadId: email.id,
+            subject: `Fwd: ${email.subject}`,
+            to: [],
+        })
     }
 
     return (
@@ -50,16 +53,22 @@ export function InlineReply() {
         >
             <Pressable
                 style={[styles.actionButton, { borderColor: theme.borderColor.val }]}
-                onPress={() => setIsExpanded(true)}
+                onPress={handleReply}
             >
                 <Reply size={16} color={theme.color8.val} />
                 <Text style={[styles.actionText, { color: theme.color8.val }]}>Reply</Text>
             </Pressable>
-            <Pressable style={[styles.actionButton, { borderColor: theme.borderColor.val }]}>
+            <Pressable
+                style={[styles.actionButton, { borderColor: theme.borderColor.val }]}
+                onPress={handleReplyAll}
+            >
                 <ReplyAll size={16} color={theme.color8.val} />
                 <Text style={[styles.actionText, { color: theme.color8.val }]}>Reply all</Text>
             </Pressable>
-            <Pressable style={[styles.actionButton, { borderColor: theme.borderColor.val }]}>
+            <Pressable
+                style={[styles.actionButton, { borderColor: theme.borderColor.val }]}
+                onPress={handleForward}
+            >
                 <Forward size={16} color={theme.color8.val} />
                 <Text style={[styles.actionText, { color: theme.color8.val }]}>Forward</Text>
             </Pressable>
@@ -89,32 +98,5 @@ const styles = StyleSheet.create({
     actionText: {
         fontSize: 13,
         fontWeight: '500',
-    },
-    replyBox: {
-        margin: 16,
-        borderWidth: 1,
-        borderRadius: 8,
-        padding: 12,
-        minHeight: 120,
-    },
-    replyInput: {
-        flex: 1,
-        fontSize: 14,
-        minHeight: 80,
-        textAlignVertical: 'top',
-    },
-    replyActions: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        marginTop: 8,
-    },
-    sendButton: {
-        paddingHorizontal: 20,
-        paddingVertical: 8,
-        borderRadius: 20,
-    },
-    sendText: {
-        fontSize: 14,
-        fontWeight: '600',
     },
 })

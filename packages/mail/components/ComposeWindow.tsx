@@ -1,15 +1,49 @@
-import { Platform, StyleSheet, TextInput, View } from 'react-native'
+import { useEffect, useRef } from 'react'
+import { Platform, StyleSheet, Text, View } from 'react-native'
 import { useTheme } from 'tamagui'
 import { useBreakpoint } from '~/components/workspace/useBreakpoint'
+import { useForm, z, zodResolver } from '~/ui/form'
 import { useCompose } from '../hooks/useComposeState'
+import { useDefaultMailbox } from '../hooks/useDefaultMailbox'
+import { useSendEmail } from '../hooks/useSendEmail'
 import { ComposeFields } from './ComposeFields'
 import { ComposeHeader } from './ComposeHeader'
 import { ComposeToolbar } from './ComposeToolbar'
+import type { RichTextEditorHandle } from './RichTextEditor'
+import { RichTextEditor } from './RichTextEditor'
 
 const webShadow =
     Platform.OS === 'web'
         ? ({ boxShadow: '0 8px 32px rgba(0,0,0,0.24)' } as Record<string, unknown>)
         : {}
+
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+const composeSchema = z.object({
+    to: z
+        .string()
+        .min(1, 'At least one recipient is required')
+        .refine(
+            value =>
+                value
+                    .split(',')
+                    .map(s => s.trim())
+                    .filter(Boolean)
+                    .every(email => emailPattern.test(email)),
+            'One or more email addresses are invalid'
+        ),
+    subject: z.string().min(1, 'Subject is required'),
+})
+
+export type ComposeFormData = z.infer<typeof composeSchema>
+
+function parseRecipients(value: string) {
+    return value
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean)
+        .map(email => ({ name: '', email }))
+}
 
 interface ComposeWindowProps {
     isVisible: boolean
@@ -17,14 +51,53 @@ interface ComposeWindowProps {
 
 export function ComposeWindow({ isVisible }: ComposeWindowProps) {
     const theme = useTheme()
-    const { mode, minimize, maximize, open, close } = useCompose()
+    const { mode, replyContext, minimize, maximize, open, close } = useCompose()
     const breakpoint = useBreakpoint()
+    const editorRef = useRef<RichTextEditorHandle>(null)
+    const mailboxId = useDefaultMailbox()
+    const prevModeRef = useRef(mode)
+
+    const {
+        control,
+        handleSubmit,
+        reset,
+        setError,
+        formState: { errors },
+    } = useForm<ComposeFormData>({
+        resolver: zodResolver(composeSchema),
+        mode: 'onChange',
+        defaultValues: { to: '', subject: '' },
+    })
+
+    useEffect(() => {
+        const wasClosedOrNew = prevModeRef.current === 'closed'
+        prevModeRef.current = mode
+
+        if (replyContext) {
+            const toValue = replyContext.to.map(r => r.email).join(', ')
+            const subjectPrefix = replyContext.subject.startsWith('Re:')
+                ? replyContext.subject
+                : `Re: ${replyContext.subject}`
+            reset({ to: toValue, subject: subjectPrefix })
+        } else if (mode === 'open' && wasClosedOrNew) {
+            reset({ to: '', subject: '' })
+        }
+    }, [replyContext, mode, reset])
+
+    const { send, isPending } = useSendEmail({
+        onSuccess: () => {
+            editorRef.current?.clear()
+            reset({ to: '', subject: '' })
+            close()
+        },
+    })
 
     if (!isVisible) return null
 
     const isMinimized = mode === 'minimized'
     const isMaximized = mode === 'maximized'
     const isNotDesktop = breakpoint !== 'desktop'
+    const hasMailbox = mailboxId != null
 
     const modeStyleMap = {
         open: styles.normal,
@@ -33,6 +106,25 @@ export function ComposeWindow({ isVisible }: ComposeWindowProps) {
         closed: styles.normal,
     }
     const windowStyle = isNotDesktop ? styles.fullscreen : modeStyleMap[mode]
+
+    const onSend = handleSubmit(async data => {
+        if (!mailboxId) {
+            setError('to', { message: 'No mailbox configured — contact your admin' })
+            return
+        }
+
+        const htmlBody = (await editorRef.current?.getHTML()) ?? ''
+        const textBody = (await editorRef.current?.getText()) ?? ''
+
+        send({
+            mailbox_id: mailboxId,
+            to: parseRecipients(data.to),
+            subject: data.subject,
+            html_body: htmlBody,
+            text_body: textBody,
+            in_reply_to_message_id: replyContext?.messageId,
+        })
+    })
 
     return (
         <View
@@ -54,16 +146,18 @@ export function ComposeWindow({ isVisible }: ComposeWindowProps) {
             />
             {isMinimized ? null : (
                 <>
-                    <ComposeFields />
+                    <ComposeFields control={control} errors={errors} />
+                    {hasMailbox ? null : (
+                        <View style={styles.mailboxWarning}>
+                            <Text style={[styles.mailboxWarningText, { color: theme.red10.val }]}>
+                                No mailbox found. Ask your admin to add you to a mailbox.
+                            </Text>
+                        </View>
+                    )}
                     <View style={styles.body}>
-                        <TextInput
-                            style={[styles.bodyInput, { color: theme.color.val }]}
-                            multiline
-                            placeholder="Compose email"
-                            placeholderTextColor={theme.placeholderColor.val}
-                        />
+                        <RichTextEditor editorRef={editorRef} />
                     </View>
-                    <ComposeToolbar onDiscard={close} />
+                    <ComposeToolbar onDiscard={close} onSend={onSend} isPending={isPending} />
                 </>
             )}
         </View>
@@ -106,9 +200,11 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 12,
     },
-    bodyInput: {
-        flex: 1,
-        fontSize: 14,
-        textAlignVertical: 'top',
+    mailboxWarning: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+    },
+    mailboxWarningText: {
+        fontSize: 12,
     },
 })
