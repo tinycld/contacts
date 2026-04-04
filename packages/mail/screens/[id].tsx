@@ -19,7 +19,11 @@ export default function MailDetailScreen() {
             <EmailDetailToolbar />
             <ScrollView flex={1} contentContainerStyle={{ flexGrow: 1 }}>
                 <EmailHeader email={email} />
-                <EmailBody html={email.body} />
+                <EmailBody
+                    collectionId="mail_messages"
+                    recordId={email.id}
+                    filename={email.body_html}
+                />
                 <InlineReply />
             </ScrollView>
         </YStack>

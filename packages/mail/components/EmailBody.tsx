@@ -1,24 +1,50 @@
+import { useEffect, useState } from 'react'
 import { Platform, StyleSheet, Text, View } from 'react-native'
 import { useTheme } from 'tamagui'
+import { pb } from '~/lib/pocketbase'
 
 interface EmailBodyProps {
-    html: string
+    collectionId: string
+    recordId: string
+    filename: string
 }
 
-export function EmailBody({ html }: EmailBodyProps) {
+function useEmailHtml(collectionId: string, recordId: string, filename: string) {
+    const [html, setHtml] = useState('')
+
+    useEffect(() => {
+        if (!filename) return
+
+        const url = pb.files.getURL({ collectionId, id: recordId }, filename)
+        fetch(url)
+            .then(res => res.text())
+            .then(setHtml)
+            .catch(() => setHtml(''))
+    }, [collectionId, recordId, filename])
+
+    return html
+}
+
+export function EmailBody({ collectionId, recordId, filename }: EmailBodyProps) {
     const theme = useTheme()
+    const html = useEmailHtml(collectionId, recordId, filename)
+
+    if (!filename) return null
 
     if (Platform.OS === 'web') {
         return (
             <View style={styles.container}>
-                <div
-                    // biome-ignore lint/security/noDangerouslySetInnerHtml: rendering email body html
-                    dangerouslySetInnerHTML={{ __html: html }}
+                <iframe
+                    sandbox=""
+                    srcDoc={html}
                     style={{
-                        color: theme.color.val,
-                        fontSize: 14,
-                        lineHeight: 1.6,
+                        border: 'none',
+                        width: '100%',
+                        minHeight: 300,
+                        flex: 1,
+                        colorScheme: 'auto',
                     }}
+                    title="Email body"
                 />
             </View>
         )
