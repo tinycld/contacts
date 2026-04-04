@@ -239,26 +239,8 @@ async function testCardDAV(config: Config, auth: AuthResult) {
         if (res.ok || res.status === 204) {
             ok('DELETE contact', `${res.status}`)
         } else {
-            // Known issue: go-webdav DELETE returns 403 — clean up via PB API
-            const pbHeaders = { Authorization: `Bearer ${auth.token}` }
-            const search = await fetch(
-                `${config.url}/api/collections/contacts/records?filter=vcard_uid='${testUID}'`,
-                { headers: pbHeaders }
-            )
-            const data = await search.json()
-            if (data.items?.[0]?.id) {
-                const del = await fetch(
-                    `${config.url}/api/collections/contacts/records/${data.items[0].id}`,
-                    { method: 'DELETE', headers: pbHeaders }
-                )
-                if (del.ok || del.status === 204) {
-                    ok('DELETE contact (via API fallback)', `cleaned up ${data.items[0].id}`)
-                } else {
-                    fail('DELETE contact', `CardDAV ${res.status}, API fallback also failed`)
-                }
-            } else {
-                fail('DELETE contact', `CardDAV ${res.status}, could not find record to clean up`)
-            }
+            const text = await res.text()
+            fail('DELETE contact', `status ${res.status}: ${text.slice(0, 200)}`)
         }
     } catch (err) {
         fail('DELETE contact', String(err))

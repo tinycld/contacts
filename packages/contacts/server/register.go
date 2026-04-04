@@ -13,7 +13,7 @@ import (
 func Register(app *pocketbase.PocketBase) {
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
 		backend := &CardDAVBackend{app: app}
-		handler := carddav.Handler{Backend: backend}
+		handler := carddav.Handler{Backend: backend, Prefix: "/carddav"}
 
 		serveCardDAV := func(re *core.RequestEvent) error {
 			// Inject the raw HTTP request into context for auth extraction
