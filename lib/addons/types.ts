@@ -31,6 +31,12 @@ export interface AddonManifest {
         component: string
     }
 
+    settings?: {
+        slug: string
+        component: string
+        label: string
+    }[]
+
     seed?: {
         script: string
     }
