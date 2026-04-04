@@ -1,7 +1,16 @@
 import { useState } from 'react'
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
+import {
+    ActivityIndicator,
+    Platform,
+    Pressable,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
+} from 'react-native'
 import { useTheme } from 'tamagui'
 import { useAuth } from '~/lib/auth'
+import { navigateToOrg } from '~/lib/org-url'
 import { pb } from '~/lib/pocketbase'
 
 interface SignupModalProps {
@@ -66,6 +75,8 @@ export function SignupModal({ onSwitchToLogin }: SignupModalProps) {
             if (result.error) {
                 setError(result.error)
                 setIsSubmitting(false)
+            } else if (result.user?.primaryOrgSlug && Platform.OS === 'web') {
+                navigateToOrg(result.user.primaryOrgSlug)
             }
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to create account'

@@ -88,33 +88,32 @@ TinyCld is an One Stack React Native application backed by PocketBase . The repo
 ## Users & Organizations
 - Users belong to orgs via the `user_org` junction table (many-to-many)
 - Roles (`admin`, `clerical`, `workforce`) are per-org—a user can have different roles in different orgs
-- Use `useOrgInfo()` from `~/lib/use-org-info` to get `{ orgSlug, orgId, org }` for the current org context (reads orgSlug from route params via `useActiveParams`)
+- Use `useOrgInfo()` from `~/lib/use-org-info` to get `{ orgSlug, orgId, org }` for the current org context
+- `useOrgSlug()` from `~/lib/use-org-slug` returns just the org slug — on web it parses the subdomain from `window.location.hostname`, on native it reads from AsyncStorage
+- `navigateToOrg(orgSlug)` from `~/lib/org-url` does a full-page navigation to the org's subdomain (e.g. `acme.localhost:8100/app`)
 - Session helpers like `getRoleForOrg(session, orgSlug)` provide role lookups
 
 ## Routing & Navigation
-- **Always use typesafe routes** — never cast with `as Href`. Use the object form for dynamic routes:
+- **Org context comes from subdomains**, not URL path segments. In dev: `acme.localhost:8100`, in prod: `acme.tinycld.com`
+- Routes no longer contain `[orgSlug]` — e.g. `/app/contacts/new`, `/app/contacts/[id]`
+- Use `as OneRouter.Href` for routes built from runtime strings (e.g. addon slugs, settings)
   ```tsx
-  // Good — typesafe, validated at compile time
-  <Link href={{ pathname: '/app/[orgSlug]/contacts/[id]', params: { orgSlug, id } }} />
-  router.push({ pathname: '/app/[orgSlug]/contacts/new', params: { orgSlug } })
-
-  // Bad — bypasses route type checking
-  <Link href={`/app/${orgSlug}/contacts/${id}` as Href} />
+  router.push('/app/contacts/new' as OneRouter.Href)
+  <Link href={`/app/contacts/${id}` as OneRouter.Href} />
   ```
-- The only exception is when routes must be built from runtime strings that TypeScript can't narrow (e.g. addon slugs from the registry, or routes that don't exist yet like settings) — use `as OneRouter.Href` in those cases
-- Use `useOrgInfo()` instead of `useParams()` to get `orgSlug` in org-scoped screens — it uses `useActiveParams` which resolves params reliably on first render
+- Use `useOrgInfo()` or `useOrgSlug()` to get the current org — never read it from route params
 
 ## Add-on System
 - Add-ons are npm packages (workspace or published) registered in `tinycld.addons.ts`
 - `npm run addons:generate` (runs automatically before `dev` and `build:web`) wires addons into the app:
-  - Re-exports addon screens into `app/app/[orgSlug]/{slug}/`
+  - Re-exports addon screens into `app/app/{slug}/`
   - Generates typed collection wiring in `lib/generated/addon-collections.ts`
   - Generates addon registry in `lib/generated/addon-registry.ts`
   - Symlinks migrations/hooks into `server/pb_migrations/` and `server/pb_hooks/`
 - Each addon provides: `manifest.ts`, `types.ts` (schema types), `collections.ts`, `screens/`, and optionally `pb-migrations/`, `pb-hooks/`, `seed.ts`, and `tests/`
 - The type system is fully integrated — addon types.ts exports a `{PascalSlug}Schema` type that gets merged into `MergedSchema` so `useStore('addonCollection')` is strongly typed end-to-end
 - Addon screens run in the app's bundle context and can import from the host app using `~/`
-- `lib/generated/` and `app/app/[orgSlug]/*/` are gitignored; `app/app/[orgSlug]/_layout.tsx` is a core file (force-add to git)
+- `lib/generated/` and `app/app/*/` are gitignored; `app/app/_layout.tsx` is a core file (force-add to git)
 - Runtime hooks: `useAddons()` and `useAddon(slug)` from `~/lib/addons/use-addons`
 - Full documentation: `docs/addons.md`
 
