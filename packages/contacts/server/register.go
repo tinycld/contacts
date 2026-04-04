@@ -25,7 +25,7 @@ func Register(app *pocketbase.PocketBase) {
 		e.Router.Any("/carddav/{path...}", serveCardDAV)
 		e.Router.Any("/carddav", serveCardDAV)
 
-		e.Router.GET("/.well-known/carddav", func(re *core.RequestEvent) error {
+		e.Router.Any("/.well-known/carddav", func(re *core.RequestEvent) error {
 			http.Redirect(re.Response, re.Request, "/carddav/", http.StatusMovedPermanently)
 			return nil
 		})

@@ -168,7 +168,9 @@ func main() {
 			e.Router.POST("/api/signup", HandleSignup)
 
 			if !e.Router.HasRoute(http.MethodGet, "/{path...}") {
-				e.Router.Any("/{path...}", staticWithFallback(publicDir, fallbackFile))
+				spa := staticWithFallback(publicDir, fallbackFile)
+				e.Router.GET("/{path...}", spa)
+				e.Router.HEAD("/{path...}", spa)
 			}
 
 			return e.Next()
