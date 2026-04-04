@@ -20,19 +20,15 @@ type CardDAVBackend struct {
 }
 
 func (b *CardDAVBackend) CurrentUserPrincipal(ctx context.Context) (string, error) {
-	user, err := b.authFromContext(ctx)
+	_, err := b.authFromContext(ctx)
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("/carddav/principals/%s/", user.Id), nil
+	return "/carddav/user/", nil
 }
 
 func (b *CardDAVBackend) AddressBookHomeSetPath(ctx context.Context) (string, error) {
-	user, err := b.authFromContext(ctx)
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("/carddav/principals/%s/", user.Id), nil
+	return b.CurrentUserPrincipal(ctx)
 }
 
 func (b *CardDAVBackend) ListAddressBooks(ctx context.Context) ([]carddav.AddressBook, error) {
@@ -56,7 +52,7 @@ func (b *CardDAVBackend) ListAddressBooks(ctx context.Context) ([]carddav.Addres
 		}
 		slug := org.GetString("slug")
 		books = append(books, carddav.AddressBook{
-			Path:        fmt.Sprintf("/carddav/principals/%s/%s/", user.Id, slug),
+			Path:        fmt.Sprintf("/carddav/%s/", slug),
 			Name:        org.GetString("name"),
 			Description: fmt.Sprintf("Contacts for %s", org.GetString("name")),
 		})
@@ -98,9 +94,10 @@ func (b *CardDAVBackend) ListAddressObjects(ctx context.Context, path string, re
 		return nil, err
 	}
 
+	bookPath := extractBookPath(path)
 	objects := make([]carddav.AddressObject, 0, len(records))
 	for _, record := range records {
-		obj, err := b.recordToAddressObject(record, path, req)
+		obj, err := b.recordToAddressObject(record, bookPath, req)
 		if err != nil {
 			continue
 		}
@@ -165,7 +162,7 @@ func (b *CardDAVBackend) PutAddressObject(ctx context.Context, path string, card
 		return nil, err
 	}
 
-	bookPath = fmt.Sprintf("/carddav/principals/%s/%s/", user.Id, orgSlug)
+	bookPath = fmt.Sprintf("/carddav/%s/", orgSlug)
 	return b.recordToAddressObject(record, bookPath, nil)
 }
 
@@ -222,7 +219,7 @@ func (b *CardDAVBackend) resolveContactByPath(ctx context.Context, path string) 
 		return nil, "", err
 	}
 
-	// Path format: /carddav/principals/{userId}/{orgSlug}/{vcard_uid}.vcf
+	// Path: /carddav/{orgSlug}/{vcard_uid}.vcf
 	vcardUID := extractVCardUID(path)
 	if vcardUID == "" {
 		return nil, "", fmt.Errorf("invalid contact path")
@@ -240,7 +237,7 @@ func (b *CardDAVBackend) resolveContactByPath(ctx context.Context, path string) 
 		return nil, "", fmt.Errorf("contact not found")
 	}
 
-	bookPath := fmt.Sprintf("/carddav/principals/%s/%s/", user.Id, orgSlug)
+	bookPath := fmt.Sprintf("/carddav/%s/", orgSlug)
 	return records[0], bookPath, nil
 }
 
@@ -269,21 +266,31 @@ func (b *CardDAVBackend) findUserOrg(userId, orgSlug string) (*core.Record, erro
 	return userOrgs[0], nil
 }
 
+// extractBookPath returns the address book portion of a path (up to and including the orgSlug).
+func extractBookPath(path string) string {
+	slug := extractOrgSlug(path)
+	if slug == "" {
+		return path
+	}
+	return fmt.Sprintf("/carddav/%s/", slug)
+}
+
+// extractOrgSlug gets the org slug from /carddav/{orgSlug}/...
 func extractOrgSlug(path string) string {
-	// Path: /carddav/principals/{userId}/{orgSlug}/...
 	parts := strings.Split(strings.Trim(path, "/"), "/")
-	if len(parts) >= 4 {
-		return parts[3]
+	// parts[0] = "carddav", parts[1] = orgSlug (or "user")
+	if len(parts) >= 2 && parts[1] != "user" {
+		return parts[1]
 	}
 	return ""
 }
 
+// extractVCardUID gets the vcard UID from /carddav/{orgSlug}/{vcard_uid}.vcf
 func extractVCardUID(path string) string {
-	// Path: /carddav/principals/{userId}/{orgSlug}/{vcard_uid}.vcf
 	parts := strings.Split(strings.Trim(path, "/"), "/")
-	if len(parts) >= 5 {
-		name := parts[4]
-		return strings.TrimSuffix(name, ".vcf")
+	// parts[0] = "carddav", parts[1] = orgSlug, parts[2] = {uid}.vcf
+	if len(parts) >= 3 {
+		return strings.TrimSuffix(parts[2], ".vcf")
 	}
 	return ""
 }
