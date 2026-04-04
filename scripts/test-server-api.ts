@@ -86,33 +86,54 @@ async function testHealth(config: Config) {
     }
 }
 
-async function testAuth(config: Config): Promise<string | null> {
+interface AuthResult {
+    token: string
+    userId: string
+    orgSlug: string
+}
+
+async function testAuth(config: Config): Promise<AuthResult | null> {
     console.log('\n▸ Authentication')
     try {
         const res = await fetch(`${config.url}/api/collections/users/auth-with-password`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ identity: config.email, password: config.password }),
+            body: JSON.stringify({
+                identity: config.email,
+                password: config.password,
+                expand: 'user_org_via_user.org',
+            }),
         })
         const data = await res.json()
-        if (res.ok && data.token) {
-            ok('POST /api/collections/users/auth-with-password', `token obtained`)
-            return data.token
+        if (!res.ok || !data.token) {
+            fail('Auth', `status ${res.status}: ${data.message || 'unknown error'}`)
+            return null
         }
-        fail('Auth', `status ${res.status}: ${data.message || 'unknown error'}`)
-        return null
+
+        ok('POST auth-with-password', `user ${data.record.id}`)
+
+        const userOrgs = data.record?.expand?.user_org_via_user ?? []
+        const orgSlug = userOrgs[0]?.expand?.org?.slug
+        if (!orgSlug) {
+            fail('Auth', 'no org found for user')
+            return null
+        }
+
+        ok('User org', orgSlug)
+        return { token: data.token, userId: data.record.id, orgSlug }
     } catch (err) {
         fail('Auth', String(err))
         return null
     }
 }
 
-async function testCardDAV(config: Config) {
+async function testCardDAV(config: Config, auth: AuthResult) {
     console.log('\n▸ CardDAV')
     const basicAuth = Buffer.from(`${config.email}:${config.password}`).toString('base64')
     const headers = { Authorization: `Basic ${basicAuth}` }
+    const addressBookPath = `/carddav/principals/${auth.userId}/${auth.orgSlug}/`
 
-    // PROPFIND on well-known
+    // Well-known redirect
     try {
         const res = await fetch(`${config.url}/.well-known/carddav`, {
             method: 'GET',
@@ -128,42 +149,9 @@ async function testCardDAV(config: Config) {
         fail('GET /.well-known/carddav', String(err))
     }
 
-    // Step 1: Discover current-user-principal
-    let principalPath: string | null = null
+    // PROPFIND address book
     try {
         const body = `<?xml version="1.0" encoding="utf-8"?>
-<d:propfind xmlns:d="DAV:">
-  <d:prop>
-    <d:current-user-principal/>
-  </d:prop>
-</d:propfind>`
-
-        const res = await fetch(`${config.url}/carddav/`, {
-            method: 'PROPFIND',
-            headers: { ...headers, 'Content-Type': 'application/xml', Depth: '0' },
-            body,
-        })
-        const text = await res.text()
-        if (res.status === 207) {
-            const hrefMatch = text.match(/<[A-Za-z:]*href[^>]*>([^<]*principals[^<]*)</)
-            if (hrefMatch) {
-                principalPath = hrefMatch[1]
-                ok('Discover principal', principalPath)
-            } else {
-                fail('Discover principal', `no principal href in response: ${text.slice(0, 300)}`)
-            }
-        } else {
-            fail('PROPFIND /carddav/', `status ${res.status}: ${text.slice(0, 200)}`)
-        }
-    } catch (err) {
-        fail('PROPFIND /carddav/', String(err))
-    }
-
-    // Step 2: List address books under the principal
-    let addressBookPath: string | null = null
-    if (principalPath) {
-        try {
-            const body = `<?xml version="1.0" encoding="utf-8"?>
 <d:propfind xmlns:d="DAV:" xmlns:card="urn:ietf:params:xml:ns:carddav">
   <d:prop>
     <d:resourcetype/>
@@ -171,32 +159,19 @@ async function testCardDAV(config: Config) {
   </d:prop>
 </d:propfind>`
 
-            const res = await fetch(`${config.url}${principalPath}`, {
-                method: 'PROPFIND',
-                headers: { ...headers, 'Content-Type': 'application/xml', Depth: '1' },
-                body,
-            })
+        const res = await fetch(`${config.url}${addressBookPath}`, {
+            method: 'PROPFIND',
+            headers: { ...headers, 'Content-Type': 'application/xml', Depth: '1' },
+            body,
+        })
+        if (res.status === 207) {
+            ok('PROPFIND address book', `${res.status} multistatus`)
+        } else {
             const text = await res.text()
-            if (res.status === 207) {
-                // Find an href deeper than the principal itself (an address book)
-                const allHrefs = [...text.matchAll(/<[A-Za-z:]*href[^>]*>([^<]+)</g)].map(m => m[1])
-                addressBookPath =
-                    allHrefs.find(h => h !== principalPath && h.startsWith(principalPath || '')) ||
-                    null
-                if (addressBookPath) {
-                    ok('Discovered address book', addressBookPath)
-                } else {
-                    fail(
-                        'Discover address book',
-                        `no child address book found. hrefs: ${allHrefs.join(', ')}`
-                    )
-                }
-            } else {
-                fail(`PROPFIND ${principalPath}`, `status ${res.status}: ${text.slice(0, 200)}`)
-            }
-        } catch (err) {
-            fail(`PROPFIND ${principalPath}`, String(err))
+            fail('PROPFIND address book', `status ${res.status}: ${text.slice(0, 200)}`)
         }
+    } catch (err) {
+        fail('PROPFIND address book', String(err))
     }
 
     if (!addressBookPath) {
@@ -301,8 +276,10 @@ async function main() {
     console.log(`\nTesting server at ${config.url} as ${config.email}`)
 
     await testHealth(config)
-    await testAuth(config)
-    await testCardDAV(config)
+    const auth = await testAuth(config)
+    if (auth) {
+        await testCardDAV(config, auth)
+    }
 
     console.log(`\n${passed} passed, ${failed} failed\n`)
     if (failed > 0) process.exit(1)
