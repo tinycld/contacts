@@ -8,12 +8,13 @@ import {
     useMemo,
     useState,
 } from 'react'
+import { useBreakpoint } from '~/components/workspace/useBreakpoint'
 import { useOrgHref } from '~/lib/org-routes'
 import { addDays, addMonths, addWeeks, parseDate, toDateString } from './useCalendarNavigation'
 
-export type ViewMode = 'day' | 'week' | 'month'
+export type ViewMode = 'day' | 'week' | 'month' | 'schedule'
 
-const VIEW_MODES = new Set<string>(['day', 'week', 'month'])
+const VIEW_MODES = new Set<string>(['day', 'week', 'month', 'schedule'])
 
 function parseViewMode(str: string | undefined): ViewMode {
     if (str && VIEW_MODES.has(str)) return str as ViewMode
@@ -55,6 +56,8 @@ export function useCalendarView(): CalendarViewState {
     const orgHref = useOrgHref()
     const { view, date } = useActiveParams<{ view?: string; date?: string }>()
     const popoverCtx = useContext(PopoverContext)
+    const breakpoint = useBreakpoint()
+    const isMobile = breakpoint === 'mobile'
 
     if (!popoverCtx) {
         throw new Error('useCalendarView must be used within CalendarViewProvider')
@@ -79,16 +82,19 @@ export function useCalendarView(): CalendarViewState {
     const goToday = useCallback(() => navigate(viewMode, new Date()), [navigate, viewMode])
 
     const goNext = useCallback(() => {
-        if (viewMode === 'day') navigate(viewMode, addDays(focusDate, 1))
-        else if (viewMode === 'week') navigate(viewMode, addWeeks(focusDate, 1))
+        if (viewMode === 'day' || viewMode === 'schedule') navigate(viewMode, addDays(focusDate, 1))
+        else if (viewMode === 'week')
+            navigate(viewMode, isMobile ? addDays(focusDate, 3) : addWeeks(focusDate, 1))
         else navigate(viewMode, addMonths(focusDate, 1))
-    }, [navigate, viewMode, focusDate])
+    }, [navigate, viewMode, focusDate, isMobile])
 
     const goPrevious = useCallback(() => {
-        if (viewMode === 'day') navigate(viewMode, addDays(focusDate, -1))
-        else if (viewMode === 'week') navigate(viewMode, addWeeks(focusDate, -1))
+        if (viewMode === 'day' || viewMode === 'schedule')
+            navigate(viewMode, addDays(focusDate, -1))
+        else if (viewMode === 'week')
+            navigate(viewMode, isMobile ? addDays(focusDate, -3) : addWeeks(focusDate, -1))
         else navigate(viewMode, addMonths(focusDate, -1))
-    }, [navigate, viewMode, focusDate])
+    }, [navigate, viewMode, focusDate, isMobile])
 
     const goToDate = useCallback((d: Date) => navigate(viewMode, d), [navigate, viewMode])
 

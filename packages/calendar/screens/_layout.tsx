@@ -1,5 +1,7 @@
 import { Slot } from 'one'
 import { YStack } from 'tamagui'
+import { useBreakpoint } from '~/components/workspace/useBreakpoint'
+import { CalendarFAB } from '../components/CalendarFAB'
 import { CalendarHeader } from '../components/CalendarHeader'
 import { EventDetailPopover } from '../components/EventDetailPopover'
 import { EventQuickCreate } from '../components/EventQuickCreate'
@@ -8,6 +10,7 @@ import { CalendarViewProvider, useCalendarView } from '../hooks/useCalendarView'
 
 function CalendarLayoutInner() {
     const { popover, closePopover } = useCalendarView()
+    const isMobile = useBreakpoint() === 'mobile'
 
     const eventId = popover.type === 'event-detail' ? popover.eventId : undefined
     const { event, calendar } = useEventDetail(eventId)
@@ -18,6 +21,8 @@ function CalendarLayoutInner() {
             <YStack flex={1}>
                 <Slot />
             </YStack>
+
+            <CalendarFAB isVisible={isMobile} />
 
             <EventQuickCreate
                 isVisible={popover.type === 'quick-create'}

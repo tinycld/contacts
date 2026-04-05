@@ -53,7 +53,10 @@ export function getWeekDays(weekStart: Date): Date[] {
     return Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
 }
 
-export function formatDateLabel(date: Date, viewMode: 'day' | 'week' | 'month'): string {
+export function formatDateLabel(
+    date: Date,
+    viewMode: 'day' | 'week' | 'month' | 'schedule'
+): string {
     const months = [
         'January',
         'February',

@@ -1,1 +1,1 @@
-export const addons = ['@tinycld/contacts', '@tinycld/mail'] as const
+export const addons = ['@tinycld/contacts', '@tinycld/mail', '@tinycld/calendar'] as const

@@ -6,7 +6,9 @@ const manifest = {
     routes: { directory: 'screens' },
     nav: { label: 'Calendar', icon: 'calendar', order: 8 },
     sidebar: { component: 'sidebar' },
+    migrations: { directory: 'pb-migrations' },
     collections: { register: 'collections', types: 'types' },
+    seed: { script: 'seed' },
 }
 
 export default manifest

@@ -1,10 +1,12 @@
-import { Clock, MapPin, Pencil, Trash2, Users, X } from 'lucide-react-native'
+import { Clock, MapPin, MoreHorizontal, Pencil, Trash2, Users, X } from 'lucide-react-native'
 import { useRouter } from 'one'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useTheme } from 'tamagui'
+import { useBreakpoint } from '~/components/workspace/useBreakpoint'
 import { useOrgHref } from '~/lib/org-routes'
 import type { CalendarEvent } from '../types'
 import { getCalendarColorResolved } from './calendar-colors'
+import { EventGuestList } from './EventGuestList'
 
 interface EventDetailPopoverProps {
     isVisible: boolean
@@ -40,6 +42,103 @@ function formatEventDateTime(event: CalendarEvent): string {
     return `${dateStr}\n${startTime} – ${endTime}`
 }
 
+const RECURRENCE_LABELS: Record<string, string> = {
+    daily: 'Repeats every day',
+    weekly: 'Repeats every week',
+    monthly: 'Repeats every month',
+    yearly: 'Repeats every year',
+}
+
+function MobileEventDetail({
+    event,
+    calendarName,
+    calendarColorKey,
+    onClose,
+}: Omit<EventDetailPopoverProps, 'isVisible'> & { event: CalendarEvent }) {
+    const theme = useTheme()
+    const router = useRouter()
+    const orgHref = useOrgHref()
+    const colors = getCalendarColorResolved(calendarColorKey)
+    const dateTimeStr = formatEventDateTime(event)
+
+    const onEdit = () => {
+        onClose()
+        router.push(orgHref('calendar/[id]', { id: event.id }))
+    }
+
+    return (
+        <View style={[mobileStyles.container, { backgroundColor: theme.background.val }]}>
+            <View style={mobileStyles.topBar}>
+                <Pressable onPress={onClose} hitSlop={8}>
+                    <X size={22} color={theme.color.val} />
+                </Pressable>
+                <View style={mobileStyles.topBarActions}>
+                    <Pressable onPress={onEdit} hitSlop={8}>
+                        <Pencil size={20} color={theme.color8.val} />
+                    </Pressable>
+                    <Pressable hitSlop={8}>
+                        <MoreHorizontal size={20} color={theme.color8.val} />
+                    </Pressable>
+                </View>
+            </View>
+
+            <ScrollView style={mobileStyles.body} contentContainerStyle={mobileStyles.bodyContent}>
+                <View style={mobileStyles.titleRow}>
+                    <View style={[mobileStyles.colorDot, { backgroundColor: colors.bg }]} />
+                    <Text style={[mobileStyles.title, { color: theme.color.val }]}>
+                        {event.title}
+                    </Text>
+                </View>
+
+                <View style={mobileStyles.detailRow}>
+                    <Clock size={18} color={theme.color8.val} />
+                    <Text style={[mobileStyles.detailText, { color: theme.color.val }]}>
+                        {dateTimeStr}
+                    </Text>
+                </View>
+
+                {event.recurrence ? (
+                    <Text style={[mobileStyles.recurrence, { color: theme.color8.val }]}>
+                        {RECURRENCE_LABELS[event.recurrence] ?? event.recurrence}
+                    </Text>
+                ) : null}
+
+                {event.location ? (
+                    <View style={mobileStyles.detailRow}>
+                        <MapPin size={18} color={theme.color8.val} />
+                        <Text style={[mobileStyles.detailText, { color: theme.color.val }]}>
+                            {event.location}
+                        </Text>
+                    </View>
+                ) : null}
+
+                {event.guests.length > 0 ? (
+                    <View style={mobileStyles.guestSection}>
+                        <View style={mobileStyles.detailRow}>
+                            <Users size={18} color={theme.color8.val} />
+                            <Text style={[mobileStyles.detailText, { color: theme.color.val }]}>
+                                {event.guests.length} guest
+                                {event.guests.length !== 1 ? 's' : ''}
+                            </Text>
+                        </View>
+                        <EventGuestList guests={event.guests} />
+                    </View>
+                ) : null}
+
+                {event.description ? (
+                    <Text style={[mobileStyles.description, { color: theme.color.val }]}>
+                        {event.description}
+                    </Text>
+                ) : null}
+
+                <Text style={[mobileStyles.calendarLabel, { color: theme.color8.val }]}>
+                    {calendarName}
+                </Text>
+            </ScrollView>
+        </View>
+    )
+}
+
 export function EventDetailPopover({
     isVisible,
     event,
@@ -50,8 +149,22 @@ export function EventDetailPopover({
     const theme = useTheme()
     const router = useRouter()
     const orgHref = useOrgHref()
+    const isMobile = useBreakpoint() === 'mobile'
 
     if (!isVisible || !event) return null
+
+    if (isMobile) {
+        return (
+            <View style={mobileStyles.overlay}>
+                <MobileEventDetail
+                    event={event}
+                    calendarName={calendarName}
+                    calendarColorKey={calendarColorKey}
+                    onClose={onClose}
+                />
+            </View>
+        )
+    }
 
     const colors = getCalendarColorResolved(calendarColorKey)
     const dateTimeStr = formatEventDateTime(event)
@@ -136,6 +249,82 @@ export function EventDetailPopover({
         </Pressable>
     )
 }
+
+const mobileStyles = StyleSheet.create({
+    overlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 100,
+    },
+    container: {
+        flex: 1,
+    },
+    topBar: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+    },
+    topBarActions: {
+        flexDirection: 'row',
+        gap: 20,
+    },
+    body: {
+        flex: 1,
+    },
+    bodyContent: {
+        paddingHorizontal: 20,
+        paddingBottom: 40,
+    },
+    titleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        marginBottom: 20,
+    },
+    colorDot: {
+        width: 16,
+        height: 16,
+        borderRadius: 8,
+    },
+    title: {
+        fontSize: 22,
+        fontWeight: '700',
+        flex: 1,
+    },
+    detailRow: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        gap: 12,
+        marginBottom: 12,
+    },
+    detailText: {
+        fontSize: 15,
+        flex: 1,
+    },
+    recurrence: {
+        fontSize: 14,
+        marginBottom: 12,
+        paddingLeft: 30,
+    },
+    guestSection: {
+        marginBottom: 8,
+    },
+    description: {
+        fontSize: 15,
+        marginTop: 8,
+        marginBottom: 12,
+        lineHeight: 22,
+    },
+    calendarLabel: {
+        fontSize: 13,
+        marginTop: 16,
+    },
+})
 
 const styles = StyleSheet.create({
     overlay: {
