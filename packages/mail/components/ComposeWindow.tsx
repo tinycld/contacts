@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Platform, StyleSheet, Text, View } from 'react-native'
 import { useTheme } from 'tamagui'
 import { useBreakpoint } from '~/components/workspace/useBreakpoint'
@@ -39,6 +39,7 @@ export function ComposeWindow({ isVisible }: ComposeWindowProps) {
     const fileInputRef = useRef<HTMLInputElement>(null)
     const mailboxId = useDefaultMailbox()
     const draftIdRef = useRef<string | null>(null)
+    const [headerTitle, setHeaderTitle] = useState('')
     const { attachments, addFiles, removeFile, clearAll: clearAttachments } = useAttachments()
 
     const editor = useMailEditor({ placeholder: 'Compose email' })
@@ -59,6 +60,8 @@ export function ComposeWindow({ isVisible }: ComposeWindowProps) {
         defaultValues: { to: '', cc: '', bcc: '', subject: '' },
     })
 
+    const onSubjectBlur = useCallback(() => setHeaderTitle(getValues('subject')), [getValues])
+
     useEffect(() => {
         if (draftContext) {
             draftIdRef.current = draftContext.messageId
@@ -70,6 +73,7 @@ export function ComposeWindow({ isVisible }: ComposeWindowProps) {
                 bcc: formatRecipients(draftContext.bcc),
                 subject: draftContext.subject,
             })
+            setHeaderTitle(draftContext.subject)
             setContentWhenReady(
                 editorBridgeRef.current,
                 draftContext.htmlBody || draftContext.textBody || ''
@@ -83,9 +87,11 @@ export function ComposeWindow({ isVisible }: ComposeWindowProps) {
                 ? replyContext.subject
                 : `Re: ${replyContext.subject}`
             reset({ to: toValue, cc: '', bcc: '', subject: subjectPrefix })
+            setHeaderTitle(subjectPrefix)
         } else {
             draftIdRef.current = null
             reset({ to: '', cc: '', bcc: '', subject: '' })
+            setHeaderTitle('')
         }
     }, [replyContext, draftContext, reset])
 
@@ -104,6 +110,7 @@ export function ComposeWindow({ isVisible }: ComposeWindowProps) {
         onSuccess: async () => {
             await deleteDraftMessage()
             editorRef.current?.clear()
+            clearAttachments()
             reset({ to: '', cc: '', bcc: '', subject: '' })
             close()
         },
@@ -133,10 +140,12 @@ export function ComposeWindow({ isVisible }: ComposeWindowProps) {
             subject: data.subject,
             html_body: htmlBody,
             text_body: text,
+            attachments: attachments.map(a => a.file),
         })
 
         draftIdRef.current = null
         editorRef.current?.clear()
+        clearAttachments()
         reset({ to: '', cc: '', bcc: '', subject: '' })
         close()
     }
@@ -178,8 +187,24 @@ export function ComposeWindow({ isVisible }: ComposeWindowProps) {
             html_body: htmlBody,
             text_body: textBody,
             in_reply_to_message_id: replyContext?.messageId,
+            attachments: attachments.map(a => a.file),
         })
     })
+
+    const handleAttach = () => {
+        fileInputRef.current?.click()
+    }
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files
+        if (!files?.length) return
+        try {
+            addFiles(Array.from(files))
+        } catch (err) {
+            captureException(err)
+        }
+        e.target.value = ''
+    }
 
     const composeWindow = (
         <View
@@ -195,12 +220,13 @@ export function ComposeWindow({ isVisible }: ComposeWindowProps) {
         >
             <ComposeHeader
                 mode={mode}
+                title={headerTitle}
                 onMinimize={isMinimized ? open : minimize}
                 onMaximize={isMaximized ? open : maximize}
                 onClose={handleClose}
             />
             <View style={isMinimized ? styles.hidden : styles.composeBody}>
-                <ComposeFields control={control} errors={errors} />
+                <ComposeFields control={control} errors={errors} onSubjectBlur={onSubjectBlur} />
                 {hasMailbox ? null : (
                     <View style={styles.mailboxWarning}>
                         <Text style={[styles.mailboxWarningText, { color: theme.red10.val }]}>
@@ -211,10 +237,25 @@ export function ComposeWindow({ isVisible }: ComposeWindowProps) {
                 <View style={styles.body}>
                     <RichTextEditor editor={editor} />
                 </View>
+                <AttachmentRibbon
+                    isVisible={attachments.length > 0}
+                    attachments={attachments}
+                    onRemove={removeFile}
+                />
+                {Platform.OS === 'web' && (
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        style={{ display: 'none' }}
+                        onChange={handleFileChange}
+                    />
+                )}
                 <ComposeToolbar
                     editor={editor}
                     onDiscard={close}
                     onSend={onSend}
+                    onAttach={handleAttach}
                     isPending={isPending}
                 />
             </View>

@@ -6,15 +6,23 @@ import type { ComposeMode } from '../hooks/useComposeState'
 
 interface ComposeHeaderProps {
     mode: ComposeMode
+    title?: string
     onMinimize: () => void
     onMaximize: () => void
     onClose: () => void
 }
 
-export function ComposeHeader({ mode, onMinimize, onMaximize, onClose }: ComposeHeaderProps) {
+export function ComposeHeader({
+    mode,
+    title,
+    onMinimize,
+    onMaximize,
+    onClose,
+}: ComposeHeaderProps) {
     const theme = useTheme()
     const breakpoint = useBreakpoint()
     const showWindowControls = breakpoint === 'desktop'
+    const displayTitle = title?.trim() || 'New Message'
 
     return (
         <View style={[styles.header, { backgroundColor: theme.color.val }]}>
@@ -22,7 +30,9 @@ export function ComposeHeader({ mode, onMinimize, onMaximize, onClose }: Compose
                 style={styles.titleArea}
                 onPress={mode === 'minimized' ? onMinimize : undefined}
             >
-                <Text style={[styles.title, { color: theme.background.val }]}>New Message</Text>
+                <Text style={[styles.title, { color: theme.background.val }]} numberOfLines={1}>
+                    {displayTitle}
+                </Text>
             </Pressable>
             <View style={styles.actions}>
                 {showWindowControls ? (

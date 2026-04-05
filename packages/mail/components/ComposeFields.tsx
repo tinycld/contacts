@@ -8,14 +8,17 @@ import { RecipientField } from './RecipientField'
 interface ComposeFieldsProps {
     control: Control<ComposeFormData>
     errors: FieldErrors<ComposeFormData>
+    onSubjectBlur?: () => void
 }
 
 function ComposeFieldInput({
     control,
     name,
+    onBlur: onBlurExtra,
 }: {
     control: Control<ComposeFormData>
     name: keyof ComposeFormData
+    onBlur?: () => void
 }) {
     const theme = useTheme()
     const { field } = useController({ control, name })
@@ -26,12 +29,15 @@ function ComposeFieldInput({
             placeholderTextColor={theme.placeholderColor.val}
             value={field.value}
             onChangeText={field.onChange}
-            onBlur={field.onBlur}
+            onBlur={() => {
+                field.onBlur()
+                onBlurExtra?.()
+            }}
         />
     )
 }
 
-export function ComposeFields({ control, errors }: ComposeFieldsProps) {
+export function ComposeFields({ control, errors, onSubjectBlur }: ComposeFieldsProps) {
     const theme = useTheme()
     const [showCc, setShowCc] = useState(false)
     const [showBcc, setShowBcc] = useState(false)
@@ -100,7 +106,7 @@ export function ComposeFields({ control, errors }: ComposeFieldsProps) {
                 ]}
             >
                 <Text style={[styles.fieldLabel, { color: theme.color8.val }]}>Subject</Text>
-                <ComposeFieldInput control={control} name="subject" />
+                <ComposeFieldInput control={control} name="subject" onBlur={onSubjectBlur} />
             </View>
         </View>
     )
