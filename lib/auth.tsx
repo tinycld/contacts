@@ -208,11 +208,18 @@ export function useAuth(options?: {
     }
 
     const throwIfAnon = options?.throwIfAnon ?? true
-    if (throwIfAnon && !context.isLoggedIn && !context.isInitializing) {
-        throw new AuthRequiredError('User must be authenticated to access this resource')
-    }
 
     if (throwIfAnon) {
+        // When user is null (initializing or not logged in), return a stub
+        // so callers that access user.id / user.name don't crash while the
+        // skeleton overlay blocks the UI. The overlay handles the auth gate UX.
+        if (!context.user) {
+            return {
+                ...context,
+                isLoggedIn: false,
+                user: { id: '', name: '', email: '' },
+            } as unknown as AuthenticatedContext
+        }
         return context as AuthenticatedContext
     }
 

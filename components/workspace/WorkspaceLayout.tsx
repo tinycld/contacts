@@ -8,28 +8,29 @@ import { useWorkspaceLayout } from './useWorkspaceLayout'
 
 const SIDEBAR_WIDTH = 260
 
-export function WorkspaceLayout() {
+export function WorkspaceLayout({ isReady = true }: { isReady?: boolean }) {
     const theme = useTheme()
     const { breakpoint, isSidebarOpen, setSidebarOpen } = useWorkspaceLayout()
 
-    if (breakpoint === 'mobile') return <MobileLayout />
+    if (breakpoint === 'mobile') return <MobileLayout isReady={isReady} />
 
     const isTablet = breakpoint === 'tablet'
     const showSidebarOverlay = isTablet && isSidebarOpen
 
     return (
         <View style={[styles.container, { backgroundColor: theme.background.val }]}>
-            <AddonRail />
+            {isReady && <AddonRail />}
 
-            {isTablet ? (
-                <SidebarOverlay
-                    isVisible={showSidebarOverlay}
-                    overlayColor={theme.overlayBackground.val}
-                    onDismiss={() => setSidebarOpen(false)}
-                />
-            ) : (
-                <AddonSidebar width={SIDEBAR_WIDTH} />
-            )}
+            {isReady &&
+                (isTablet ? (
+                    <SidebarOverlay
+                        isVisible={showSidebarOverlay}
+                        overlayColor={theme.overlayBackground.val}
+                        onDismiss={() => setSidebarOpen(false)}
+                    />
+                ) : (
+                    <AddonSidebar width={SIDEBAR_WIDTH} />
+                ))}
 
             <View style={[styles.main, { backgroundColor: theme.background.val }]}>
                 <Slot />

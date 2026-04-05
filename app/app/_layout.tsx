@@ -1,5 +1,6 @@
 import { usePathname } from 'one'
 import { useEffect } from 'react'
+import { Platform, StyleSheet, View } from 'react-native'
 import { AuthGate } from '~/components/workspace/AuthGate'
 import { SkeletonLayout } from '~/components/workspace/SkeletonLayout'
 import { useWorkspaceLayout } from '~/components/workspace/useWorkspaceLayout'
@@ -17,27 +18,33 @@ export default function OrgLayout() {
 
 function OrgLayoutInner() {
     const auth = useAuth({ throwIfAnon: false })
-
-    if (auth.isInitializing) {
-        return <SkeletonLayout />
-    }
-
-    if (!auth.isLoggedIn) {
-        return (
-            <>
-                <SkeletonLayout />
-                <AuthGate />
-            </>
-        )
-    }
+    const isReady = !auth.isInitializing && auth.isLoggedIn
 
     return (
         <>
             <ActiveAddonSync />
-            <WorkspaceLayout />
+            <WorkspaceLayout isReady={isReady} />
+            {!isReady && (
+                <View style={styles.overlay}>
+                    <SkeletonLayout />
+                    {!auth.isInitializing && !auth.isLoggedIn && <AuthGate />}
+                </View>
+            )}
         </>
     )
 }
+
+const styles = StyleSheet.create({
+    overlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 10,
+        ...(Platform.OS === 'web' ? { height: '100vh' as unknown as number } : {}),
+    },
+})
 
 function ActiveAddonSync() {
     const pathname = usePathname()

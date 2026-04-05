@@ -5,7 +5,7 @@ import { MobileDrawer } from './MobileDrawer'
 import { MobileTabBar } from './MobileTabBar'
 import { useWorkspaceLayout } from './useWorkspaceLayout'
 
-export function MobileLayout() {
+export function MobileLayout({ isReady = true }: { isReady?: boolean }) {
     const theme = useTheme()
     const { isDrawerOpen } = useWorkspaceLayout()
 
@@ -14,8 +14,8 @@ export function MobileLayout() {
             <View style={styles.content}>
                 <Slot />
             </View>
-            <MobileTabBar />
-            <MobileDrawer isVisible={isDrawerOpen} />
+            {isReady && <MobileTabBar />}
+            {isReady && <MobileDrawer isVisible={isDrawerOpen} />}
         </View>
     )
 }

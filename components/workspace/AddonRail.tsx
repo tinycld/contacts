@@ -12,7 +12,7 @@ export function AddonRail() {
     const theme = useTheme()
     const addons = useAddons()
     const { activeAddonSlug } = useWorkspaceLayout()
-    const { logout } = useAuth()
+    const { logout } = useAuth({ throwIfAnon: false })
     const router = useRouter()
 
     const sorted = [...addons].sort((a, b) => (a.nav.order ?? 99) - (b.nav.order ?? 99))
