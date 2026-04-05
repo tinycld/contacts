@@ -25,6 +25,18 @@ func Register(app *pocketbase.PocketBase) {
 		}
 		return e.Next()
 	}
+	// Auto-create personal mailbox when a user joins an org
+	app.OnRecordAfterCreateSuccess("user_org").BindFunc(func(e *core.RecordEvent) error {
+		handleUserOrgCreated(app, e.Record)
+		return e.Next()
+	})
+
+	// Clean up orphaned personal mailboxes when a user leaves an org
+	app.OnRecordAfterDeleteSuccess("user_org").BindFunc(func(e *core.RecordEvent) error {
+		handleUserOrgDeleted(app, e.Record)
+		return e.Next()
+	})
+
 	app.OnRecordAfterCreateSuccess("settings").BindFunc(invalidateSettingsCache)
 	app.OnRecordAfterUpdateSuccess("settings").BindFunc(invalidateSettingsCache)
 	app.OnRecordAfterDeleteSuccess("settings").BindFunc(invalidateSettingsCache)
