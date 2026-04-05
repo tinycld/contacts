@@ -25,6 +25,14 @@ func authenticateRequest(app *pocketbase.PocketBase, r *http.Request) (*core.Rec
 	return record, nil
 }
 
+// requireAuth is a middleware that ensures the request has a valid auth token.
+func requireAuth(re *core.RequestEvent) error {
+	if re.Auth == nil {
+		return re.UnauthorizedError("Authentication required", nil)
+	}
+	return re.Next()
+}
+
 type authError struct{}
 
 func (e *authError) Error() string { return "unauthorized" }

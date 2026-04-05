@@ -11,6 +11,20 @@ import (
 )
 
 func Register(app *pocketbase.PocketBase) {
+	// FTS sync hooks for contacts
+	app.OnRecordAfterCreateSuccess("contacts").BindFunc(func(e *core.RecordEvent) error {
+		syncContactToFTS(app, e.Record, "create")
+		return e.Next()
+	})
+	app.OnRecordAfterUpdateSuccess("contacts").BindFunc(func(e *core.RecordEvent) error {
+		syncContactToFTS(app, e.Record, "update")
+		return e.Next()
+	})
+	app.OnRecordAfterDeleteSuccess("contacts").BindFunc(func(e *core.RecordEvent) error {
+		syncContactToFTS(app, e.Record, "delete")
+		return e.Next()
+	})
+
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
 		backend := &CardDAVBackend{app: app}
 		handler := carddav.Handler{Backend: backend, Prefix: "/carddav"}
@@ -36,6 +50,11 @@ func Register(app *pocketbase.PocketBase) {
 			http.Redirect(re.Response, re.Request, "/carddav/", http.StatusMovedPermanently)
 			return nil
 		})
+
+		// Contacts search endpoint (requires auth)
+		e.Router.GET("/api/contacts/search", func(re *core.RequestEvent) error {
+			return handleContactSearch(app, re)
+		}).BindFunc(requireAuth)
 
 		return e.Next()
 	})

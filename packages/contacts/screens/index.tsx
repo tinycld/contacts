@@ -2,12 +2,13 @@ import { useLiveQuery } from '@tanstack/react-db'
 import { Star } from 'lucide-react-native'
 import type { OneRouter } from 'one'
 import { Link } from 'one'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Pressable } from 'react-native'
 import { Input, SizableText, useTheme, XStack, YStack } from 'tamagui'
 import { useMutation } from '~/lib/mutations'
 import { useStore } from '~/lib/pocketbase'
 import { ContactAvatar } from '../components/ContactAvatar'
+import { useContactSearch } from '../hooks/useContactSearch'
 
 export default function ContactListScreen() {
     const [contactsCollection] = useStore('contacts')
@@ -28,17 +29,24 @@ export default function ContactListScreen() {
         },
     })
 
-    const query = searchQuery.toLowerCase()
-    const filteredContacts = query
-        ? contacts?.filter(c => {
-              const fullName = `${c.first_name} ${c.last_name}`.toLowerCase()
-              return (
-                  fullName.includes(query) ||
-                  c.email?.toLowerCase().includes(query) ||
-                  c.company?.toLowerCase().includes(query)
-              )
-          })
-        : contacts
+    const useServerSearch = searchQuery.length >= 2
+    const { results: serverResults } = useContactSearch(useServerSearch ? searchQuery : '')
+
+    const filteredContacts = useMemo(() => {
+        if (useServerSearch) return serverResults
+
+        const q = searchQuery.toLowerCase()
+        if (!q) return contacts ?? []
+
+        return (contacts ?? []).filter(c => {
+            const fullName = `${c.first_name} ${c.last_name}`.toLowerCase()
+            return (
+                fullName.includes(q) ||
+                c.email?.toLowerCase().includes(q) ||
+                c.company?.toLowerCase().includes(q)
+            )
+        })
+    }, [useServerSearch, serverResults, searchQuery, contacts])
 
     const count = filteredContacts?.length ?? 0
 
