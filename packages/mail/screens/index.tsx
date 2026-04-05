@@ -1,24 +1,21 @@
-import { eq } from '@tanstack/db'
-import { useLiveQuery } from '@tanstack/react-db'
 import { useParams } from 'one'
 import { useCallback, useMemo } from 'react'
 import { FlatList } from 'react-native'
 import { SizableText, Spinner, YStack } from 'tamagui'
 import { useBreakpoint } from '~/components/workspace/useBreakpoint'
 import { useMutation } from '~/lib/mutations'
-import { pb, useStore } from '~/lib/pocketbase'
+import { pb } from '~/lib/pocketbase'
 import { useCurrentRole } from '~/lib/use-current-role'
 import { ComposeFAB } from '../components/ComposeFAB'
 import { EmailListToolbar } from '../components/EmailListToolbar'
 import { EmailRow } from '../components/EmailRow'
 import type { ThreadListItem } from '../components/thread-list-item'
-import { toThreadListItem } from '../components/thread-list-item'
 import { useCompose } from '../hooks/useComposeState'
 import { useMailBulkActions } from '../hooks/useMailBulkActions'
 import type { MailSearchResult } from '../hooks/useMailSearch'
 import { useMailSelection } from '../hooks/useMailSelection'
 import { useMailSearchState } from '../hooks/useSearchState'
-import type { MailMessages } from '../types'
+import { useThreadListItems } from '../hooks/useThreadListItems'
 
 function useQueryParams() {
     const { folder, label } = useParams<{ folder?: string; label?: string }>()
@@ -87,101 +84,10 @@ export default function MailListScreen() {
     const { openDraft } = useCompose()
     const search = useMailSearchState()
 
-    const [threadStateCollection, threadsCollection, labelsCollection, messagesCollection] =
-        useStore('mail_thread_state', 'mail_threads', 'mail_labels', 'mail_messages')
-
-    const { data: threadStates } = useLiveQuery(
-        query =>
-            query
-                .from({ mail_thread_state: threadStateCollection })
-                .where(({ mail_thread_state }) => eq(mail_thread_state.user_org, userOrgId))
-                .orderBy(({ mail_thread_state }) => mail_thread_state.updated, 'desc'),
-        [userOrgId]
-    )
-
-    const { data: threads } = useLiveQuery(
-        query => query.from({ mail_threads: threadsCollection }),
-        []
-    )
-
-    const { data: allLabels } = useLiveQuery(
-        query => query.from({ mail_labels: labelsCollection }),
-        []
-    )
-
-    const { data: draftMessages } = useLiveQuery(
-        query =>
-            query
-                .from({ mail_messages: messagesCollection })
-                .where(({ mail_messages }) => eq(mail_messages.delivery_status, 'draft')),
-        []
-    )
-
-    const draftByThread = useMemo(() => {
-        const map = new Map<string, MailMessages>()
-        for (const msg of (draftMessages ?? []) as MailMessages[]) {
-            map.set(msg.thread, msg)
-        }
-        return map
-    }, [draftMessages])
-
-    const { data: attachmentMessages } = useLiveQuery(
-        query =>
-            query
-                .from({ mail_messages: messagesCollection })
-                .where(({ mail_messages }) => eq(mail_messages.has_attachments, true)),
-        []
-    )
-
-    const threadsWithAttachments = useMemo(() => {
-        const set = new Set<string>()
-        for (const msg of (attachmentMessages ?? []) as MailMessages[]) {
-            set.add(msg.thread)
-        }
-        return set
-    }, [attachmentMessages])
-
-    const threadMap = useMemo(() => {
-        const map = new Map<string, (typeof threads)[number]>()
-        for (const t of threads ?? []) {
-            map.set(t.id, t)
-        }
-        return map
-    }, [threads])
-
-    const labelMap = useMemo(() => {
-        const map = new Map<string, { id: string; name: string; color: string }>()
-        for (const l of allLabels ?? []) {
-            map.set(l.id, l)
-        }
-        return map
-    }, [allLabels])
-
-    const items: ThreadListItem[] = useMemo(() => {
-        if (!threadStates) return []
-
-        const mapped = threadStates.map(state => {
-            const thread = threadMap.get(state.thread)
-            const labelIds: string[] = state.labels ?? []
-            const stateLabels = labelIds
-                .map((lid: string) => labelMap.get(lid))
-                .filter((l): l is { id: string; name: string; color: string } => l != null)
-            const hasDraft = draftByThread.has(state.thread)
-            const hasAttachments = threadsWithAttachments.has(state.thread)
-            return toThreadListItem(state, thread, stateLabels, hasDraft, hasAttachments)
-        })
-
-        if (label) {
-            return mapped.filter(item => item.labels.some(l => l.id === label))
-        }
-
-        const activeFolder = folder ?? 'inbox'
-        if (activeFolder === 'starred') {
-            return mapped.filter(item => item.isStarred)
-        }
-
-        return mapped.filter(item => item.folder === activeFolder)
-    }, [threadStates, threadMap, labelMap, draftByThread, threadsWithAttachments, folder, label])
+    const { items, labels, draftByThread, threadStateCollection } = useThreadListItems(userOrgId, {
+        folder,
+        label,
+    })
 
     const selection = useMailSelection(items, folder, label)
     const bulkActions = useMailBulkActions(
@@ -189,10 +95,6 @@ export default function MailListScreen() {
         selection.selectedItems,
         selection.clearSelection
     )
-
-    const allLabelsList = useMemo(() => {
-        return Array.from(labelMap.values())
-    }, [labelMap])
 
     const selectedItemLabelIds = useMemo(() => {
         if (selection.selectedItems.length === 0) return new Set<string>()
@@ -294,7 +196,7 @@ export default function MailListScreen() {
                 someSelected={selection.someSelected}
                 allSelectedRead={selection.allSelectedRead}
                 allSelectedStarred={selection.allSelectedStarred}
-                labels={allLabelsList}
+                labels={labels}
                 selectedItemLabelIds={selectedItemLabelIds}
                 onToggleAll={selection.toggleAll}
                 onArchive={() => bulkActions.archiveSelected.mutate()}

@@ -1,7 +1,7 @@
 import { and, eq } from '@tanstack/db'
 import { useLiveQuery } from '@tanstack/react-db'
-import { useParams } from 'one'
-import { useMemo, useRef, useState } from 'react'
+import { useParams, useRouter } from 'one'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useTheme, YStack } from 'tamagui'
 import { useMutation } from '~/lib/mutations'
@@ -13,16 +13,40 @@ import { EmailDetailToolbar } from '../components/EmailDetailToolbar'
 import { MessageHeader, ThreadSubjectHeader } from '../components/EmailHeader'
 import { InlineReply } from '../components/InlineReply'
 import { NotFoundState } from '../components/NotFoundState'
+import { useCompose } from '../hooks/useComposeState'
+import { useLabels } from '../hooks/useLabels'
+import { useThreadActions } from '../hooks/useThreadActions'
 import type { MailMessages } from '../types'
+
+function useAutoMarkAsRead(
+    // biome-ignore lint/suspicious/noExplicitAny: pbtsdb collection type is deeply generic
+    threadStateCollection: any,
+    threadState: { id: string; is_read: boolean } | undefined,
+    threadId: string
+) {
+    const markedRef = useRef<string | null>(null)
+    const markAsRead = useMutation({
+        mutationFn: function* (stateId: string) {
+            yield threadStateCollection.update(stateId, draft => {
+                draft.is_read = true
+            })
+        },
+    })
+    if (threadState && !threadState.is_read && markedRef.current !== threadId) {
+        markedRef.current = threadId
+        markAsRead.mutate(threadState.id)
+    }
+}
 
 export default function MailDetailScreen() {
     const { id = '' } = useParams<{ id: string }>()
     const { userOrgId } = useCurrentRole()
+    const router = useRouter()
+    const { openReply } = useCompose()
 
-    const [threadStateCollection, messagesCollection, labelsCollection] = useStore(
+    const [threadStateCollection, messagesCollection] = useStore(
         'mail_thread_state',
-        'mail_messages',
-        'mail_labels'
+        'mail_messages'
     )
 
     const { data: threadStates } = useLiveQuery(
@@ -46,40 +70,32 @@ export default function MailDetailScreen() {
         [id]
     )
 
-    const { data: allLabels } = useLiveQuery(
-        query => query.from({ mail_labels: labelsCollection }),
-        []
+    const { labels: allLabels, labelsForIds } = useLabels()
+
+    const labels = useMemo(
+        () => labelsForIds(threadState?.labels ?? []),
+        [threadState?.labels, labelsForIds]
     )
 
-    const labelMap = useMemo(() => {
-        const map = new Map<string, { id: string; name: string; color: string }>()
-        for (const l of allLabels ?? []) {
-            map.set(l.id, l)
-        }
-        return map
-    }, [allLabels])
+    const threadLabelIds = useMemo(
+        () => new Set<string>(threadState?.labels ?? []),
+        [threadState?.labels]
+    )
 
-    const labels = useMemo(() => {
-        if (!threadState?.labels) return []
-        const stateLabels: string[] = threadState.labels
-        return stateLabels
-            .map((lid: string) => labelMap.get(lid))
-            .filter((l): l is { id: string; name: string; color: string } => l != null)
-    }, [threadState?.labels, labelMap])
+    useAutoMarkAsRead(threadStateCollection, threadState, id)
 
-    const markAsRead = useMutation({
-        mutationFn: function* (stateId: string) {
-            yield threadStateCollection.update(stateId, draft => {
-                draft.is_read = true
-            })
-        },
-    })
+    const navigateBack = useCallback(() => router.back(), [router])
 
-    const markAsReadRef = useRef<string | null>(null)
-    if (threadState && !threadState.is_read && markAsReadRef.current !== id) {
-        markAsReadRef.current = id
-        markAsRead.mutate(threadState.id)
-    }
+    const {
+        archiveThread,
+        spamThread,
+        trashThread,
+        moveThread,
+        toggleRead,
+        toggleStar,
+        toggleImportant,
+        updateLabel,
+    } = useThreadActions(threadStateCollection, threadState, navigateBack)
 
     const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set())
 
@@ -113,9 +129,32 @@ export default function MailDetailScreen() {
         return [{ recordId: msg.id, filenames: msg.attachments as string[] }]
     })
 
+    const handleForwardAll = () => {
+        if (!lastMessage) return
+        openReply({
+            messageId: lastMessage.id,
+            threadId: id,
+            subject: `Fwd: ${subject}`,
+            to: [],
+        })
+    }
+
     return (
         <YStack flex={1} backgroundColor="$background">
-            <EmailDetailToolbar />
+            <EmailDetailToolbar
+                threadState={threadState}
+                labels={allLabels}
+                threadLabelIds={threadLabelIds}
+                onArchive={() => archiveThread.mutate()}
+                onSpam={() => spamThread.mutate()}
+                onTrash={() => trashThread.mutate()}
+                onMove={folder => moveThread.mutate(folder)}
+                onUpdateLabel={(labelId, add) => updateLabel.mutate({ labelId, add })}
+                onToggleRead={() => toggleRead.mutate()}
+                onToggleStar={() => toggleStar.mutate()}
+                onToggleImportant={() => toggleImportant.mutate()}
+                onForwardAll={handleForwardAll}
+            />
             <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }}>
                 <ThreadSubjectHeader subject={subject} labels={labels} />
                 {messageList.map((msg, index) => {

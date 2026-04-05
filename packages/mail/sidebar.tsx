@@ -14,8 +14,8 @@ import {
 import { useOrgHref } from '~/lib/org-routes'
 import { useStore } from '~/lib/pocketbase'
 import { useCurrentRole } from '~/lib/use-current-role'
-import { useOrgInfo } from '~/lib/use-org-info'
 import { composeEvents } from './hooks/composeEvents'
+import { useLabels } from './hooks/useLabels'
 
 interface MailSidebarProps {
     isCollapsed: boolean
@@ -34,10 +34,10 @@ export default function MailSidebar(_props: MailSidebarProps) {
     const theme = useTheme()
     const activeFolder = useActiveFolder()
     const { userOrgId } = useCurrentRole()
-    const { orgId } = useOrgInfo()
     const orgHref = useOrgHref()
 
-    const [threadStateCollection, labelsCollection] = useStore('mail_thread_state', 'mail_labels')
+    const [threadStateCollection] = useStore('mail_thread_state')
+    const { labels: orgLabels } = useLabels()
 
     const { data: threadStates } = useLiveQuery(
         query =>
@@ -45,14 +45,6 @@ export default function MailSidebar(_props: MailSidebarProps) {
                 .from({ mail_thread_state: threadStateCollection })
                 .where(({ mail_thread_state }) => eq(mail_thread_state.user_org, userOrgId)),
         [userOrgId]
-    )
-
-    const { data: orgLabels } = useLiveQuery(
-        query =>
-            query
-                .from({ mail_labels: labelsCollection })
-                .where(({ mail_labels }) => eq(mail_labels.org, orgId)),
-        [orgId]
     )
 
     const folderCounts = useMemo(() => {
@@ -77,7 +69,7 @@ export default function MailSidebar(_props: MailSidebarProps) {
         router.push(orgHref('mail', { label: labelId }))
     }
 
-    const labelItems = (orgLabels ?? []).map(label => (
+    const labelItems = orgLabels.map(label => (
         <SidebarItem
             key={label.id}
             label={label.name}
