@@ -1,4 +1,4 @@
-import type { ComponentType } from 'react'
+import type { ComponentType, ReactNode } from 'react'
 import { type Control, type FieldValues, type Path, useController } from 'react-hook-form'
 import type { TextInputProps as RNTextInputProps } from 'react-native'
 import { Input, SizableText, useTheme, XStack, YStack, type YStackProps } from 'tamagui'
@@ -39,6 +39,7 @@ export type TextInputProps<T extends FieldValues = Record<string, unknown>> = Om
     labelIcon?: ComponentType<{ size: number; color: string }>
     hint?: string
     wrapperProps?: YStackProps
+    addon?: ReactNode
 }
 
 export function TextInput<T extends FieldValues = Record<string, unknown>>(
@@ -52,6 +53,7 @@ export function TextInput<T extends FieldValues = Record<string, unknown>>(
         control,
         rules,
         wrapperProps = {},
+        addon,
         ...inputProps
     } = props
     const {
@@ -64,23 +66,27 @@ export function TextInput<T extends FieldValues = Record<string, unknown>>(
     return (
         <YStack gap="$1.5" marginBottom="$3" {...wrapperProps}>
             {label ? <LabelRow label={label} icon={LabelIcon} /> : null}
-            <Input
-                size="$4"
-                value={field.value || ''}
-                onChangeText={field.onChange}
-                onBlur={field.onBlur}
-                accessibilityLabel={label}
-                testID={name}
-                placeholder={inputProps.placeholder}
-                autoFocus={inputProps.autoFocus}
-                keyboardType={inputProps.keyboardType}
-                autoCapitalize={inputProps.autoCapitalize}
-                secureTextEntry={inputProps.secureTextEntry}
-                placeholderTextColor="$placeholderColor"
-                borderColor={hasError ? '$red8' : '$borderColor'}
-                backgroundColor="$background"
-                color="$color"
-            />
+            <XStack gap="$2" alignItems="center">
+                <Input
+                    size="$4"
+                    flex={1}
+                    value={field.value || ''}
+                    onChangeText={field.onChange}
+                    onBlur={field.onBlur}
+                    accessibilityLabel={label}
+                    testID={name}
+                    placeholder={inputProps.placeholder}
+                    autoFocus={inputProps.autoFocus}
+                    keyboardType={inputProps.keyboardType}
+                    autoCapitalize={inputProps.autoCapitalize}
+                    secureTextEntry={inputProps.secureTextEntry}
+                    placeholderTextColor="$placeholderColor"
+                    borderColor={hasError ? '$red8' : '$borderColor'}
+                    backgroundColor="$background"
+                    color="$color"
+                />
+                {addon}
+            </XStack>
             {hint && !hasError ? (
                 <SizableText size="$2" color="$color8">
                     {hint}
