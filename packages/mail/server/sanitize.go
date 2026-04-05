@@ -2,9 +2,28 @@ package mail
 
 import (
 	"net/url"
+	"regexp"
+	"strings"
 
 	"github.com/microcosm-cc/bluemonday"
 )
+
+var collapseWhitespace = regexp.MustCompile(`\s+`)
+
+// stripHTMLToText removes all HTML tags and collapses whitespace,
+// returning plain text suitable for FTS indexing.
+func stripHTMLToText(html string) string {
+	text := bluemonday.StrictPolicy().Sanitize(html)
+	text = strings.ReplaceAll(text, "&nbsp;", " ")
+	text = strings.ReplaceAll(text, "&#160;", " ")
+	text = strings.ReplaceAll(text, "&amp;", "&")
+	text = strings.ReplaceAll(text, "&lt;", "<")
+	text = strings.ReplaceAll(text, "&gt;", ">")
+	text = strings.ReplaceAll(text, "&#34;", `"`)
+	text = strings.ReplaceAll(text, "&#39;", "'")
+	text = collapseWhitespace.ReplaceAllString(text, " ")
+	return strings.TrimSpace(text)
+}
 
 func sanitizeEmailHTML(raw string) string {
 	p := bluemonday.UGCPolicy()

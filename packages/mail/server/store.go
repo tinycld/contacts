@@ -164,9 +164,26 @@ func storeMessage(app *pocketbase.PocketBase, threadID string, msg *storedMessag
 	}
 	record.Set("recipients_cc", string(ccJSON))
 
+	// Mark as recently indexed so the record hook skips re-indexing
+	recentlyIndexed.Store(record.Id, true)
+
 	if err := app.Save(record); err != nil {
+		recentlyIndexed.Delete(record.Id)
 		return nil, fmt.Errorf("failed to store message: %w", err)
 	}
+
+	// Assign IMAP UID for the new message
+	thread, err := app.FindRecordById("mail_threads", threadID)
+	if err == nil {
+		mailboxID := thread.GetString("mailbox")
+		if _, uidErr := ensureMessageUID(app, mailboxID, record); uidErr != nil {
+			app.Logger().Warn("failed to assign imap_uid", "messageID", record.Id, "error", uidErr)
+		}
+	}
+
+	// Index in FTS — done inline so we have access to full TextBody + attachments
+	attachmentText := extractTextFromAttachments(msg.Attachments)
+	syncMessageToFTS(app, record.Id, msg, attachmentText)
 
 	return record, nil
 }
@@ -175,6 +192,7 @@ func storeMessage(app *pocketbase.PocketBase, threadID string, msg *storedMessag
 type storedMessage struct {
 	MessageID      string
 	InReplyTo      string
+	References     string
 	SenderName     string
 	SenderEmail    string
 	To             []Recipient

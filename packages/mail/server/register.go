@@ -41,7 +41,81 @@ func Register(app *pocketbase.PocketBase) {
 	app.OnRecordAfterUpdateSuccess("settings").BindFunc(invalidateSettingsCache)
 	app.OnRecordAfterDeleteSuccess("settings").BindFunc(invalidateSettingsCache)
 
+	// FTS sync hooks for mail_threads
+	app.OnRecordAfterCreateSuccess("mail_threads").BindFunc(func(e *core.RecordEvent) error {
+		syncThreadToFTS(app, e.Record, "create")
+		return e.Next()
+	})
+	app.OnRecordAfterUpdateSuccess("mail_threads").BindFunc(func(e *core.RecordEvent) error {
+		syncThreadToFTS(app, e.Record, "update")
+		return e.Next()
+	})
+	app.OnRecordAfterDeleteSuccess("mail_threads").BindFunc(func(e *core.RecordEvent) error {
+		syncThreadToFTS(app, e.Record, "delete")
+		return e.Next()
+	})
+
+	// FTS sync hooks for mail_messages
+	// On create: skip if storeMessage() already indexed inline (full body + attachments).
+	// Otherwise load HTML + attachments from storage for a complete index.
+	app.OnRecordAfterCreateSuccess("mail_messages").BindFunc(func(e *core.RecordEvent) error {
+		if _, ok := recentlyIndexed.LoadAndDelete(e.Record.Id); ok {
+			return e.Next()
+		}
+		indexMessageRecordFromStorage(app, e.Record)
+		return e.Next()
+	})
+	// On update: always re-index from storage (e.g. draft edits via updateDraftRecord).
+	app.OnRecordAfterUpdateSuccess("mail_messages").BindFunc(func(e *core.RecordEvent) error {
+		indexMessageRecordFromStorage(app, e.Record)
+		return e.Next()
+	})
+	app.OnRecordAfterDeleteSuccess("mail_messages").BindFunc(func(e *core.RecordEvent) error {
+		deleteMessageFromFTS(app, e.Record.Id)
+		return e.Next()
+	})
+
+	// IMAP IDLE notifications: notify when messages are created or thread state changes
+	app.OnRecordAfterCreateSuccess("mail_messages").BindFunc(func(e *core.RecordEvent) error {
+		threadID := e.Record.GetString("thread")
+		thread, err := app.FindRecordById("mail_threads", threadID)
+		if err == nil {
+			globalNotifier.notify(thread.GetString("mailbox"))
+		}
+		return e.Next()
+	})
+	app.OnRecordAfterUpdateSuccess("mail_thread_state").BindFunc(func(e *core.RecordEvent) error {
+		threadID := e.Record.GetString("thread")
+		thread, err := app.FindRecordById("mail_threads", threadID)
+		if err == nil {
+			globalNotifier.notify(thread.GetString("mailbox"))
+		}
+		return e.Next()
+	})
+
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
+		// Start IMAP server
+		imapShutdown, err := StartIMAPServer(app)
+		if err != nil {
+			app.Logger().Error("Failed to start IMAP server", "error", err)
+		} else {
+			app.OnTerminate().BindFunc(func(te *core.TerminateEvent) error {
+				imapShutdown()
+				return te.Next()
+			})
+		}
+
+		// Start SMTP submission server
+		smtpShutdown, smtpErr := StartSMTPServer(app)
+		if smtpErr != nil {
+			app.Logger().Error("Failed to start SMTP server", "error", smtpErr)
+		} else {
+			app.OnTerminate().BindFunc(func(te *core.TerminateEvent) error {
+				smtpShutdown()
+				return te.Next()
+			})
+		}
+
 		// Send endpoint (requires auth, resolves provider from org settings)
 		e.Router.POST("/api/mail/send", func(re *core.RequestEvent) error {
 			return handleSend(app, re)
@@ -50,6 +124,11 @@ func Register(app *pocketbase.PocketBase) {
 		// Draft endpoint (requires auth, saves without sending)
 		e.Router.POST("/api/mail/draft", func(re *core.RequestEvent) error {
 			return handleDraft(app, re)
+		}).BindFunc(requireAuth)
+
+		// Search endpoint (requires auth)
+		e.Router.GET("/api/mail/search", func(re *core.RequestEvent) error {
+			return handleSearch(app, re)
 		}).BindFunc(requireAuth)
 
 		// Inbound webhook (unauthenticated, secured via secret token)
@@ -153,6 +232,27 @@ func getOrgSettings(app *pocketbase.PocketBase, appName, orgID string) map[strin
 
 	settingsCache.Store(cacheKey, result)
 	return result
+}
+
+// indexMessageRecordFromStorage builds FTS body_text from the record's stored
+// HTML body and text-based attachments. Used by record hooks when storeMessage()
+// wasn't involved or on updates.
+func indexMessageRecordFromStorage(app *pocketbase.PocketBase, record *core.Record) {
+	bodyText := record.GetString("snippet") // fallback
+
+	html := loadHTMLBody(app, record)
+	if html != "" {
+		bodyText = stripHTMLToText(html)
+	}
+
+	attachmentText := loadTextAttachments(app, record)
+
+	syncMessageToFTS(app, record.Id, &storedMessage{
+		Subject:     record.GetString("subject"),
+		SenderName:  record.GetString("sender_name"),
+		SenderEmail: record.GetString("sender_email"),
+		TextBody:    bodyText,
+	}, attachmentText)
 }
 
 // requireAuth is a middleware that ensures the request has a valid auth token.
