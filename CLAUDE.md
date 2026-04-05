@@ -118,7 +118,7 @@ TinyCld is an One Stack React Native application backed by PocketBase . The repo
 - Runtime hooks: `useAddons()` and `useAddon(slug)` from `~/lib/addons/use-addons`
 - Full documentation: `docs/addons.md`
 
-## Forms
+## Forms and other components
 - All form UI components live in `ui/form/` and are exported from `~/ui/form`
 - The barrel export re-exports `useForm`, `Control`, `Controller`, `zodResolver`, and `z` so screens only need one import:
   ```tsx
@@ -145,6 +145,7 @@ TinyCld is an One Stack React Native application backed by PocketBase . The repo
 - Do NOT use manual `useState` for form fields — always use `useForm` + the form components
 - For complex forms, extract a `useFeatureForm()` hook that wraps `useForm` with schema, defaults, and submit logic
 - See `packages/contacts/screens/new.tsx` for a reference implementation
+- When developing a feature for a add-on, consider if the components you are adding would be of use to other add-ons. If so add them to the top-level ./components and offer to update other add-ons to use them.
 
 ## Documentation & Support
 - Expo documentation: https://docs.expo.dev/llms-full.txt

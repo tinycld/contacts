@@ -1,4 +1,4 @@
-import { Square, Star } from 'lucide-react-native'
+import { Square, SquareCheck, Star } from 'lucide-react-native'
 import type { OneRouter } from 'one'
 import { Link } from 'one'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
@@ -10,11 +10,26 @@ interface EmailRowProps {
     email: ThreadListItem
     isMobile?: boolean
     onToggleStar?: () => void
+    isSelected?: boolean
+    onToggleSelect?: () => void
 }
 
-export function EmailRow({ email, isMobile, onToggleStar }: EmailRowProps) {
+export function EmailRow({
+    email,
+    isMobile,
+    onToggleStar,
+    isSelected,
+    onToggleSelect,
+}: EmailRowProps) {
     if (isMobile) return <MobileEmailRow email={email} onToggleStar={onToggleStar} />
-    return <DesktopEmailRow email={email} onToggleStar={onToggleStar} />
+    return (
+        <DesktopEmailRow
+            email={email}
+            onToggleStar={onToggleStar}
+            isSelected={isSelected}
+            onToggleSelect={onToggleSelect}
+        />
+    )
 }
 
 function MobileEmailRow({ email, onToggleStar }: EmailRowProps) {
@@ -104,13 +119,20 @@ function MobileEmailRow({ email, onToggleStar }: EmailRowProps) {
     )
 }
 
-function DesktopEmailRow({ email, onToggleStar }: EmailRowProps) {
+function DesktopEmailRow({ email, onToggleStar, isSelected, onToggleSelect }: EmailRowProps) {
     const theme = useTheme()
 
-    const rowBg = email.isRead ? 'transparent' : theme.backgroundHover.val
+    const rowBg = isSelected
+        ? `${theme.accentBackground.val}18`
+        : email.isRead
+          ? 'transparent'
+          : theme.backgroundHover.val
     const senderWeight = email.isRead ? '400' : '700'
     const subjectWeight = email.isRead ? '400' : '600'
     const dateDisplay = formatMailDate(email.latestDate)
+
+    const CheckboxIcon = isSelected ? SquareCheck : Square
+    const checkboxColor = isSelected ? theme.accentBackground.val : theme.color8.val
 
     return (
         <Link
@@ -126,8 +148,15 @@ function DesktopEmailRow({ email, onToggleStar }: EmailRowProps) {
                     },
                 ]}
             >
-                <Pressable style={styles.checkbox} onPress={e => e.stopPropagation()}>
-                    <Square size={16} color={theme.color8.val} />
+                <Pressable
+                    style={styles.checkbox}
+                    onPress={e => {
+                        e.stopPropagation()
+                        e.preventDefault()
+                        onToggleSelect?.()
+                    }}
+                >
+                    <CheckboxIcon size={16} color={checkboxColor} />
                 </Pressable>
                 <Pressable
                     style={styles.starButton}

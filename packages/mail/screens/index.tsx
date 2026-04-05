@@ -13,6 +13,8 @@ import { EmailListToolbar } from '../components/EmailListToolbar'
 import { EmailRow } from '../components/EmailRow'
 import type { ThreadListItem } from '../components/thread-list-item'
 import { toThreadListItem } from '../components/thread-list-item'
+import { useMailBulkActions } from '../hooks/useMailBulkActions'
+import { useMailSelection } from '../hooks/useMailSelection'
 
 function useQueryParams() {
     const { folder, label } = useParams<{ folder?: string; label?: string }>()
@@ -100,6 +102,25 @@ export default function MailListScreen() {
         return mapped.filter(item => item.folder === activeFolder)
     }, [threadStates, threadMap, labelMap, folder, label])
 
+    const selection = useMailSelection(items, folder, label)
+    const bulkActions = useMailBulkActions(
+        threadStateCollection,
+        selection.selectedItems,
+        selection.clearSelection
+    )
+
+    const allLabelsList = useMemo(() => {
+        return Array.from(labelMap.values())
+    }, [labelMap])
+
+    const selectedItemLabelIds = useMemo(() => {
+        if (selection.selectedItems.length === 0) return new Set<string>()
+        const sets = selection.selectedItems.map(item => new Set(item.labels.map(l => l.id)))
+        const firstIds = Array.from(sets[0])
+        const intersection = new Set<string>(firstIds.filter(id => sets.every(s => s.has(id))))
+        return intersection
+    }, [selection.selectedItems])
+
     const toggleStar = useMutation({
         mutationFn: function* ({
             stateId,
@@ -123,7 +144,27 @@ export default function MailListScreen() {
 
     return (
         <YStack flex={1}>
-            <EmailListToolbar emailCount={items.length} />
+            <EmailListToolbar
+                emailCount={items.length}
+                hasSelection={selection.hasSelection}
+                selectedCount={selection.selectedCount}
+                allSelected={selection.allSelected}
+                someSelected={selection.someSelected}
+                allSelectedRead={selection.allSelectedRead}
+                allSelectedStarred={selection.allSelectedStarred}
+                labels={allLabelsList}
+                selectedItemLabelIds={selectedItemLabelIds}
+                onToggleAll={selection.toggleAll}
+                onArchive={() => bulkActions.archiveSelected.mutate()}
+                onSpam={() => bulkActions.spamSelected.mutate()}
+                onTrash={() => bulkActions.trashSelected.mutate()}
+                onToggleRead={markAsRead => bulkActions.toggleReadSelected.mutate({ markAsRead })}
+                onMove={folder => bulkActions.moveSelected.mutate(folder)}
+                onToggleStar={star => bulkActions.toggleStarSelected.mutate({ star })}
+                onUpdateLabel={(labelId, add) =>
+                    bulkActions.updateLabelsSelected.mutate({ labelId, add })
+                }
+            />
             <EmptyState folderTitle={folderTitle} isVisible={isEmpty} />
             {isEmpty ? null : (
                 <FlatList
@@ -133,6 +174,8 @@ export default function MailListScreen() {
                         <EmailRow
                             email={item}
                             isMobile={isMobile}
+                            isSelected={selection.selectedIds.has(item.stateId)}
+                            onToggleSelect={() => selection.toggle(item.stateId)}
                             onToggleStar={() =>
                                 toggleStar.mutate({
                                     stateId: item.stateId,
