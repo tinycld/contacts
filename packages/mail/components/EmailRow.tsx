@@ -3,34 +3,42 @@ import type { OneRouter } from 'one'
 import { Link } from 'one'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { useTheme } from 'tamagui'
-import type { MockEmail } from './mockData'
+import type { ThreadListItem } from './thread-list-item'
+import { formatMailDate } from './thread-list-item'
 
 interface EmailRowProps {
-    email: MockEmail
+    email: ThreadListItem
     isMobile?: boolean
+    onToggleStar?: () => void
 }
 
-export function EmailRow({ email, isMobile }: EmailRowProps) {
-    if (isMobile) return <MobileEmailRow email={email} />
-    return <DesktopEmailRow email={email} />
+export function EmailRow({ email, isMobile, onToggleStar }: EmailRowProps) {
+    if (isMobile) return <MobileEmailRow email={email} onToggleStar={onToggleStar} />
+    return <DesktopEmailRow email={email} onToggleStar={onToggleStar} />
 }
 
-function MobileEmailRow({ email }: EmailRowProps) {
+function MobileEmailRow({ email, onToggleStar }: EmailRowProps) {
     const theme = useTheme()
 
     const senderWeight = email.isRead ? ('400' as const) : ('700' as const)
     const subjectWeight = email.isRead ? ('400' as const) : ('600' as const)
     const rowBg = email.isRead ? 'transparent' : theme.backgroundHover.val
 
-    const initials = email.sender
+    const initials = email.senderName
         .split(' ')
+        .filter(Boolean)
         .map(n => n[0])
         .join('')
         .toUpperCase()
         .slice(0, 2)
 
+    const dateDisplay = formatMailDate(email.latestDate)
+
     return (
-        <Link href={`/app/mail/${email.id}` as OneRouter.Href}>
+        <Link
+            href={`/app/mail/${email.threadId}` as OneRouter.Href}
+            style={{ display: 'flex', width: '100%' }}
+        >
             <View
                 style={[
                     mobileStyles.row,
@@ -56,14 +64,17 @@ function MobileEmailRow({ email }: EmailRowProps) {
                             ]}
                             numberOfLines={1}
                         >
-                            {email.sender}
+                            {email.senderName}
                         </Text>
                         <Text style={[mobileStyles.date, { color: theme.color8.val }]}>
-                            {email.date}
+                            {dateDisplay}
                         </Text>
                         <Pressable
                             style={mobileStyles.starButton}
-                            onPress={e => e.stopPropagation()}
+                            onPress={e => {
+                                e.stopPropagation()
+                                onToggleStar?.()
+                            }}
                         >
                             <Star
                                 size={16}
@@ -85,7 +96,7 @@ function MobileEmailRow({ email }: EmailRowProps) {
                         style={[mobileStyles.preview, { color: theme.color8.val }]}
                         numberOfLines={2}
                     >
-                        {email.preview}
+                        {email.snippet}
                     </Text>
                 </View>
             </View>
@@ -93,15 +104,19 @@ function MobileEmailRow({ email }: EmailRowProps) {
     )
 }
 
-function DesktopEmailRow({ email }: EmailRowProps) {
+function DesktopEmailRow({ email, onToggleStar }: EmailRowProps) {
     const theme = useTheme()
 
     const rowBg = email.isRead ? 'transparent' : theme.backgroundHover.val
     const senderWeight = email.isRead ? '400' : '700'
     const subjectWeight = email.isRead ? '400' : '600'
+    const dateDisplay = formatMailDate(email.latestDate)
 
     return (
-        <Link href={`/app/mail/${email.id}` as OneRouter.Href}>
+        <Link
+            href={`/app/mail/${email.threadId}` as OneRouter.Href}
+            style={{ display: 'flex', width: '100%' }}
+        >
             <View
                 style={[
                     styles.row,
@@ -114,7 +129,13 @@ function DesktopEmailRow({ email }: EmailRowProps) {
                 <Pressable style={styles.checkbox} onPress={e => e.stopPropagation()}>
                     <Square size={16} color={theme.color8.val} />
                 </Pressable>
-                <Pressable style={styles.starButton} onPress={e => e.stopPropagation()}>
+                <Pressable
+                    style={styles.starButton}
+                    onPress={e => {
+                        e.stopPropagation()
+                        onToggleStar?.()
+                    }}
+                >
                     <Star
                         size={16}
                         color={email.isStarred ? theme.yellow8.val : theme.color8.val}
@@ -128,11 +149,11 @@ function DesktopEmailRow({ email }: EmailRowProps) {
                     ]}
                     numberOfLines={1}
                 >
-                    {email.sender}
+                    {email.senderName}
                 </Text>
-                {email.threadCount && email.threadCount > 1 ? (
+                {email.messageCount > 1 ? (
                     <Text style={[styles.threadBadge, { color: theme.color8.val }]}>
-                        {email.threadCount}
+                        {email.messageCount}
                     </Text>
                 ) : null}
                 <View style={styles.subjectArea}>
@@ -147,10 +168,10 @@ function DesktopEmailRow({ email }: EmailRowProps) {
                     </Text>
                     <Text style={[styles.preview, { color: theme.color8.val }]} numberOfLines={1}>
                         {' \u2014 '}
-                        {email.preview}
+                        {email.snippet}
                     </Text>
                 </View>
-                <Text style={[styles.date, { color: theme.color8.val }]}>{email.date}</Text>
+                <Text style={[styles.date, { color: theme.color8.val }]}>{dateDisplay}</Text>
             </View>
         </Link>
     )
@@ -164,6 +185,7 @@ const mobileStyles = StyleSheet.create({
         paddingVertical: 12,
         borderBottomWidth: 1,
         gap: 12,
+        flex: 1,
     },
     avatar: {
         width: 40,
@@ -215,6 +237,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 8,
         borderBottomWidth: 1,
         gap: 4,
+        flex: 1,
     },
     checkbox: {
         padding: 4,

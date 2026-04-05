@@ -1,18 +1,22 @@
+import { eq } from '@tanstack/db'
+import { useLiveQuery } from '@tanstack/react-db'
+import { useParams } from 'one'
 import { useMemo } from 'react'
-import { ScrollView, SizableText, YStack } from 'tamagui'
+import { FlatList } from 'react-native'
+import { SizableText, YStack } from 'tamagui'
 import { useBreakpoint } from '~/components/workspace/useBreakpoint'
+import { useMutation } from '~/lib/mutations'
+import { useStore } from '~/lib/pocketbase'
+import { useCurrentRole } from '~/lib/use-current-role'
 import { ComposeFAB } from '../components/ComposeFAB'
 import { EmailListToolbar } from '../components/EmailListToolbar'
 import { EmailRow } from '../components/EmailRow'
-import { getEmailsByFolder, getEmailsByLabel, mockEmails } from '../components/mockData'
+import type { ThreadListItem } from '../components/thread-list-item'
+import { toThreadListItem } from '../components/thread-list-item'
 
 function useQueryParams() {
-    if (typeof window === 'undefined') return { folder: 'inbox', label: null }
-    const params = new URLSearchParams(window.location.search)
-    return {
-        folder: params.get('folder'),
-        label: params.get('label'),
-    }
+    const { folder, label } = useParams<{ folder?: string; label?: string }>()
+    return { folder: folder ?? null, label: label ?? null }
 }
 
 function EmptyState({ folderTitle, isVisible }: { folderTitle: string; isVisible: boolean }) {
@@ -26,44 +30,119 @@ function EmptyState({ folderTitle, isVisible }: { folderTitle: string; isVisible
     )
 }
 
-function EmailList({
-    emails,
-    isVisible,
-    isMobile,
-}: {
-    emails: typeof mockEmails
-    isVisible: boolean
-    isMobile: boolean
-}) {
-    if (!isVisible) return null
-
-    const rows = emails.map(email => <EmailRow key={email.id} email={email} isMobile={isMobile} />)
-
-    return <ScrollView flex={1}>{rows}</ScrollView>
-}
-
 export default function MailListScreen() {
     const { folder, label } = useQueryParams()
     const breakpoint = useBreakpoint()
+    const { userOrgId } = useCurrentRole()
 
-    const emails = useMemo(() => {
-        if (label) return getEmailsByLabel(label)
-        if (folder === 'starred') return mockEmails.filter(e => e.isStarred)
-        return getEmailsByFolder(folder ?? 'inbox')
-    }, [folder, label])
+    const [threadStateCollection, threadsCollection, labelsCollection] = useStore(
+        'mail_thread_state',
+        'mail_threads',
+        'mail_labels'
+    )
+
+    const { data: threadStates } = useLiveQuery(
+        query =>
+            query
+                .from({ mail_thread_state: threadStateCollection })
+                .where(({ mail_thread_state }) => eq(mail_thread_state.user_org, userOrgId))
+                .orderBy(({ mail_thread_state }) => mail_thread_state.updated, 'desc'),
+        [userOrgId]
+    )
+
+    const { data: threads } = useLiveQuery(
+        query => query.from({ mail_threads: threadsCollection }),
+        []
+    )
+
+    const { data: allLabels } = useLiveQuery(
+        query => query.from({ mail_labels: labelsCollection }),
+        []
+    )
+
+    const threadMap = useMemo(() => {
+        const map = new Map<string, (typeof threads)[number]>()
+        for (const t of threads ?? []) {
+            map.set(t.id, t)
+        }
+        return map
+    }, [threads])
+
+    const labelMap = useMemo(() => {
+        const map = new Map<string, { id: string; name: string; color: string }>()
+        for (const l of allLabels ?? []) {
+            map.set(l.id, l)
+        }
+        return map
+    }, [allLabels])
+
+    const items: ThreadListItem[] = useMemo(() => {
+        if (!threadStates) return []
+
+        const mapped = threadStates.map(state => {
+            const thread = threadMap.get(state.thread)
+            const labelIds: string[] = state.labels ?? []
+            const stateLabels = labelIds
+                .map((lid: string) => labelMap.get(lid))
+                .filter((l): l is { id: string; name: string; color: string } => l != null)
+            return toThreadListItem(state, thread, stateLabels)
+        })
+
+        if (label) {
+            return mapped.filter(item => item.labels.some(l => l.id === label))
+        }
+
+        const activeFolder = folder ?? 'inbox'
+        if (activeFolder === 'starred') {
+            return mapped.filter(item => item.isStarred)
+        }
+
+        return mapped.filter(item => item.folder === activeFolder)
+    }, [threadStates, threadMap, labelMap, folder, label])
+
+    const toggleStar = useMutation({
+        mutationFn: function* ({
+            stateId,
+            currentStarred,
+        }: {
+            stateId: string
+            currentStarred: boolean
+        }) {
+            yield threadStateCollection.update(stateId, draft => {
+                draft.is_starred = !currentStarred
+            })
+        },
+    })
 
     const folderTitle = label
         ? 'Label'
         : (folder ?? 'inbox').charAt(0).toUpperCase() + (folder ?? 'inbox').slice(1)
 
-    const isEmpty = emails.length === 0
+    const isEmpty = items.length === 0
     const isMobile = breakpoint === 'mobile'
 
     return (
         <YStack flex={1}>
-            <EmailListToolbar emailCount={emails.length} />
+            <EmailListToolbar emailCount={items.length} />
             <EmptyState folderTitle={folderTitle} isVisible={isEmpty} />
-            <EmailList emails={emails} isVisible={!isEmpty} isMobile={isMobile} />
+            {isEmpty ? null : (
+                <FlatList
+                    data={items}
+                    keyExtractor={item => item.stateId}
+                    renderItem={({ item }) => (
+                        <EmailRow
+                            email={item}
+                            isMobile={isMobile}
+                            onToggleStar={() =>
+                                toggleStar.mutate({
+                                    stateId: item.stateId,
+                                    currentStarred: item.isStarred,
+                                })
+                            }
+                        />
+                    )}
+                />
+            )}
             <ComposeFAB isVisible={isMobile} />
         </YStack>
     )

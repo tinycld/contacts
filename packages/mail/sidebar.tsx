@@ -1,6 +1,9 @@
+import { eq } from '@tanstack/db'
+import { useLiveQuery } from '@tanstack/react-db'
 import { ChevronDown, Clock, File, Inbox, Pencil, Send, Star, Tag } from 'lucide-react-native'
 import type { OneRouter } from 'one'
-import { usePathname, useRouter } from 'one'
+import { useActiveParams, usePathname, useRouter } from 'one'
+import { useMemo } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { useTheme } from 'tamagui'
 import {
@@ -9,7 +12,9 @@ import {
     SidebarItem,
     SidebarNav,
 } from '~/components/sidebar-primitives'
-import { folderCounts, mockLabels } from './components/mockData'
+import { useStore } from '~/lib/pocketbase'
+import { useCurrentRole } from '~/lib/use-current-role'
+import { useOrgInfo } from '~/lib/use-org-info'
 import { composeEvents } from './hooks/composeEvents'
 
 interface MailSidebarProps {
@@ -19,10 +24,7 @@ interface MailSidebarProps {
 
 function useActiveFolder() {
     const pathname = usePathname()
-    const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
-    const folder = params.get('folder')
-    const label = params.get('label')
-
+    const { folder, label } = useActiveParams<{ folder?: string; label?: string }>()
     if (pathname.includes('/mail/')) return null
     if (label) return `label:${label}`
     return folder ?? 'inbox'
@@ -32,6 +34,36 @@ export default function MailSidebar(_props: MailSidebarProps) {
     const router = useRouter()
     const theme = useTheme()
     const activeFolder = useActiveFolder()
+    const { userOrgId } = useCurrentRole()
+    const { orgId } = useOrgInfo()
+
+    const [threadStateCollection, labelsCollection] = useStore('mail_thread_state', 'mail_labels')
+
+    const { data: threadStates } = useLiveQuery(
+        query =>
+            query
+                .from({ mail_thread_state: threadStateCollection })
+                .where(({ mail_thread_state }) => eq(mail_thread_state.user_org, userOrgId)),
+        [userOrgId]
+    )
+
+    const { data: orgLabels } = useLiveQuery(
+        query =>
+            query
+                .from({ mail_labels: labelsCollection })
+                .where(({ mail_labels }) => eq(mail_labels.org, orgId)),
+        [orgId]
+    )
+
+    const folderCounts = useMemo(() => {
+        const states = threadStates ?? []
+        return {
+            inbox: states.filter(s => s.folder === 'inbox' && !s.is_read).length,
+            drafts: states.filter(s => s.folder === 'drafts').length,
+            sent: states.filter(s => s.folder === 'sent').length,
+            starred: states.filter(s => s.is_starred).length,
+        }
+    }, [threadStates])
 
     const navigateToFolder = (folder: string) => {
         if (folder === 'inbox') {
@@ -45,7 +77,7 @@ export default function MailSidebar(_props: MailSidebarProps) {
         router.push(`/app/mail?label=${labelId}` as OneRouter.Href)
     }
 
-    const labelItems = mockLabels.map(label => (
+    const labelItems = (orgLabels ?? []).map(label => (
         <SidebarItem
             key={label.id}
             label={label.name}
