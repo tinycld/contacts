@@ -121,6 +121,12 @@ func storeMessage(app *pocketbase.PocketBase, threadID string, msg *storedMessag
 	record.Set("snippet", truncateSnippet(snippetSource, 200))
 	record.Set("has_attachments", len(msg.Attachments) > 0)
 
+	totalSize := int64(len(msg.HTMLBody))
+	for _, att := range msg.Attachments {
+		totalSize += att.Size
+	}
+	record.Set("total_size", totalSize)
+
 	deliveryStatus := msg.DeliveryStatus
 	if deliveryStatus == "" {
 		deliveryStatus = "sending"

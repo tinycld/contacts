@@ -63,6 +63,7 @@ export interface MailMessages {
     subject: string
     snippet: string
     has_attachments: boolean
+    total_size?: number
     body_html: string
     attachments: string[]
     delivery_status: 'sending' | 'sent' | 'delivered' | 'bounced' | 'spam_complaint' | 'draft'

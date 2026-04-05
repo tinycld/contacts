@@ -1,6 +1,7 @@
 import { type Control, type Path, useController } from 'react-hook-form'
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { useTheme } from 'tamagui'
+import { PlainInput } from '~/ui/PlainInput'
 import { ContactAvatar } from '../../contacts/components/ContactAvatar'
 import type { ComposeFormData } from '../hooks/composeSchema'
 import { useRecipientSuggestions } from '../hooks/useRecipientSuggestions'
@@ -81,7 +82,7 @@ export function RecipientField({ control, name, placeholder }: RecipientFieldPro
                         />
                     )
                 })}
-                <TextInput
+                <PlainInput
                     style={[styles.input, { color: theme.color.val }]}
                     placeholderTextColor={theme.placeholderColor.val}
                     value={activeQuery}
@@ -136,8 +137,6 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: 13,
         minWidth: 80,
-        height: 28,
         paddingHorizontal: 4,
-        outlineStyle: 'none',
-    } as Record<string, unknown>,
+    },
 })

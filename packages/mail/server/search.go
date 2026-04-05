@@ -20,6 +20,36 @@ var recentlyIndexed sync.Map
 // fts5SpecialChars matches characters that have special meaning in FTS5 queries.
 var fts5SpecialChars = regexp.MustCompile(`[":*^{}()\[\]~\-]`)
 
+// buildAdvancedFTSQuery builds an FTS5 query from the main query, hasWords, and notWords.
+// hasWords terms are filtered to the body_text column; notWords are appended as NOT clauses.
+func buildAdvancedFTSQuery(q, hasWords, notWords string) string {
+	base := sanitizeFTSQuery(q)
+
+	if hw := strings.TrimSpace(hasWords); hw != "" {
+		cleaned := fts5SpecialChars.ReplaceAllString(hw, " ")
+		terms := strings.Fields(cleaned)
+		for _, term := range terms {
+			term = strings.ReplaceAll(term, `"`, `""`)
+			base += ` body_text : "` + term + `"*`
+		}
+	}
+
+	if nw := strings.TrimSpace(notWords); nw != "" {
+		cleaned := fts5SpecialChars.ReplaceAllString(nw, " ")
+		terms := strings.Fields(cleaned)
+		// FTS5 requires at least one positive term; NOT-only queries error.
+		// If no positive terms exist, skip NOT terms (caller falls back to SQL-only).
+		if strings.TrimSpace(base) != "" {
+			for _, term := range terms {
+				term = strings.ReplaceAll(term, `"`, `""`)
+				base += ` NOT "` + term + `"`
+			}
+		}
+	}
+
+	return strings.TrimSpace(base)
+}
+
 // sanitizeFTSQuery escapes special FTS5 characters and wraps each term in quotes
 // so that user input is always treated as literal text.
 func sanitizeFTSQuery(input string) string {

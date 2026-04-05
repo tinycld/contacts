@@ -95,7 +95,7 @@ func Register(app *pocketbase.PocketBase) {
 
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
 		// Start IMAP server
-		imapShutdown, err := StartIMAPServer(app)
+		imapShutdown, err := StartIMAPServer(app, e.CertManager)
 		if err != nil {
 			app.Logger().Error("Failed to start IMAP server", "error", err)
 		} else {
@@ -106,7 +106,7 @@ func Register(app *pocketbase.PocketBase) {
 		}
 
 		// Start SMTP submission server
-		smtpShutdown, smtpErr := StartSMTPServer(app)
+		smtpShutdown, smtpErr := StartSMTPServer(app, e.CertManager)
 		if smtpErr != nil {
 			app.Logger().Error("Failed to start SMTP server", "error", smtpErr)
 		} else {

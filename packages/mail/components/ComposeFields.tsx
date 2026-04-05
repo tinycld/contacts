@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { type Control, type FieldErrors, useController } from 'react-hook-form'
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { useTheme } from 'tamagui'
+import { PlainInput } from '~/ui/PlainInput'
 import type { ComposeFormData } from '../hooks/composeSchema'
 import { RecipientField } from './RecipientField'
 
@@ -24,7 +25,7 @@ function ComposeFieldInput({
     const { field } = useController({ control, name })
 
     return (
-        <TextInput
+        <PlainInput
             style={[styles.fieldInput, { color: theme.color.val }]}
             placeholderTextColor={theme.placeholderColor.val}
             value={field.value}
@@ -142,9 +143,7 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: 13,
         paddingHorizontal: 4,
-        height: 28,
-        outlineStyle: 'none',
-    } as Record<string, unknown>,
+    },
     ccBccButtons: {
         flexDirection: 'row',
         gap: 8,

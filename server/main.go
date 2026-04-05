@@ -25,8 +25,9 @@ const defaultHTTPAddr = "127.0.0.1:7090"
 func main() {
 	loadEnvFile()
 
-	// Default to port 7090 if --http is not explicitly provided (serve only)
-	if hasSubcommand("serve") && !hasFlag("--http") {
+	// Default to port 7090 if --http is not explicitly provided (serve only).
+	// Skip when domain args are present — PocketBase autocert needs :80/:443.
+	if hasSubcommand("serve") && !hasFlag("--http") && !hasDomainArgs() {
 		os.Args = append(os.Args, "--http", defaultHTTPAddr)
 	}
 
@@ -212,6 +213,23 @@ func hasFlag(name string) bool {
 func hasSubcommand(name string) bool {
 	for _, arg := range os.Args[1:] {
 		if !strings.HasPrefix(arg, "-") && arg == name {
+			return true
+		}
+	}
+	return false
+}
+
+// hasDomainArgs returns true when positional arguments follow the "serve"
+// subcommand (e.g. "./tinycld serve mail.example.com"). These are domain
+// names that PocketBase uses for autocert TLS provisioning.
+func hasDomainArgs() bool {
+	foundServe := false
+	for _, arg := range os.Args[1:] {
+		if arg == "serve" {
+			foundServe = true
+			continue
+		}
+		if foundServe && !strings.HasPrefix(arg, "-") {
 			return true
 		}
 	}

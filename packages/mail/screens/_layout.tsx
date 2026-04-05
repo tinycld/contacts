@@ -13,13 +13,20 @@ import {
     type ReplyContext,
 } from '../hooks/useComposeState'
 import { useMailSearch } from '../hooks/useMailSearch'
-import { SearchContext } from '../hooks/useSearchState'
+import {
+    type AdvancedSearchFilters,
+    countActiveFilters,
+    hasActiveFilters,
+    SearchContext,
+} from '../hooks/useSearchState'
 
 export default function MailLayout() {
     const [composeMode, setComposeMode] = useState<ComposeMode>('closed')
     const [replyContext, setReplyContext] = useState<ReplyContext | null>(null)
     const [draftContext, setDraftContext] = useState<DraftContext | null>(null)
     const [searchQuery, setSearchQuery] = useState('')
+    const [advancedFilters, setAdvancedFilters] = useState<AdvancedSearchFilters>({})
+    const [isFilterOpen, setIsFilterOpen] = useState(false)
     const breakpoint = useBreakpoint()
     const { setDrawerOpen } = useWorkspaceLayout()
 
@@ -74,7 +81,9 @@ export default function MailLayout() {
         ]
     )
 
-    const { results, total, isSearching } = useMailSearch(searchQuery)
+    const { results, total, isSearching } = useMailSearch(searchQuery, advancedFilters)
+
+    const activeFilterCount = countActiveFilters(advancedFilters)
 
     const searchValue = useMemo(
         () => ({
@@ -82,9 +91,10 @@ export default function MailLayout() {
             results,
             total,
             isSearching,
-            isActive: searchQuery.length >= 2,
+            isActive: searchQuery.length >= 2 || hasActiveFilters(advancedFilters),
+            filters: advancedFilters,
         }),
-        [searchQuery, results, total, isSearching]
+        [searchQuery, results, total, isSearching, advancedFilters]
     )
 
     const isComposeVisible = composeMode !== 'closed' && composeMode !== 'inline'
@@ -99,6 +109,11 @@ export default function MailLayout() {
                             value={searchQuery}
                             onChangeText={setSearchQuery}
                             onMenuPress={isMobile ? () => setDrawerOpen(true) : undefined}
+                            isFilterOpen={isFilterOpen}
+                            onFilterOpenChange={setIsFilterOpen}
+                            onApplyFilters={setAdvancedFilters}
+                            activeFilterCount={activeFilterCount}
+                            currentFilters={advancedFilters}
                         />
                     </YStack>
                     <YStack flex={1}>

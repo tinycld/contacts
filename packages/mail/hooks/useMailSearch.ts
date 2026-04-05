@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { pb } from '~/lib/pocketbase'
+import type { AdvancedSearchFilters } from './useSearchState'
+import { hasActiveFilters } from './useSearchState'
 
 export interface MailSearchResult {
     thread_id: string
@@ -27,6 +29,76 @@ interface UseMailSearchReturn {
 const DEBOUNCE_MS = 300
 const MIN_QUERY_LENGTH = 2
 
+const SIZE_MULTIPLIERS: Record<string, number> = {
+    bytes: 1,
+    KB: 1024,
+    MB: 1024 * 1024,
+}
+
+const SIMPLE_FILTER_MAP: [keyof AdvancedSearchFilters, string][] = [
+    ['from', 'from'],
+    ['to', 'to'],
+    ['subject', 'subject'],
+    ['hasWords', 'has_words'],
+    ['doesntHave', 'not_words'],
+]
+
+function addSizeParams(filters: AdvancedSearchFilters, params: Record<string, string>) {
+    if (!filters.sizeValue || !filters.sizeOp) return
+    const numericSize = Number.parseFloat(filters.sizeValue)
+    if (numericSize <= 0) return
+    const unit = filters.sizeUnit ?? 'bytes'
+    params.size_op = filters.sizeOp === 'greater_than' ? 'gt' : 'lt'
+    params.size_bytes = String(Math.round(numericSize * (SIZE_MULTIPLIERS[unit] ?? 1)))
+}
+
+function addDateParams(filters: AdvancedSearchFilters, params: Record<string, string>) {
+    if (!filters.dateWithin || !filters.dateAnchor) return
+    const anchor = new Date(filters.dateAnchor)
+    if (Number.isNaN(anchor.getTime())) return
+    const ms = parseDuration(filters.dateWithin)
+    if (ms <= 0) return
+    params.date_after = new Date(anchor.getTime() - ms).toISOString()
+    params.date_before = new Date(anchor.getTime() + ms).toISOString()
+}
+
+function filtersToQueryParams(filters: AdvancedSearchFilters): Record<string, string> {
+    const params: Record<string, string> = {}
+    for (const [filterKey, paramKey] of SIMPLE_FILTER_MAP) {
+        const val = filters[filterKey]
+        if (val && typeof val === 'string') params[paramKey] = val
+    }
+    addSizeParams(filters, params)
+    addDateParams(filters, params)
+    if (filters.folder && filters.folder !== 'all') params.folder = filters.folder
+    if (filters.hasAttachment) params.has_attachment = 'true'
+    return params
+}
+
+function parseDuration(value: string): number {
+    const DAY = 86400000
+    switch (value) {
+        case '1d':
+            return DAY
+        case '3d':
+            return 3 * DAY
+        case '1w':
+            return 7 * DAY
+        case '2w':
+            return 14 * DAY
+        case '1m':
+            return 30 * DAY
+        case '2m':
+            return 60 * DAY
+        case '6m':
+            return 180 * DAY
+        case '1y':
+            return 365 * DAY
+        default:
+            return 0
+    }
+}
+
 function isAbortError(err: unknown): boolean {
     return err instanceof DOMException && err.name === 'AbortError'
 }
@@ -35,7 +107,10 @@ function toErrorMessage(err: unknown): string {
     return err instanceof Error ? err.message : 'Search failed'
 }
 
-export function useMailSearch(query: string): UseMailSearchReturn {
+export function useMailSearch(
+    query: string,
+    filters: AdvancedSearchFilters = {}
+): UseMailSearchReturn {
     const [results, setResults] = useState<MailSearchResult[]>([])
     const [total, setTotal] = useState(0)
     const [isSearching, setIsSearching] = useState(false)
@@ -43,7 +118,7 @@ export function useMailSearch(query: string): UseMailSearchReturn {
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const abortRef = useRef<AbortController | null>(null)
 
-    const search = useCallback(async (q: string) => {
+    const search = useCallback(async (q: string, f: AdvancedSearchFilters) => {
         abortRef.current?.abort()
         const controller = new AbortController()
         abortRef.current = controller
@@ -52,9 +127,16 @@ export function useMailSearch(query: string): UseMailSearchReturn {
         setError(null)
 
         try {
+            const queryParams: Record<string, string> = {
+                ...filtersToQueryParams(f),
+            }
+            if (q.length >= MIN_QUERY_LENGTH) {
+                queryParams.q = q
+            }
+
             const response: MailSearchResponse = await pb.send('/api/mail/search', {
                 method: 'GET',
-                query: { q },
+                query: queryParams,
                 signal: controller.signal,
             })
             if (!controller.signal.aborted) {
@@ -75,10 +157,15 @@ export function useMailSearch(query: string): UseMailSearchReturn {
         }
     }, [])
 
+    const filtersJSON = JSON.stringify(filters)
+
     useEffect(() => {
         if (timerRef.current) clearTimeout(timerRef.current)
 
-        if (query.length < MIN_QUERY_LENGTH) {
+        const parsedFilters: AdvancedSearchFilters = JSON.parse(filtersJSON)
+        const hasFilters = hasActiveFilters(parsedFilters)
+
+        if (query.length < MIN_QUERY_LENGTH && !hasFilters) {
             setResults([])
             setTotal(0)
             setIsSearching(false)
@@ -87,12 +174,12 @@ export function useMailSearch(query: string): UseMailSearchReturn {
             return
         }
 
-        timerRef.current = setTimeout(() => search(query), DEBOUNCE_MS)
+        timerRef.current = setTimeout(() => search(query, parsedFilters), DEBOUNCE_MS)
 
         return () => {
             if (timerRef.current) clearTimeout(timerRef.current)
         }
-    }, [query, search])
+    }, [query, filtersJSON, search])
 
     useEffect(() => {
         return () => {

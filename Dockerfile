@@ -103,6 +103,13 @@ RUN mkdir -p pb_data types
 
 COPY CHECKS ./
 
-EXPOSE 7090
+# 7090: default HTTP (backward compat / dev)
+# 80/443: autocert HTTP/HTTPS (production with domain)
+# 993: IMAPS (implicit TLS)
+# 465: SMTPS (implicit TLS)
+EXPOSE 7090 80 443 993 465
 
+# Default: HTTP on port 7090 without TLS.
+# For production with autocert, override CMD:
+#   CMD ["./tinycld", "serve", "mail.example.com"]
 CMD ["./tinycld", "serve", "--http=0.0.0.0:7090"]
