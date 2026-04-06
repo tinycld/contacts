@@ -14,6 +14,8 @@ declare module 'one' {
         | `/a/[orgSlug]/contacts`
         | `/a/[orgSlug]/contacts/`
         | `/a/[orgSlug]/contacts/new`
+        | `/a/[orgSlug]/drive`
+        | `/a/[orgSlug]/drive/`
         | `/a/[orgSlug]/mail`
         | `/a/[orgSlug]/mail/`
         | `/a/[orgSlug]/settings`

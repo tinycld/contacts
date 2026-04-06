@@ -1,6 +1,7 @@
 import {
     Building2,
     Calendar,
+    HardDrive,
     Home,
     type LucideIcon,
     Mail,
@@ -17,6 +18,7 @@ const iconMap: Record<string, LucideIcon> = {
     settings: Settings,
     user: User,
     building: Building2,
+    'hard-drive': HardDrive,
 }
 
 export function getIcon(name: string): LucideIcon {
