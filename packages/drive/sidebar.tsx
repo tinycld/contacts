@@ -1,24 +1,23 @@
+import { Menu } from '@tamagui/menu'
 import {
     ChevronDown,
     ChevronRight,
     Clock,
     Folder,
+    FolderPlus,
     HardDrive,
     Plus,
     Star,
     Trash2,
+    Upload,
     UserPlus,
     Users,
 } from 'lucide-react-native'
 import { useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { useTheme } from 'tamagui'
-import {
-    SidebarActionButton,
-    SidebarDivider,
-    SidebarItem,
-    SidebarNav,
-} from '~/components/sidebar-primitives'
+import { MenuActionItem } from '~/components/DropdownMenu'
+import { SidebarDivider, SidebarItem, SidebarNav } from '~/components/sidebar-primitives'
 import { useDrive } from './hooks/useDrive'
 import type { FolderTreeNode } from './types'
 
@@ -34,7 +33,9 @@ export default function DriveSidebar(_props: DriveSidebarProps) {
         navigateToSection,
         folderTree,
         totalStorageUsed,
+        triggerFilePicker,
     } = useDrive()
+    const theme = useTheme()
     const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set())
 
     const toggleExpand = (id: string) => {
@@ -60,10 +61,51 @@ export default function DriveSidebar(_props: DriveSidebarProps) {
 
     return (
         <SidebarNav>
-            <SidebarActionButton label="New" icon={Plus} onPress={() => {}} />
+            <View style={styles.menuWrapper}>
+                <Menu>
+                    <Menu.Trigger asChild>
+                        <Pressable
+                            style={[
+                                styles.newButton,
+                                { backgroundColor: theme.accentBackground.val },
+                            ]}
+                        >
+                            <Plus size={16} color={theme.accentColor.val} />
+                            <Text style={[styles.newButtonText, { color: theme.accentColor.val }]}>
+                                New
+                            </Text>
+                        </Pressable>
+                    </Menu.Trigger>
+                    <Menu.Portal zIndex={100}>
+                        <Menu.Content
+                            borderRadius={8}
+                            minWidth={200}
+                            backgroundColor="$background"
+                            borderColor="$borderColor"
+                            borderWidth={1}
+                            paddingVertical="$1"
+                            shadowColor="#000"
+                            shadowOffset={{ width: 0, height: 4 }}
+                            shadowOpacity={0.15}
+                            shadowRadius={12}
+                        >
+                            <MenuActionItem
+                                label="Upload file"
+                                icon={Upload}
+                                onPress={triggerFilePicker}
+                            />
+                            <MenuActionItem
+                                label="New folder"
+                                icon={FolderPlus}
+                                onPress={() => {}}
+                            />
+                        </Menu.Content>
+                    </Menu.Portal>
+                </Menu>
+            </View>
 
             <SidebarItem
-                label="My Drive"
+                label="My Files"
                 icon={HardDrive}
                 isActive={activeSection === 'my-drive' && currentFolderId === ''}
                 onPress={() => navigateToSection('my-drive')}
@@ -78,7 +120,7 @@ export default function DriveSidebar(_props: DriveSidebarProps) {
                 depth={1}
             />
 
-            <SidebarItem label="Shared drives" icon={Users} isActive={false} onPress={() => {}} />
+            <SidebarItem label="Shared files" icon={Users} isActive={false} onPress={() => {}} />
 
             <SidebarDivider />
 
@@ -237,13 +279,29 @@ function StorageBar({ usedGB, totalGB }: { usedGB: number; totalGB: number }) {
                 />
             </View>
             <Text style={[styles.storageText, { color: theme.color8.val }]}>
-                {usedGB} GB of {totalGB} GB used
+                {usedGB.toFixed(2)} GB of {totalGB} GB used
             </Text>
         </View>
     )
 }
 
 const styles = StyleSheet.create({
+    menuWrapper: {
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+    },
+    newButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 20,
+    },
+    newButtonText: {
+        fontSize: 14,
+        fontWeight: '600',
+    },
     treeItem: {
         flexDirection: 'row',
         alignItems: 'center',

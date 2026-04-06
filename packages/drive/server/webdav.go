@@ -199,6 +199,12 @@ func (fs *DriveFileSystem) Create(ctx context.Context, name string, body io.Read
 			return nil, false, err
 		}
 
+		if existing.GetString("file") != "" {
+			if err := snapshotCurrentFile(fs.app, existing, userOrg.Id, "upload", ""); err != nil {
+				fs.app.Logger().Warn("version snapshot failed", "id", existing.Id, "error", err)
+			}
+		}
+
 		if err := writeFileContent(fs.app, existing, body, itemName); err != nil {
 			return nil, false, err
 		}

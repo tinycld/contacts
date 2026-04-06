@@ -77,6 +77,20 @@ export type ViewMode = 'list' | 'grid'
 
 export type SidebarSection = 'my-drive' | 'shared-with-me' | 'recent' | 'starred' | 'trash'
 
+export interface DriveItemVersions {
+    id: string
+    item: string
+    version_number: number
+    file: string
+    size: number
+    mime_type: string
+    source: 'upload' | 'system'
+    label: string
+    created_by: string
+    created: string
+    updated: string
+}
+
 export type DriveSchema = {
     drive_items: {
         type: DriveItems
@@ -99,6 +113,13 @@ export type DriveSchema = {
         relations: {
             item: DriveItems
             user_org: UserOrg
+        }
+    }
+    drive_item_versions: {
+        type: DriveItemVersions
+        relations: {
+            item: DriveItems
+            created_by: UserOrg
         }
     }
 }

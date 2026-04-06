@@ -200,11 +200,7 @@ const FILES = [
     },
 ] as const
 
-async function seedFolders(
-    pb: PocketBase,
-    orgId: string,
-    userOrgId: string
-) {
+async function seedFolders(pb: PocketBase, orgId: string, userOrgId: string) {
     const folderIds: Record<string, string> = {}
 
     for (const folder of FOLDERS) {

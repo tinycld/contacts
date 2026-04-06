@@ -3,4 +3,6 @@ export const addons = [
     '@tinycld/mail',
     '@tinycld/calendar',
     '@tinycld/drive',
+    '@tinycld/docs',
+    '@tinycld/sheets',
 ] as const

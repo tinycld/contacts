@@ -4,6 +4,9 @@ import { XStack, YStack } from 'tamagui'
 import { useBreakpoint } from '~/components/workspace/useBreakpoint'
 import { DetailPanel } from '../components/DetailPanel'
 import { DriveToolbar } from '../components/DriveToolbar'
+import { DropZone } from '../components/DropZone'
+import { FileUploadFAB } from '../components/FileUploadFAB'
+import { UploadStatusBar } from '../components/UploadStatusBar'
 import { useDrive } from '../hooks/useDrive'
 import DriveProvider from '../provider'
 
@@ -16,16 +19,21 @@ export default function DriveLayout() {
 }
 
 function DriveLayoutInner() {
-    const { selectedItem, selectItem } = useDrive()
+    const { selectedItem, selectItem, activeSection, uploadFiles, isUploading } = useDrive()
     const isMobile = useBreakpoint() === 'mobile'
     const showDetail = !!selectedItem && !isMobile
+    const isMyDrive = activeSection === 'my-drive'
 
     return (
         <YStack flex={1} backgroundColor="$background">
             <DriveToolbar />
             <XStack flex={1}>
                 <View style={{ flex: 1 }}>
-                    <Slot />
+                    <DropZone onDrop={uploadFiles} isEnabled={isMyDrive}>
+                        <Slot />
+                    </DropZone>
+                    <UploadStatusBar isVisible={isUploading} />
+                    <FileUploadFAB isVisible={isMyDrive} />
                 </View>
                 <DetailPanel
                     isVisible={showDetail}

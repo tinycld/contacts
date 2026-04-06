@@ -1,6 +1,6 @@
 /// <reference path="../../../pb_types.d.ts" />
 migrate(
-    (app) => {
+    app => {
         app.db()
             .newQuery(
                 `CREATE VIRTUAL TABLE IF NOT EXISTS fts_drive_items USING fts5(
@@ -13,7 +13,7 @@ migrate(
             )
             .execute()
     },
-    (app) => {
+    app => {
         app.db().newQuery('DROP TABLE IF EXISTS fts_drive_items').execute()
     }
 )

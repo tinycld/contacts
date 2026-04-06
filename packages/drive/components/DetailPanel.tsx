@@ -1,8 +1,10 @@
-import { X } from 'lucide-react-native'
-import { useState } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
-import { useTheme } from 'tamagui'
+import { Download, RotateCcw, X } from 'lucide-react-native'
+import { useCallback, useState } from 'react'
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Button, Dialog, SizableText, useTheme, XStack } from 'tamagui'
 import { formatBytes, formatDate } from '~/lib/format-utils'
+import { pb } from '~/lib/pocketbase'
+import { useVersionHistory } from '../hooks/useVersionHistory'
 import type { DriveItemView } from '../types'
 import { getFileIcon } from './file-icons'
 
@@ -18,10 +20,13 @@ export function DetailPanel({ isVisible, item, onClose }: DetailPanelProps) {
     return <DetailPanelContent item={item} onClose={onClose} />
 }
 
+type DetailTab = 'details' | 'versions' | 'activity'
+
 function DetailPanelContent({ item, onClose }: { item: DriveItemView; onClose: () => void }) {
     const theme = useTheme()
-    const [activeTab, setActiveTab] = useState<'details' | 'activity'>('details')
+    const [activeTab, setActiveTab] = useState<DetailTab>('details')
     const { icon: FileIcon, color: iconColor } = getFileIcon(item.category, theme.color8.val)
+    const showVersionsTab = !item.isFolder
 
     return (
         <View style={[styles.container, { borderLeftColor: theme.borderColor.val }]}>
@@ -38,65 +43,27 @@ function DetailPanelContent({ item, onClose }: { item: DriveItemView; onClose: (
                 <FileIcon size={64} color={iconColor} />
             </View>
 
-            <View style={[styles.tabs, { borderBottomColor: theme.borderColor.val }]}>
-                <Pressable
-                    style={[
-                        styles.tab,
-                        activeTab === 'details' && {
-                            borderBottomColor: theme.accentColor.val,
-                            borderBottomWidth: 2,
-                        },
-                    ]}
-                    onPress={() => setActiveTab('details')}
-                >
-                    <Text
-                        style={[
-                            styles.tabText,
-                            {
-                                color:
-                                    activeTab === 'details'
-                                        ? theme.accentColor.val
-                                        : theme.color8.val,
-                            },
-                        ]}
-                    >
-                        Details
-                    </Text>
-                </Pressable>
-                <Pressable
-                    style={[
-                        styles.tab,
-                        activeTab === 'activity' && {
-                            borderBottomColor: theme.accentColor.val,
-                            borderBottomWidth: 2,
-                        },
-                    ]}
-                    onPress={() => setActiveTab('activity')}
-                >
-                    <Text
-                        style={[
-                            styles.tabText,
-                            {
-                                color:
-                                    activeTab === 'activity'
-                                        ? theme.accentColor.val
-                                        : theme.color8.val,
-                            },
-                        ]}
-                    >
-                        Activity
-                    </Text>
-                </Pressable>
-            </View>
+            <TabBar
+                tabs={
+                    showVersionsTab
+                        ? (['details', 'versions', 'activity'] as const)
+                        : (['details', 'activity'] as const)
+                }
+                activeTab={activeTab}
+                onTabPress={setActiveTab}
+                theme={theme}
+            />
 
-            {activeTab === 'details' ? <DetailsContent item={item} /> : <ActivityContent />}
+            {activeTab === 'details' && <DetailsContent item={item} />}
+            {activeTab === 'versions' && showVersionsTab && <VersionsContent itemId={item.id} />}
+            {activeTab === 'activity' && <ActivityContent />}
         </View>
     )
 }
 
 function DetailsContent({ item }: { item: DriveItemView }) {
     const theme = useTheme()
-    const accessText = item.shared ? `Shared with others` : 'Private to you'
+    const accessText = item.shared ? 'Shared with others' : 'Private to you'
 
     return (
         <View style={styles.content}>
@@ -142,6 +109,222 @@ function DetailRow({ label, value }: { label: string; value: string }) {
             <Text style={[styles.detailValue, { color: theme.color.val }]} numberOfLines={1}>
                 {value}
             </Text>
+        </View>
+    )
+}
+
+interface TabBarProps {
+    tabs: readonly DetailTab[]
+    activeTab: DetailTab
+    onTabPress: (tab: DetailTab) => void
+    theme: ReturnType<typeof useTheme>
+}
+
+function TabBar({ tabs, activeTab, onTabPress, theme }: TabBarProps) {
+    const labels: Record<DetailTab, string> = {
+        details: 'Details',
+        versions: 'Versions',
+        activity: 'Activity',
+    }
+
+    return (
+        <View style={[styles.tabs, { borderBottomColor: theme.borderColor.val }]}>
+            {tabs.map(tab => (
+                <Pressable
+                    key={tab}
+                    style={[
+                        styles.tab,
+                        activeTab === tab && {
+                            borderBottomColor: theme.accentColor.val,
+                            borderBottomWidth: 2,
+                        },
+                    ]}
+                    onPress={() => onTabPress(tab)}
+                >
+                    <Text
+                        style={[
+                            styles.tabText,
+                            {
+                                color: activeTab === tab ? theme.accentColor.val : theme.color8.val,
+                            },
+                        ]}
+                    >
+                        {labels[tab]}
+                    </Text>
+                </Pressable>
+            ))}
+        </View>
+    )
+}
+
+function VersionsContent({ itemId }: { itemId: string }) {
+    const theme = useTheme()
+    const { versions, restoreVersion, isRestoring } = useVersionHistory(itemId)
+    const [confirmVersionId, setConfirmVersionId] = useState<string | null>(null)
+
+    const confirmingVersion = confirmVersionId
+        ? versions.find(v => v.id === confirmVersionId)
+        : null
+
+    const handleConfirmRestore = useCallback(() => {
+        if (!confirmVersionId) return
+        restoreVersion(confirmVersionId)
+        setConfirmVersionId(null)
+    }, [confirmVersionId, restoreVersion])
+
+    const handleDownload = useCallback((version: { id: string; file: string }) => {
+        const url = pb.files.getURL(
+            {
+                id: version.id,
+                collectionId: 'pbc_drive_versions_01',
+                collectionName: 'drive_item_versions',
+            },
+            version.file
+        )
+        if (typeof window !== 'undefined') {
+            window.open(url, '_blank')
+        }
+    }, [])
+
+    if (versions.length === 0) {
+        return (
+            <View style={styles.content}>
+                <Text style={[styles.placeholderText, { color: theme.color8.val }]}>
+                    No previous versions
+                </Text>
+            </View>
+        )
+    }
+
+    return (
+        <>
+            <ScrollView style={styles.content}>
+                {versions.map(version => (
+                    <VersionRow
+                        key={version.id}
+                        version={version}
+                        onRestore={() => setConfirmVersionId(version.id)}
+                        onDownload={() => handleDownload(version)}
+                        isRestoring={isRestoring}
+                    />
+                ))}
+            </ScrollView>
+
+            <RestoreConfirmDialog
+                open={!!confirmingVersion}
+                onOpenChange={open => {
+                    if (!open) setConfirmVersionId(null)
+                }}
+                versionNumber={confirmingVersion?.version_number ?? 0}
+                onConfirm={handleConfirmRestore}
+            />
+        </>
+    )
+}
+
+interface RestoreConfirmDialogProps {
+    open: boolean
+    onOpenChange: (open: boolean) => void
+    versionNumber: number
+    onConfirm: () => void
+}
+
+function RestoreConfirmDialog({
+    open,
+    onOpenChange,
+    versionNumber,
+    onConfirm,
+}: RestoreConfirmDialogProps) {
+    return (
+        <Dialog modal open={open} onOpenChange={onOpenChange}>
+            <Dialog.Portal>
+                <Dialog.Overlay
+                    key="overlay"
+                    opacity={0.3}
+                    backgroundColor="$shadow6"
+                    enterStyle={{ opacity: 0 }}
+                    exitStyle={{ opacity: 0 }}
+                />
+                <Dialog.Content
+                    key="content"
+                    bordered
+                    elevate
+                    padding="$4"
+                    gap="$3"
+                    width={340}
+                    backgroundColor="$background"
+                >
+                    <Dialog.Title size="$5">Restore version</Dialog.Title>
+                    <SizableText size="$3" color="$color10">
+                        Restore to version {versionNumber}? The current file will be saved as a new
+                        version before restoring.
+                    </SizableText>
+                    <XStack gap="$3" justifyContent="flex-end">
+                        <Dialog.Close asChild>
+                            <Button size="$3" chromeless>
+                                <Button.Text>Cancel</Button.Text>
+                            </Button>
+                        </Dialog.Close>
+                        <Button
+                            size="$3"
+                            theme="accent"
+                            onPress={() => {
+                                onConfirm()
+                                onOpenChange(false)
+                            }}
+                        >
+                            <Button.Text fontWeight="600">Restore</Button.Text>
+                        </Button>
+                    </XStack>
+                </Dialog.Content>
+            </Dialog.Portal>
+        </Dialog>
+    )
+}
+
+interface VersionRowProps {
+    version: {
+        id: string
+        version_number: number
+        size: number
+        created: string
+        file: string
+    }
+    onRestore: () => void
+    onDownload: () => void
+    isRestoring: boolean
+}
+
+function VersionRow({ version, onRestore, onDownload, isRestoring }: VersionRowProps) {
+    const theme = useTheme()
+
+    return (
+        <View style={[styles.versionRow, { borderBottomColor: theme.borderColor.val }]}>
+            <View style={styles.versionInfo}>
+                <Text style={[styles.versionNumber, { color: theme.color.val }]}>
+                    Version {version.version_number}
+                </Text>
+                <Text style={[styles.versionMeta, { color: theme.color8.val }]}>
+                    {formatDate(version.created)} · {formatBytes(version.size)}
+                </Text>
+            </View>
+            <View style={styles.versionActions}>
+                <Pressable onPress={onDownload} hitSlop={8} style={styles.versionActionButton}>
+                    <Download size={14} color={theme.color8.val} />
+                </Pressable>
+                <Pressable
+                    onPress={onRestore}
+                    hitSlop={8}
+                    disabled={isRestoring}
+                    style={styles.versionActionButton}
+                >
+                    {isRestoring ? (
+                        <ActivityIndicator size="small" />
+                    ) : (
+                        <RotateCcw size={14} color={theme.color8.val} />
+                    )}
+                </Pressable>
+            </View>
         </View>
     )
 }
@@ -246,5 +429,30 @@ const styles = StyleSheet.create({
         fontSize: 14,
         textAlign: 'center',
         paddingVertical: 24,
+    },
+    versionRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+    },
+    versionInfo: {
+        flex: 1,
+        gap: 2,
+    },
+    versionNumber: {
+        fontSize: 13,
+        fontWeight: '500',
+    },
+    versionMeta: {
+        fontSize: 12,
+    },
+    versionActions: {
+        flexDirection: 'row',
+        gap: 8,
+    },
+    versionActionButton: {
+        padding: 4,
     },
 })

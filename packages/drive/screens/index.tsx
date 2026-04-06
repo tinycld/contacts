@@ -45,16 +45,16 @@ function ListView({ items }: { items: DriveItemView[] }) {
         <View style={styles.listContainer}>
             <DataTableHeader columns={DRIVE_COLUMNS} />
             {folders.map(item => (
-                <DriveListRow key={item.id} item={item} />
+                <FilesListRow key={item.id} item={item} />
             ))}
             {files.map(item => (
-                <DriveListRow key={item.id} item={item} />
+                <FilesListRow key={item.id} item={item} />
             ))}
         </View>
     )
 }
 
-function DriveListRow({ item }: { item: DriveItemView }) {
+function FilesListRow({ item }: { item: DriveItemView }) {
     const theme = useTheme()
     const { selectedItemId, openItem } = useDrive()
     const isSelected = selectedItemId === item.id

@@ -20,10 +20,7 @@ const extractResults = (response: unknown) => (response as DriveSearchResponse).
 const extractTotal = (response: unknown) => (response as DriveSearchResponse).total
 
 export function useDriveSearch(query: string, orgId: string) {
-    const buildQueryParams = useMemo(
-        () => (q: string) => ({ q, org: orgId }),
-        [orgId],
-    )
+    const buildQueryParams = useMemo(() => (q: string) => ({ q, org: orgId }), [orgId])
 
     const options = useMemo(
         () => ({
@@ -32,7 +29,7 @@ export function useDriveSearch(query: string, orgId: string) {
             extractResults,
             extractTotal,
         }),
-        [buildQueryParams],
+        [buildQueryParams]
     )
 
     return useApiSearch<DriveSearchResult>(query, options)

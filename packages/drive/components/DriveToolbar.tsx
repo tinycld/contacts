@@ -9,11 +9,13 @@ import {
     Search,
     Share2,
     Trash2,
+    Upload,
     X,
 } from 'lucide-react-native'
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 import { useTheme } from 'tamagui'
 import { ToolbarIconButton } from '~/components/ToolbarIconButton'
+import { captureException } from '~/lib/errors'
 import { useDrive } from '../hooks/useDrive'
 import type { ViewMode } from '../types'
 
@@ -34,7 +36,7 @@ export function DriveToolbar() {
     if (selectedItem) {
         return (
             <SelectionToolbar
-                itemName={selectedItem.name}
+                item={selectedItem}
                 viewMode={viewMode}
                 onSetViewMode={setViewMode}
                 onClearSelection={() => selectItem(null)}
@@ -55,7 +57,7 @@ export function DriveToolbar() {
                 <View style={styles.breadcrumbs}>
                     <Pressable onPress={() => navigateToFolder('')}>
                         <Text style={[styles.breadcrumbText, { color: theme.accentColor.val }]}>
-                            My Drive
+                            My Files
                         </Text>
                     </Pressable>
                     {breadcrumbs.map(crumb => (
@@ -76,11 +78,7 @@ export function DriveToolbar() {
                 </View>
             )}
             <View style={styles.rightSection}>
-                <SearchInput
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                    theme={theme}
-                />
+                <SearchInput value={searchQuery} onChangeText={setSearchQuery} theme={theme} />
                 <ViewToggle viewMode={viewMode} onSetViewMode={setViewMode} theme={theme} />
             </View>
         </View>
@@ -114,7 +112,7 @@ function SearchInput({ value, onChangeText, theme }: SearchInputProps) {
 }
 
 interface SelectionToolbarProps {
-    itemName: string
+    item: { name: string; isFolder: boolean; id: string }
     viewMode: ViewMode
     onSetViewMode: (mode: ViewMode) => void
     onClearSelection: () => void
@@ -122,19 +120,46 @@ interface SelectionToolbarProps {
 }
 
 function SelectionToolbar({
-    itemName,
+    item,
     viewMode,
     onSetViewMode,
     onClearSelection,
     theme,
 }: SelectionToolbarProps) {
+    const { uploadNewVersion } = useDrive()
+
+    const triggerVersionUpload = () => {
+        if (Platform.OS === 'web') {
+            const input = document.createElement('input')
+            input.type = 'file'
+            input.onchange = () => {
+                if (input.files?.[0]) {
+                    uploadNewVersion(item.id, input.files[0]).catch(err =>
+                        captureException('uploadNewVersion', err)
+                    )
+                }
+            }
+            input.click()
+        }
+    }
+
     const actionIcons = [
-        { key: 'share', icon: Share2, label: 'Share' },
-        { key: 'download', icon: Download, label: 'Download' },
-        { key: 'move', icon: FolderInput, label: 'Move' },
-        { key: 'trash', icon: Trash2, label: 'Trash' },
-        { key: 'link', icon: Link, label: 'Copy link' },
-        { key: 'more', icon: MoreVertical, label: 'More actions' },
+        ...(!item.isFolder
+            ? [
+                  {
+                      key: 'upload-version',
+                      icon: Upload,
+                      label: 'Upload new version',
+                      onPress: triggerVersionUpload,
+                  },
+              ]
+            : []),
+        { key: 'share', icon: Share2, label: 'Share', onPress: () => {} },
+        { key: 'download', icon: Download, label: 'Download', onPress: () => {} },
+        { key: 'move', icon: FolderInput, label: 'Move', onPress: () => {} },
+        { key: 'trash', icon: Trash2, label: 'Trash', onPress: () => {} },
+        { key: 'link', icon: Link, label: 'Copy link', onPress: () => {} },
+        { key: 'more', icon: MoreVertical, label: 'More actions', onPress: () => {} },
     ]
 
     return (
@@ -144,12 +169,12 @@ function SelectionToolbar({
                     <X size={16} color={theme.color8.val} />
                 </Pressable>
                 <Text style={[styles.selectionText, { color: theme.color.val }]} numberOfLines={1}>
-                    {itemName}
+                    {item.name}
                 </Text>
             </View>
             <View style={styles.actions}>
-                {actionIcons.map(({ key, icon, label }) => (
-                    <ToolbarIconButton key={key} icon={icon} label={label} onPress={() => {}} />
+                {actionIcons.map(({ key, icon, label, onPress }) => (
+                    <ToolbarIconButton key={key} icon={icon} label={label} onPress={onPress} />
                 ))}
                 <View style={[styles.actionDivider, { backgroundColor: theme.borderColor.val }]} />
                 <ViewToggle viewMode={viewMode} onSetViewMode={onSetViewMode} theme={theme} />

@@ -7,8 +7,9 @@ import { useStore } from '~/lib/pocketbase'
 import { useCurrentUserOrg } from '~/lib/use-current-user-org'
 import { useOrgInfo } from '~/lib/use-org-info'
 import { mimeTypeToCategory } from '../components/file-icons'
-import { useDriveSearch } from './useDriveSearch'
 import type { DriveItemView, FolderTreeNode, SidebarSection, ViewMode } from '../types'
+import { useDriveSearch } from './useDriveSearch'
+import { useFileUpload } from './useFileUpload'
 
 interface DriveContextValue {
     currentFolderId: string
@@ -32,6 +33,11 @@ interface DriveContextValue {
     toggleStar: (itemId: string) => void
     moveToTrash: (itemId: string) => void
     restoreFromTrash: (itemId: string) => void
+    uploadFiles: (files: File[]) => void
+    isUploading: boolean
+    uploadingFiles: { name: string; status: 'pending' | 'uploading' | 'done' | 'error' }[]
+    triggerFilePicker: () => void
+    uploadNewVersion: (itemId: string, file: File) => Promise<void>
 }
 
 export const DriveContext = createContext<DriveContextValue | null>(null)
@@ -61,46 +67,38 @@ export function useDriveState(): DriveContextValue {
     const isSearchActive = searchQuery.length >= 2
     const { results: searchResults, isSearching } = useDriveSearch(
         isSearchActive ? searchQuery : '',
-        orgId,
+        orgId
     )
 
     const { data: rawItems } = useLiveQuery(
-        query =>
-            query
-                .from({ item: itemsCollection })
-                .where(({ item }) => eq(item.org, orgId)),
-        [orgId],
+        query => query.from({ item: itemsCollection }).where(({ item }) => eq(item.org, orgId)),
+        [orgId]
     )
 
-    const { data: rawShares } = useLiveQuery(
-        query => query.from({ share: sharesCollection }),
-        [],
-    )
+    const { data: rawShares } = useLiveQuery(query => query.from({ share: sharesCollection }), [])
 
     const { data: rawStates } = useLiveQuery(
         query =>
             query
                 .from({ state: stateCollection })
                 .where(({ state }) => eq(state.user_org, userOrgId)),
-        [userOrgId],
+        [userOrgId]
     )
 
     const { data: orgUserOrgs } = useLiveQuery(
-        query =>
-            query
-                .from({ uo: userOrgCollection })
-                .where(({ uo }) => eq(uo.org, orgId)),
-        [orgId],
+        query => query.from({ uo: userOrgCollection }).where(({ uo }) => eq(uo.org, orgId)),
+        [orgId]
     )
 
     const userOrgNames = useMemo(
-        () => new Map(
-            (orgUserOrgs ?? []).map(uo => [
-                uo.id,
-                uo.expand?.user?.name || uo.expand?.user?.email || '',
-            ]),
-        ),
-        [orgUserOrgs],
+        () =>
+            new Map(
+                (orgUserOrgs ?? []).map(uo => [
+                    uo.id,
+                    uo.expand?.user?.name || uo.expand?.user?.email || '',
+                ])
+            ),
+        [orgUserOrgs]
     )
 
     const sharesByItem = useMemo(() => {
@@ -113,43 +111,38 @@ export function useDriveState(): DriveContextValue {
         return map
     }, [rawShares])
 
-    const stateByItem = useMemo(
-        () => new Map((rawStates ?? []).map(s => [s.item, s])),
-        [rawStates],
+    const stateByItem = useMemo(() => new Map((rawStates ?? []).map(s => [s.item, s])), [rawStates])
+
+    const allItems = useMemo<DriveItemView[]>(
+        () =>
+            (rawItems ?? []).map(item => {
+                const state = stateByItem.get(item.id)
+                const shares = sharesByItem.get(item.id) ?? []
+                const hasNonOwnerShares = shares.some(s => s.role !== 'owner')
+                const ownerName = userOrgNames.get(item.created_by) ?? ''
+
+                return {
+                    id: item.id,
+                    name: item.name,
+                    isFolder: item.is_folder,
+                    mimeType: item.mime_type,
+                    parentId: item.parent ?? '',
+                    owner: item.created_by === userOrgId ? 'me' : ownerName,
+                    ownerUserOrgId: item.created_by,
+                    updated: item.updated,
+                    size: item.size,
+                    shared: hasNonOwnerShares,
+                    starred: state?.is_starred ?? false,
+                    trashedAt: state?.trashed_at ?? '',
+                    file: item.file,
+                    description: item.description,
+                    category: mimeTypeToCategory(item.mime_type, item.is_folder),
+                }
+            }),
+        [rawItems, stateByItem, sharesByItem, userOrgId, userOrgNames]
     )
 
-    const allItems = useMemo<DriveItemView[]>(() =>
-        (rawItems ?? []).map(item => {
-            const state = stateByItem.get(item.id)
-            const shares = sharesByItem.get(item.id) ?? []
-            const hasNonOwnerShares = shares.some(s => s.role !== 'owner')
-            const ownerName = userOrgNames.get(item.created_by) ?? ''
-
-            return {
-                id: item.id,
-                name: item.name,
-                isFolder: item.is_folder,
-                mimeType: item.mime_type,
-                parentId: item.parent ?? '',
-                owner: item.created_by === userOrgId ? 'me' : ownerName,
-                ownerUserOrgId: item.created_by,
-                updated: item.updated,
-                size: item.size,
-                shared: hasNonOwnerShares,
-                starred: state?.is_starred ?? false,
-                trashedAt: state?.trashed_at ?? '',
-                file: item.file,
-                description: item.description,
-                category: mimeTypeToCategory(item.mime_type, item.is_folder),
-            }
-        }),
-    [rawItems, stateByItem, sharesByItem, userOrgId, userOrgNames],
-    )
-
-    const itemsById = useMemo(
-        () => new Map(allItems.map(i => [i.id, i])),
-        [allItems],
-    )
+    const itemsById = useMemo(() => new Map(allItems.map(i => [i.id, i])), [allItems])
 
     const searchItemViews = useMemo<DriveItemView[]>(() => {
         if (!isSearchActive) return []
@@ -182,7 +175,10 @@ export function useDriveState(): DriveContextValue {
         switch (activeSection) {
             case 'my-drive':
                 return allItems.filter(
-                    i => i.ownerUserOrgId === userOrgId && i.parentId === currentFolderId && !i.trashedAt,
+                    i =>
+                        i.ownerUserOrgId === userOrgId &&
+                        i.parentId === currentFolderId &&
+                        !i.trashedAt
                 )
             case 'shared-with-me':
                 return allItems.filter(i => i.ownerUserOrgId !== userOrgId && !i.trashedAt)
@@ -214,12 +210,12 @@ export function useDriveState(): DriveContextValue {
 
     const selectedItem = useMemo(
         () => (selectedItemId ? itemsById.get(selectedItemId) : undefined),
-        [selectedItemId, itemsById],
+        [selectedItemId, itemsById]
     )
 
     const folderTree = useMemo(() => {
         const folders = allItems.filter(
-            i => i.isFolder && i.ownerUserOrgId === userOrgId && !i.trashedAt,
+            i => i.isFolder && i.ownerUserOrgId === userOrgId && !i.trashedAt
         )
 
         function buildTree(parentId: string): FolderTreeNode[] {
@@ -234,10 +230,7 @@ export function useDriveState(): DriveContextValue {
         return buildTree('')
     }, [allItems, userOrgId])
 
-    const totalStorageUsed = useMemo(
-        () => allItems.reduce((sum, i) => sum + i.size, 0),
-        [allItems],
-    )
+    const totalStorageUsed = useMemo(() => allItems.reduce((sum, i) => sum + i.size, 0), [allItems])
 
     const isLoading = !rawItems || !rawShares || !rawStates || !orgUserOrgs
 
@@ -286,18 +279,25 @@ export function useDriveState(): DriveContextValue {
             const item = itemsById.get(itemId)
             toggleStarMutation.mutate({ itemId, starred: item?.starred ?? false })
         },
-        [itemsById, toggleStarMutation],
+        [itemsById, toggleStarMutation]
     )
 
     const moveToTrash = useCallback(
         (itemId: string) => trashMutation.mutate({ itemId, restore: false }),
-        [trashMutation],
+        [trashMutation]
     )
 
     const restoreFromTrash = useCallback(
         (itemId: string) => trashMutation.mutate({ itemId, restore: true }),
-        [trashMutation],
+        [trashMutation]
     )
+
+    const { uploadFiles, isUploading, uploadingFiles, triggerFilePicker, uploadNewVersion } =
+        useFileUpload({
+            orgId,
+            userOrgId,
+            currentFolderId,
+        })
 
     const navigateToFolder = useCallback((folderId: string) => {
         setCurrentFolderId(folderId)
@@ -327,7 +327,7 @@ export function useDriveState(): DriveContextValue {
                 setSelectedItemId(item.id)
             }
         },
-        [navigateToFolder],
+        [navigateToFolder]
     )
 
     return useMemo(
@@ -353,6 +353,11 @@ export function useDriveState(): DriveContextValue {
             toggleStar,
             moveToTrash,
             restoreFromTrash,
+            uploadFiles,
+            isUploading,
+            uploadingFiles,
+            triggerFilePicker,
+            uploadNewVersion,
         }),
         [
             currentFolderId,
@@ -374,6 +379,11 @@ export function useDriveState(): DriveContextValue {
             toggleStar,
             moveToTrash,
             restoreFromTrash,
-        ],
+            uploadFiles,
+            isUploading,
+            uploadingFiles,
+            triggerFilePicker,
+            uploadNewVersion,
+        ]
     )
 }
