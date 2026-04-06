@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Pressable, StyleSheet, TextInput as RNTextInput } from 'react-native'
+import { Pressable, StyleSheet } from 'react-native'
+import { PlainInput } from '~/ui/PlainInput'
 import { Button, Dialog, SizableText, useTheme, XStack, YStack } from 'tamagui'
 import {
     buildRRule,
@@ -541,7 +542,7 @@ function EndDateInput({
             <SizableText size="$3" color="$color">
                 End date:
             </SizableText>
-            <RNTextInput
+            <PlainInput
                 value={value}
                 onChangeText={onChange}
                 placeholder="YYYY-MM-DD"
