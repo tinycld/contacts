@@ -14,8 +14,11 @@ declare module 'one' {
         | `/a/[orgSlug]/contacts`
         | `/a/[orgSlug]/contacts/`
         | `/a/[orgSlug]/contacts/new`
-        | `/a/[orgSlug]/drive`
-        | `/a/[orgSlug]/drive/`
+        | `/a/[orgSlug]/docs`
+        | `/a/[orgSlug]/docs/`
+        | `/a/[orgSlug]/docs/new`
+        | `/a/[orgSlug]/files`
+        | `/a/[orgSlug]/files/`
         | `/a/[orgSlug]/mail`
         | `/a/[orgSlug]/mail/`
         | `/a/[orgSlug]/settings`
@@ -23,6 +26,8 @@ declare module 'one' {
         | `/a/[orgSlug]/settings/members`
         | `/a/[orgSlug]/settings/organization`
         | `/a/[orgSlug]/settings/profile`
+        | `/a/[orgSlug]/sheets`
+        | `/a/[orgSlug]/sheets/`
         | `/tabs`
         | `/tabs/`
         | `/tabs/profile`
@@ -32,21 +37,27 @@ declare module 'one' {
         | `/a/${OneRouter.SingleRoutePart<T>}`
         | `/a/${OneRouter.SingleRoutePart<T>}/calendar/${OneRouter.SingleRoutePart<T>}`
         | `/a/${OneRouter.SingleRoutePart<T>}/contacts/${OneRouter.SingleRoutePart<T>}`
+        | `/a/${OneRouter.SingleRoutePart<T>}/docs/${OneRouter.SingleRoutePart<T>}`
         | `/a/${OneRouter.SingleRoutePart<T>}/mail/${OneRouter.SingleRoutePart<T>}`
         | `/a/${OneRouter.SingleRoutePart<T>}/settings/${string}`
+        | `/a/${OneRouter.SingleRoutePart<T>}/sheets/${OneRouter.SingleRoutePart<T>}`
       DynamicRouteTemplate: 
         | `/a/[orgSlug]`
         | `/a/[orgSlug]/calendar/[id]`
         | `/a/[orgSlug]/contacts/[id]`
+        | `/a/[orgSlug]/docs/[id]`
         | `/a/[orgSlug]/mail/[id]`
         | `/a/[orgSlug]/settings/[...section]`
+        | `/a/[orgSlug]/sheets/[id]`
       IsTyped: true
       RouteTypes: {
         '/a/[orgSlug]': RouteInfo<{ orgSlug: string }>
         '/a/[orgSlug]/calendar/[id]': RouteInfo<{ orgSlug: string; id: string }>
         '/a/[orgSlug]/contacts/[id]': RouteInfo<{ orgSlug: string; id: string }>
+        '/a/[orgSlug]/docs/[id]': RouteInfo<{ orgSlug: string; id: string }>
         '/a/[orgSlug]/mail/[id]': RouteInfo<{ orgSlug: string; id: string }>
         '/a/[orgSlug]/settings/[...section]': RouteInfo<{ orgSlug: string; section: string[] }>
+        '/a/[orgSlug]/sheets/[id]': RouteInfo<{ orgSlug: string; id: string }>
       }
     }
   }
