@@ -13,9 +13,13 @@ import {
 import { useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { useTheme } from 'tamagui'
-import { SidebarDivider, SidebarItem, SidebarNav } from '~/components/sidebar-primitives'
+import {
+    SidebarActionButton,
+    SidebarDivider,
+    SidebarItem,
+    SidebarNav,
+} from '~/components/sidebar-primitives'
 import { useDrive } from './hooks/useDrive'
-import { getFolderTree } from './mock-data'
 import type { FolderTreeNode } from './types'
 
 interface DriveSidebarProps {
@@ -23,10 +27,15 @@ interface DriveSidebarProps {
 }
 
 export default function DriveSidebar(_props: DriveSidebarProps) {
-    const theme = useTheme()
-    const { activeSection, currentFolderId, navigateToFolder, navigateToSection } = useDrive()
+    const {
+        activeSection,
+        currentFolderId,
+        navigateToFolder,
+        navigateToSection,
+        folderTree,
+        totalStorageUsed,
+    } = useDrive()
     const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set())
-    const folderTree = getFolderTree()
 
     const toggleExpand = (id: string) => {
         setExpandedIds(prev => {
@@ -51,19 +60,12 @@ export default function DriveSidebar(_props: DriveSidebarProps) {
 
     return (
         <SidebarNav>
-            <View style={styles.newWrapper}>
-                <Pressable
-                    style={[styles.newButton, { backgroundColor: theme.accentBackground.val }]}
-                >
-                    <Plus size={16} color={theme.accentColor.val} />
-                    <Text style={[styles.newText, { color: theme.accentColor.val }]}>New</Text>
-                </Pressable>
-            </View>
+            <SidebarActionButton label="New" icon={Plus} onPress={() => {}} />
 
             <SidebarItem
                 label="My Drive"
                 icon={HardDrive}
-                isActive={activeSection === 'my-drive' && currentFolderId === null}
+                isActive={activeSection === 'my-drive' && currentFolderId === ''}
                 onPress={() => navigateToSection('my-drive')}
             />
 
@@ -76,12 +78,7 @@ export default function DriveSidebar(_props: DriveSidebarProps) {
                 depth={1}
             />
 
-            <SidebarItem
-                label="Shared drives"
-                icon={Users}
-                isActive={activeSection === 'shared-drives'}
-                onPress={() => navigateToSection('shared-drives')}
-            />
+            <SidebarItem label="Shared drives" icon={Users} isActive={false} onPress={() => {}} />
 
             <SidebarDivider />
 
@@ -115,7 +112,7 @@ export default function DriveSidebar(_props: DriveSidebarProps) {
 
             <SidebarDivider />
 
-            <StorageBar usedGB={7.5} totalGB={15} />
+            <StorageBar usedGB={totalStorageUsed / 1024 ** 3} totalGB={15} />
         </SidebarNav>
     )
 }
@@ -123,7 +120,7 @@ export default function DriveSidebar(_props: DriveSidebarProps) {
 interface FolderTreeProps {
     nodes: FolderTreeNode[]
     expandedIds: Set<string>
-    selectedFolderId: string | null
+    selectedFolderId: string
     onToggle: (id: string) => void
     onSelect: (id: string) => void
     depth: number
@@ -159,7 +156,7 @@ function FolderTree({
 interface FolderTreeItemProps {
     node: FolderTreeNode
     expandedIds: Set<string>
-    selectedFolderId: string | null
+    selectedFolderId: string
     onToggle: (id: string) => void
     onSelect: (id: string) => void
     depth: number
@@ -247,23 +244,6 @@ function StorageBar({ usedGB, totalGB }: { usedGB: number; totalGB: number }) {
 }
 
 const styles = StyleSheet.create({
-    newWrapper: {
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-    },
-    newButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
-        paddingHorizontal: 20,
-        paddingVertical: 12,
-        borderRadius: 24,
-    },
-    newText: {
-        fontSize: 14,
-        fontWeight: '600',
-    },
     treeItem: {
         flexDirection: 'row',
         alignItems: 'center',

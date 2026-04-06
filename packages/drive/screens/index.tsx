@@ -1,16 +1,26 @@
 import { Star } from 'lucide-react-native'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { useTheme } from 'tamagui'
+import { DataTableHeader } from '~/components/DataTableHeader'
+import { EmptyState } from '~/components/EmptyState'
+import { formatBytes, formatDate } from '~/lib/format-utils'
 import { getFileIcon } from '../components/file-icons'
-import { formatBytes, formatDate } from '../components/format-utils'
 import { useDrive } from '../hooks/useDrive'
-import type { DriveItem } from '../types'
+import type { DriveItemView } from '../types'
 
 export default function DriveScreen() {
-    const { viewMode, currentItems } = useDrive()
+    const { viewMode, currentItems, searchQuery, isSearching } = useDrive()
+    const isSearchActive = searchQuery.length >= 2
+
+    if (isSearching) {
+        return <EmptyState message="Searching..." />
+    }
 
     if (currentItems.length === 0) {
-        return <EmptyState />
+        const message = isSearchActive
+            ? `No results for "${searchQuery}"`
+            : 'No files in this location'
+        return <EmptyState message={message} />
     }
 
     if (viewMode === 'grid') {
@@ -20,34 +30,20 @@ export default function DriveScreen() {
     return <ListView items={currentItems} />
 }
 
-function EmptyState() {
-    const theme = useTheme()
-    return (
-        <View style={styles.emptyContainer}>
-            <Text style={[styles.emptyText, { color: theme.color8.val }]}>
-                No files in this location
-            </Text>
-        </View>
-    )
-}
+const DRIVE_COLUMNS = [
+    { label: 'Name', flex: 3 },
+    { label: 'Owner', flex: 2 },
+    { label: 'Date modified', flex: 2 },
+    { label: 'File size', flex: 1 },
+]
 
-function ListView({ items }: { items: DriveItem[] }) {
-    const theme = useTheme()
-    const folders = items.filter(i => i.type === 'folder')
-    const files = items.filter(i => i.type !== 'folder')
+function ListView({ items }: { items: DriveItemView[] }) {
+    const folders = items.filter(i => i.isFolder)
+    const files = items.filter(i => !i.isFolder)
 
     return (
         <View style={styles.listContainer}>
-            <View style={[styles.listHeader, { borderBottomColor: theme.borderColor.val }]}>
-                <Text style={[styles.headerText, { color: theme.color8.val, flex: 3 }]}>Name</Text>
-                <Text style={[styles.headerText, { color: theme.color8.val, flex: 2 }]}>Owner</Text>
-                <Text style={[styles.headerText, { color: theme.color8.val, flex: 2 }]}>
-                    Date modified
-                </Text>
-                <Text style={[styles.headerText, { color: theme.color8.val, flex: 1 }]}>
-                    File size
-                </Text>
-            </View>
+            <DataTableHeader columns={DRIVE_COLUMNS} />
             {folders.map(item => (
                 <DriveListRow key={item.id} item={item} />
             ))}
@@ -58,11 +54,11 @@ function ListView({ items }: { items: DriveItem[] }) {
     )
 }
 
-function DriveListRow({ item }: { item: DriveItem }) {
+function DriveListRow({ item }: { item: DriveItemView }) {
     const theme = useTheme()
     const { selectedItemId, openItem } = useDrive()
     const isSelected = selectedItemId === item.id
-    const { icon: FileIcon, color: iconColor } = getFileIcon(item.type, theme.color8.val)
+    const { icon: FileIcon, color: iconColor } = getFileIcon(item.category, theme.color8.val)
 
     return (
         <Pressable
@@ -86,18 +82,18 @@ function DriveListRow({ item }: { item: DriveItem }) {
                 {item.owner}
             </Text>
             <Text style={[styles.cellText, { color: theme.color8.val, flex: 2 }]}>
-                {formatDate(item.modifiedDate)}
+                {formatDate(item.updated)}
             </Text>
             <Text style={[styles.cellText, { color: theme.color8.val, flex: 1 }]}>
-                {item.type === 'folder' ? '—' : formatBytes(item.size)}
+                {item.isFolder ? '—' : formatBytes(item.size)}
             </Text>
         </Pressable>
     )
 }
 
-function GridView({ items }: { items: DriveItem[] }) {
-    const folders = items.filter(i => i.type === 'folder')
-    const files = items.filter(i => i.type !== 'folder')
+function GridView({ items }: { items: DriveItemView[] }) {
+    const folders = items.filter(i => i.isFolder)
+    const files = items.filter(i => !i.isFolder)
 
     return (
         <View style={styles.gridContainer}>
@@ -130,11 +126,11 @@ function GridSectionHeader({ title }: { title: string }) {
     return <Text style={[styles.gridSectionTitle, { color: theme.color8.val }]}>{title}</Text>
 }
 
-function FolderGridCard({ item }: { item: DriveItem }) {
+function FolderGridCard({ item }: { item: DriveItemView }) {
     const theme = useTheme()
     const { selectedItemId, openItem } = useDrive()
     const isSelected = selectedItemId === item.id
-    const { icon: FileIcon, color: iconColor } = getFileIcon(item.type, theme.color8.val)
+    const { icon: FileIcon, color: iconColor } = getFileIcon(item.category, theme.color8.val)
 
     return (
         <Pressable
@@ -153,11 +149,11 @@ function FolderGridCard({ item }: { item: DriveItem }) {
     )
 }
 
-function FileGridCard({ item }: { item: DriveItem }) {
+function FileGridCard({ item }: { item: DriveItemView }) {
     const theme = useTheme()
     const { selectedItemId, openItem } = useDrive()
     const isSelected = selectedItemId === item.id
-    const { icon: FileIcon, color: iconColor } = getFileIcon(item.type, theme.color8.val)
+    const { icon: FileIcon, color: iconColor } = getFileIcon(item.category, theme.color8.val)
 
     return (
         <Pressable
@@ -182,30 +178,9 @@ function FileGridCard({ item }: { item: DriveItem }) {
 }
 
 const styles = StyleSheet.create({
-    emptyContainer: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 24,
-    },
-    emptyText: {
-        fontSize: 15,
-    },
     listContainer: {
         flex: 1,
         paddingHorizontal: 16,
-    },
-    listHeader: {
-        flexDirection: 'row',
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderBottomWidth: 1,
-    },
-    headerText: {
-        fontSize: 12,
-        fontWeight: '600',
-        textTransform: 'uppercase',
-        letterSpacing: 0.5,
     },
     listRow: {
         flexDirection: 'row',

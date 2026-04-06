@@ -1,14 +1,18 @@
 import {
     File,
+    FileArchive,
+    FileCode,
     FileSpreadsheet,
     FileText,
+    Film,
     Folder,
     Image,
     type LucideIcon,
+    Music,
     Palette,
     Presentation,
 } from 'lucide-react-native'
-import type { DriveItemType } from '../types'
+import type { FileCategory } from '../types'
 
 export interface FileIconConfig {
     icon: LucideIcon
@@ -20,7 +24,7 @@ interface FileIconEntry {
     brandColor?: string
 }
 
-const fileIconMap: Record<DriveItemType, FileIconEntry> = {
+const fileIconMap: Record<FileCategory, FileIconEntry> = {
     folder: { icon: Folder },
     document: { icon: FileText, brandColor: '#4285F4' },
     spreadsheet: { icon: FileSpreadsheet, brandColor: '#0F9D58' },
@@ -28,9 +32,29 @@ const fileIconMap: Record<DriveItemType, FileIconEntry> = {
     image: { icon: Image, brandColor: '#F5A623' },
     presentation: { icon: Presentation, brandColor: '#FBBC04' },
     drawing: { icon: Palette, brandColor: '#EA4335' },
+    video: { icon: Film, brandColor: '#EA4335' },
+    audio: { icon: Music, brandColor: '#4285F4' },
+    archive: { icon: FileArchive, brandColor: '#795548' },
+    code: { icon: FileCode, brandColor: '#607D8B' },
+    unknown: { icon: File },
 }
 
-export function getFileIcon(type: DriveItemType, neutralColor: string): FileIconConfig {
-    const entry = fileIconMap[type] ?? { icon: File }
+export function mimeTypeToCategory(mimeType: string, isFolder: boolean): FileCategory {
+    if (isFolder) return 'folder'
+    if (mimeType === 'application/pdf') return 'pdf'
+    if (mimeType.startsWith('image/')) return 'image'
+    if (mimeType.startsWith('video/')) return 'video'
+    if (mimeType.startsWith('audio/')) return 'audio'
+    if (/document|word|text\/plain/.test(mimeType)) return 'document'
+    if (/spreadsheet|excel|text\/csv/.test(mimeType)) return 'spreadsheet'
+    if (/presentation|powerpoint/.test(mimeType)) return 'presentation'
+    if (/drawing/.test(mimeType)) return 'drawing'
+    if (/zip|gzip|tar|compressed/.test(mimeType)) return 'archive'
+    if (/text\/javascript|application\/json|text\/html|text\/css/.test(mimeType)) return 'code'
+    return 'unknown'
+}
+
+export function getFileIcon(category: FileCategory, neutralColor: string): FileIconConfig {
+    const entry = fileIconMap[category] ?? { icon: File }
     return { icon: entry.icon, color: entry.brandColor ?? neutralColor }
 }

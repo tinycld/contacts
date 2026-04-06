@@ -2,13 +2,13 @@ import { X } from 'lucide-react-native'
 import { useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { useTheme } from 'tamagui'
-import type { DriveItem } from '../types'
+import { formatBytes, formatDate } from '~/lib/format-utils'
+import type { DriveItemView } from '../types'
 import { getFileIcon } from './file-icons'
-import { formatBytes, formatDate } from './format-utils'
 
 interface DetailPanelProps {
     isVisible: boolean
-    item: DriveItem | undefined
+    item: DriveItemView | undefined
     onClose: () => void
 }
 
@@ -18,10 +18,10 @@ export function DetailPanel({ isVisible, item, onClose }: DetailPanelProps) {
     return <DetailPanelContent item={item} onClose={onClose} />
 }
 
-function DetailPanelContent({ item, onClose }: { item: DriveItem; onClose: () => void }) {
+function DetailPanelContent({ item, onClose }: { item: DriveItemView; onClose: () => void }) {
     const theme = useTheme()
     const [activeTab, setActiveTab] = useState<'details' | 'activity'>('details')
-    const { icon: FileIcon, color: iconColor } = getFileIcon(item.type, theme.color8.val)
+    const { icon: FileIcon, color: iconColor } = getFileIcon(item.category, theme.color8.val)
 
     return (
         <View style={[styles.container, { borderLeftColor: theme.borderColor.val }]}>
@@ -94,7 +94,7 @@ function DetailPanelContent({ item, onClose }: { item: DriveItem; onClose: () =>
     )
 }
 
-function DetailsContent({ item }: { item: DriveItem }) {
+function DetailsContent({ item }: { item: DriveItemView }) {
     const theme = useTheme()
     const accessText = item.shared ? `Shared with others` : 'Private to you'
 
@@ -128,7 +128,7 @@ function DetailsContent({ item }: { item: DriveItem }) {
                 <DetailRow label="Type" value={item.mimeType} />
                 <DetailRow label="Size" value={formatBytes(item.size)} />
                 <DetailRow label="Owner" value={item.owner} />
-                <DetailRow label="Modified" value={formatDate(item.modifiedDate)} />
+                <DetailRow label="Modified" value={formatDate(item.updated)} />
             </View>
         </View>
     )

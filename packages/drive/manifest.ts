@@ -7,6 +7,10 @@ const manifest = {
     nav: { label: 'Drive', icon: 'hard-drive', order: 12 },
     sidebar: { component: 'sidebar' },
     provider: { component: 'provider' },
+    migrations: { directory: 'pb-migrations' },
+    collections: { register: 'collections', types: 'types' },
+    seed: { script: 'seed' },
+    server: { package: 'server', module: 'tinycld/addons/drive' },
 }
 
 export default manifest

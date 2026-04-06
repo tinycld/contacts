@@ -6,19 +6,30 @@ import {
     Link,
     List,
     MoreVertical,
+    Search,
     Share2,
     Trash2,
     X,
 } from 'lucide-react-native'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 import { useTheme } from 'tamagui'
+import { ToolbarIconButton } from '~/components/ToolbarIconButton'
 import { useDrive } from '../hooks/useDrive'
 import type { ViewMode } from '../types'
 
 export function DriveToolbar() {
     const theme = useTheme()
-    const { selectedItem, breadcrumbs, viewMode, setViewMode, selectItem, navigateToFolder } =
-        useDrive()
+    const {
+        selectedItem,
+        breadcrumbs,
+        viewMode,
+        setViewMode,
+        selectItem,
+        navigateToFolder,
+        searchQuery,
+        setSearchQuery,
+        isSearching,
+    } = useDrive()
 
     if (selectedItem) {
         return (
@@ -32,26 +43,72 @@ export function DriveToolbar() {
         )
     }
 
+    const isSearchActive = searchQuery.length >= 2
+
     return (
         <View style={[styles.toolbar, { borderBottomColor: theme.borderColor.val }]}>
-            <View style={styles.breadcrumbs}>
-                <Pressable onPress={() => navigateToFolder(null)}>
-                    <Text style={[styles.breadcrumbText, { color: theme.accentColor.val }]}>
-                        My Drive
-                    </Text>
-                </Pressable>
-                {breadcrumbs.map(crumb => (
-                    <View key={crumb.id} style={styles.breadcrumbSegment}>
-                        <ChevronRight size={14} color={theme.color8.val} />
-                        <Pressable onPress={() => navigateToFolder(crumb.id)}>
-                            <Text style={[styles.breadcrumbText, { color: theme.accentColor.val }]}>
-                                {crumb.name}
-                            </Text>
-                        </Pressable>
-                    </View>
-                ))}
+            {isSearchActive ? (
+                <Text style={[styles.searchLabel, { color: theme.color8.val }]}>
+                    Search results{isSearching ? '...' : ''}
+                </Text>
+            ) : (
+                <View style={styles.breadcrumbs}>
+                    <Pressable onPress={() => navigateToFolder('')}>
+                        <Text style={[styles.breadcrumbText, { color: theme.accentColor.val }]}>
+                            My Drive
+                        </Text>
+                    </Pressable>
+                    {breadcrumbs.map(crumb => (
+                        <View key={crumb.id} style={styles.breadcrumbSegment}>
+                            <ChevronRight size={14} color={theme.color8.val} />
+                            <Pressable onPress={() => navigateToFolder(crumb.id)}>
+                                <Text
+                                    style={[
+                                        styles.breadcrumbText,
+                                        { color: theme.accentColor.val },
+                                    ]}
+                                >
+                                    {crumb.name}
+                                </Text>
+                            </Pressable>
+                        </View>
+                    ))}
+                </View>
+            )}
+            <View style={styles.rightSection}>
+                <SearchInput
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    theme={theme}
+                />
+                <ViewToggle viewMode={viewMode} onSetViewMode={setViewMode} theme={theme} />
             </View>
-            <ViewToggle viewMode={viewMode} onSetViewMode={setViewMode} theme={theme} />
+        </View>
+    )
+}
+
+interface SearchInputProps {
+    value: string
+    onChangeText: (text: string) => void
+    theme: ReturnType<typeof useTheme>
+}
+
+function SearchInput({ value, onChangeText, theme }: SearchInputProps) {
+    return (
+        <View style={[styles.searchContainer, { borderColor: theme.borderColor.val }]}>
+            <Search size={14} color={theme.color8.val} />
+            <TextInput
+                style={[styles.searchInput, { color: theme.color.val }]}
+                placeholder="Search in Drive"
+                placeholderTextColor={theme.color8.val}
+                value={value}
+                onChangeText={onChangeText}
+            />
+            {value.length > 0 && (
+                <Pressable onPress={() => onChangeText('')} hitSlop={8}>
+                    <X size={14} color={theme.color8.val} />
+                </Pressable>
+            )}
         </View>
     )
 }
@@ -72,12 +129,12 @@ function SelectionToolbar({
     theme,
 }: SelectionToolbarProps) {
     const actionIcons = [
-        { key: 'share', icon: Share2 },
-        { key: 'download', icon: Download },
-        { key: 'move', icon: FolderInput },
-        { key: 'trash', icon: Trash2 },
-        { key: 'link', icon: Link },
-        { key: 'more', icon: MoreVertical },
+        { key: 'share', icon: Share2, label: 'Share' },
+        { key: 'download', icon: Download, label: 'Download' },
+        { key: 'move', icon: FolderInput, label: 'Move' },
+        { key: 'trash', icon: Trash2, label: 'Trash' },
+        { key: 'link', icon: Link, label: 'Copy link' },
+        { key: 'more', icon: MoreVertical, label: 'More actions' },
     ]
 
     return (
@@ -91,10 +148,8 @@ function SelectionToolbar({
                 </Text>
             </View>
             <View style={styles.actions}>
-                {actionIcons.map(({ key, icon: Icon }) => (
-                    <Pressable key={key} style={styles.actionButton}>
-                        <Icon size={18} color={theme.color8.val} />
-                    </Pressable>
+                {actionIcons.map(({ key, icon, label }) => (
+                    <ToolbarIconButton key={key} icon={icon} label={label} onPress={() => {}} />
                 ))}
                 <View style={[styles.actionDivider, { backgroundColor: theme.borderColor.val }]} />
                 <ViewToggle viewMode={viewMode} onSetViewMode={onSetViewMode} theme={theme} />
@@ -168,6 +223,31 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '500',
     },
+    rightSection: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    searchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        width: 240,
+    },
+    searchInput: {
+        flex: 1,
+        fontSize: 13,
+        padding: 0,
+    },
+    searchLabel: {
+        fontSize: 14,
+        fontWeight: '500',
+        flex: 1,
+    },
     viewToggle: {
         flexDirection: 'row',
         gap: 2,
@@ -194,10 +274,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 4,
-    },
-    actionButton: {
-        padding: 6,
-        borderRadius: 6,
     },
     actionDivider: {
         width: 1,
