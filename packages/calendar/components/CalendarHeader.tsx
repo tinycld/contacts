@@ -1,6 +1,6 @@
 import { ChevronDown, ChevronLeft, ChevronRight, Menu } from 'lucide-react-native'
 import { Pressable } from 'react-native'
-import { Button, SizableText, useTheme, XStack } from 'tamagui'
+import { Button, SizableText, useTheme, XGroup, XStack } from 'tamagui'
 import { useBreakpoint } from '~/components/workspace/useBreakpoint'
 import { useWorkspaceLayout } from '~/components/workspace/useWorkspaceLayout'
 import { formatDateLabel } from '../hooks/useCalendarNavigation'
@@ -88,20 +88,21 @@ export function CalendarHeader() {
                 {dateLabel}
             </SizableText>
 
-            <XStack gap="$1">
+            <XGroup>
                 {DESKTOP_VIEW_MODES.map(mode => (
-                    <Button
-                        key={mode}
-                        size="$3"
-                        theme={viewMode === mode ? 'accent' : undefined}
-                        variant={viewMode === mode ? undefined : 'outlined'}
-                        borderColor={viewMode === mode ? undefined : '$borderColor'}
-                        onPress={() => setViewMode(mode)}
-                    >
-                        <Button.Text>{VIEW_LABELS[mode]}</Button.Text>
-                    </Button>
+                    <XGroup.Item key={mode}>
+                        <Button
+                            size="$3"
+                            theme={viewMode === mode ? 'accent' : undefined}
+                            variant={viewMode === mode ? undefined : 'outlined'}
+                            borderColor={viewMode === mode ? undefined : '$borderColor'}
+                            onPress={() => setViewMode(mode)}
+                        >
+                            <Button.Text>{VIEW_LABELS[mode]}</Button.Text>
+                        </Button>
+                    </XGroup.Item>
                 ))}
-            </XStack>
+            </XGroup>
         </XStack>
     )
 }
