@@ -1,9 +1,9 @@
 package mail
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
-	"io"
 	"mime"
 	"regexp"
 	"strings"
@@ -11,6 +11,8 @@ import (
 
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
+
+	"tinycld/textextract"
 )
 
 // recentlyIndexed tracks message IDs that were indexed inline by storeMessage(),
@@ -194,30 +196,28 @@ func flattenParticipants(jsonStr string) string {
 
 const maxAttachmentBytes = 50 * 1024 // 50KB per attachment
 
-// extractTextFromAttachments extracts text from text-based inline attachments
+// extractTextFromAttachments extracts searchable text from inline attachments
 // (used by storeMessage where we have base64-encoded content in memory).
+// Supports all formats registered in textextract (PDF, DOCX, XLSX, PPTX, etc).
 func extractTextFromAttachments(attachments []InboundAttachment) string {
 	var texts []string
 	for _, att := range attachments {
-		if !strings.HasPrefix(att.ContentType, "text/") {
-			continue
-		}
 		decoded, err := base64.StdEncoding.DecodeString(att.Content)
 		if err != nil {
 			continue
 		}
-		if len(decoded) > maxAttachmentBytes {
-			decoded = decoded[:maxAttachmentBytes]
+		text, err := textextract.Extract(bytes.NewReader(decoded), att.ContentType, maxAttachmentBytes)
+		if err != nil || text == "" {
+			continue
 		}
-		if text := strings.TrimSpace(string(decoded)); text != "" {
-			texts = append(texts, text)
-		}
+		texts = append(texts, text)
 	}
 	return strings.Join(texts, " ")
 }
 
-// loadTextAttachments reads text-based attachments from PB storage for a record.
+// loadTextAttachments extracts searchable text from stored attachments for a record.
 // Used by the record hook when storeMessage wasn't involved.
+// Supports all formats registered in textextract (PDF, DOCX, XLSX, PPTX, etc).
 func loadTextAttachments(app *pocketbase.PocketBase, record *core.Record) string {
 	filenames := record.GetStringSlice("attachments")
 	if len(filenames) == 0 {
@@ -237,7 +237,7 @@ func loadTextAttachments(app *pocketbase.PocketBase, record *core.Record) string
 			continue
 		}
 		ct := mime.TypeByExtension("." + ext)
-		if !strings.HasPrefix(ct, "text/") {
+		if ct == "" {
 			continue
 		}
 
@@ -246,17 +246,12 @@ func loadTextAttachments(app *pocketbase.PocketBase, record *core.Record) string
 		if err != nil {
 			continue
 		}
-		data, err := io.ReadAll(io.LimitReader(blob, maxAttachmentBytes+1))
+		text, extractErr := textextract.Extract(blob, ct, maxAttachmentBytes)
 		blob.Close()
-		if err != nil {
+		if extractErr != nil || text == "" {
 			continue
 		}
-		if len(data) > maxAttachmentBytes {
-			data = data[:maxAttachmentBytes]
-		}
-		if text := strings.TrimSpace(string(data)); text != "" {
-			texts = append(texts, text)
-		}
+		texts = append(texts, text)
 	}
 	return strings.Join(texts, " ")
 }

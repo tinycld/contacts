@@ -1,7 +1,8 @@
 import { X } from 'lucide-react-native'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useTheme } from 'tamagui'
-import { type AttachmentFile, formatFileSize } from '../hooks/useAttachments'
+import { formatBytes } from '~/lib/format-utils'
+import type { AttachmentFile } from '../hooks/useAttachments'
 
 interface AttachmentRibbonProps {
     isVisible: boolean
@@ -57,7 +58,7 @@ function AttachmentChip({
                 {truncatedName}
             </Text>
             <Text style={[styles.chipSize, { color: theme.color8.val }]}>
-                {formatFileSize(attachment.size)}
+                {formatBytes(attachment.size)}
             </Text>
             <Pressable onPress={onRemove} style={styles.chipRemove} hitSlop={4}>
                 <X size={12} color={theme.color8.val} />

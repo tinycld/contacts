@@ -72,7 +72,7 @@ TinyCld is an One Stack React Native application backed by PocketBase . The repo
 - The logger shows timestamps and colors in development mode
 
 ## Scripts Reference
-- `npm run dev` boots Expo (`expo start -p 8100`) and the PocketBase binary (`./jobtimey --dev`) together.
+- `npm run dev` boots Expo (`expo start -p 7100`) and the PocketBase binary (`./jobtimey --dev`) together.
 - `npm run expo:dev` starts Expo only; pair with remote PocketBase when debugging API calls.
 - `npm run pb:dev` runs the PocketBase backend standalone.
 - `npm run typecheck` runs `tsc --noEmit --skipLibCheck`.

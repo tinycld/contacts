@@ -10,9 +10,9 @@ import {
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { useTheme } from 'tamagui'
 import { useBreakpoint } from '~/components/workspace/useBreakpoint'
+import { formatRelativeDate } from '~/lib/format-utils'
 import { MenuActionItem, ToolbarMenu } from './DropdownMenu'
 import { LabelBadge } from './LabelBadge'
-import { formatMailDate } from './thread-list-item'
 
 interface ThreadSubjectHeaderProps {
     subject: string
@@ -107,7 +107,7 @@ export function MessageHeader({
         .toUpperCase()
         .slice(0, 2)
 
-    const dateDisplay = formatMailDate(date)
+    const dateDisplay = formatRelativeDate(date)
 
     return (
         <View style={styles.messageHeaderContainer}>

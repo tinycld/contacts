@@ -1,11 +1,10 @@
 import { Building2, type LucideIcon, Settings, User } from 'lucide-react-native'
-import { useRouter } from 'one'
+import { Link } from 'one'
 import { Pressable, StyleSheet, View } from 'react-native'
 import { useTheme } from 'tamagui'
 import { useAddons } from '~/lib/addons/use-addons'
 import { useAuth } from '~/lib/auth'
 import { useOrgHref } from '~/lib/org-routes'
-import { useOrgSlug } from '~/lib/use-org-slug'
 import { getIcon } from './addon-icon-map'
 import { useWorkspaceLayout } from './useWorkspaceLayout'
 
@@ -14,7 +13,6 @@ export function AddonRail() {
     const addons = useAddons()
     const { activeAddonSlug } = useWorkspaceLayout()
     const { logout } = useAuth({ throwIfAnon: false })
-    const router = useRouter()
     const orgHref = useOrgHref()
 
     const sorted = [...addons].sort((a, b) => (a.nav.order ?? 99) - (b.nav.order ?? 99))
@@ -22,13 +20,9 @@ export function AddonRail() {
     return (
         <View style={[styles.rail, { backgroundColor: theme.railBackground.val }]}>
             <View style={styles.topSection}>
-                <Pressable
-                    onPress={() => router.push(orgHref(''))}
-                    style={styles.railItem}
-                    accessibilityLabel="Organization home"
-                >
+                <Link href={orgHref('')} style={styles.railItem} aria-label="Organization home">
                     <Building2 size={24} color={theme.railText.val} />
-                </Pressable>
+                </Link>
 
                 <View style={[styles.divider, { backgroundColor: theme.railText.val }]} />
 
@@ -50,13 +44,9 @@ export function AddonRail() {
             </View>
 
             <View style={styles.bottomSection}>
-                <Pressable
-                    onPress={() => router.push(orgHref('settings'))}
-                    style={styles.railItem}
-                    accessibilityLabel="Settings"
-                >
+                <Link href={orgHref('settings')} style={styles.railItem} aria-label="Settings">
                     <Settings size={22} color={theme.railText.val} />
-                </Pressable>
+                </Link>
 
                 <Pressable onPress={logout} style={styles.avatar} accessibilityLabel="Sign out">
                     <User size={20} color={theme.railActiveText.val} />
@@ -81,20 +71,19 @@ function AddonRailItem({
     activeColor: string
     textColor: string
 }) {
-    const router = useRouter()
-    const orgSlug = useOrgSlug()
+    const orgHref = useOrgHref()
 
     return (
-        <Pressable
-            onPress={() => router.push(`/a/${orgSlug}/${slug}`)}
+        <Link
+            href={orgHref(slug as never)}
             style={[styles.railItem, isActive && { backgroundColor: `${activeColor}22` }]}
-            accessibilityLabel={label}
+            aria-label={label}
         >
             {isActive && (
                 <View style={[styles.activeIndicator, { backgroundColor: activeColor }]} />
             )}
             <Icon size={22} color={textColor} />
-        </Pressable>
+        </Link>
     )
 }
 

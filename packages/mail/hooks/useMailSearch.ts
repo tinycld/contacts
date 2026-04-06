@@ -99,14 +99,6 @@ function parseDuration(value: string): number {
     }
 }
 
-function isAbortError(err: unknown): boolean {
-    return err instanceof DOMException && err.name === 'AbortError'
-}
-
-function toErrorMessage(err: unknown): string {
-    return err instanceof Error ? err.message : 'Search failed'
-}
-
 export function useMailSearch(
     query: string,
     filters: AdvancedSearchFilters = {}
@@ -144,9 +136,9 @@ export function useMailSearch(
                 setTotal(response.total)
             }
         } catch (err: unknown) {
-            if (isAbortError(err)) return
+            if (err instanceof DOMException && err.name === 'AbortError') return
             if (!controller.signal.aborted) {
-                setError(toErrorMessage(err))
+                setError(err instanceof Error ? err.message : 'Search failed')
                 setResults([])
                 setTotal(0)
             }

@@ -2,13 +2,21 @@ import { useLiveQuery } from '@tanstack/react-db'
 import { Star } from 'lucide-react-native'
 import { Link } from 'one'
 import { useMemo, useState } from 'react'
-import { Pressable } from 'react-native'
+import { Pressable, View } from 'react-native'
 import { Input, SizableText, useTheme, XStack, YStack } from 'tamagui'
+import { DataTableHeader } from '~/components/DataTableHeader'
+import { EmptyState } from '~/components/EmptyState'
 import { useMutation } from '~/lib/mutations'
 import { useOrgHref } from '~/lib/org-routes'
 import { useStore } from '~/lib/pocketbase'
 import { ContactAvatar } from '../components/ContactAvatar'
 import { useContactSearch } from '../hooks/useContactSearch'
+
+const CONTACT_COLUMNS = [
+    { label: 'Name', flex: 2 },
+    { label: 'Email', flex: 2 },
+    { label: 'Phone', flex: 1 },
+]
 
 export default function ContactListScreen() {
     const [contactsCollection] = useStore('contacts')
@@ -65,19 +73,10 @@ export default function ContactListScreen() {
 
     if (isEmpty) {
         return (
-            <YStack flex={1} padding="$5" backgroundColor="$background">
-                <SizableText size="$8" fontWeight="bold" color="$color">
-                    Contacts
-                </SizableText>
-                <SizableText size="$4" color="$color8" marginTop="$2" marginBottom="$4">
-                    No contacts yet.
-                </SizableText>
-                <Link href={newContactHref}>
-                    <SizableText size="$4" color="$accentColor" fontWeight="600">
-                        + Add Contact
-                    </SizableText>
-                </Link>
-            </YStack>
+            <EmptyState
+                message="No contacts yet."
+                action={{ label: '+ Add Contact', href: newContactHref }}
+            />
         )
     }
 
@@ -100,23 +99,7 @@ export default function ContactListScreen() {
                 />
             </XStack>
 
-            <XStack
-                paddingHorizontal="$3"
-                paddingVertical="$2"
-                borderBottomWidth={1}
-                borderBottomColor="$borderColor"
-            >
-                <SizableText size="$2" color="$color8" fontWeight="600" flex={2}>
-                    Name
-                </SizableText>
-                <SizableText size="$2" color="$color8" fontWeight="600" flex={2}>
-                    Email
-                </SizableText>
-                <SizableText size="$2" color="$color8" fontWeight="600" flex={1}>
-                    Phone
-                </SizableText>
-                <YStack width={32} />
-            </XStack>
+            <DataTableHeader columns={CONTACT_COLUMNS} trailing={<View style={{ width: 32 }} />} />
 
             <YStack>
                 {filteredContacts?.map(contact => (

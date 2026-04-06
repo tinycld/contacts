@@ -1,6 +1,6 @@
 import { Platform, ScrollView, StyleSheet } from 'react-native'
 import { ListItem, SizableText, YStack } from 'tamagui'
-import { ContactAvatar } from '../../contacts/components/ContactAvatar'
+import { NameAvatar as ContactAvatar } from '~/components/NameAvatar'
 
 interface Suggestion {
     id: string

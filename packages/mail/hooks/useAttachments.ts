@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { formatBytes } from '~/lib/format-utils'
 
 export interface AttachmentFile {
     id: string
@@ -32,7 +33,7 @@ export function useAttachments() {
             }
             const newTotal = combined.reduce((sum, a) => sum + a.size, 0)
             if (newTotal > MAX_TOTAL_SIZE) {
-                throw new Error(`Total attachment size exceeds ${formatFileSize(MAX_TOTAL_SIZE)}`)
+                throw new Error(`Total attachment size exceeds ${formatBytes(MAX_TOTAL_SIZE)}`)
             }
             return combined
         })
@@ -47,10 +48,4 @@ export function useAttachments() {
     }
 
     return { attachments, totalSize, addFiles, removeFile, clearAll }
-}
-
-export function formatFileSize(bytes: number): string {
-    if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
