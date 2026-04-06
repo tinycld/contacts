@@ -17,8 +17,8 @@ declare module 'one' {
         | `/a/[orgSlug]/docs`
         | `/a/[orgSlug]/docs/`
         | `/a/[orgSlug]/docs/new`
-        | `/a/[orgSlug]/files`
-        | `/a/[orgSlug]/files/`
+        | `/a/[orgSlug]/drive`
+        | `/a/[orgSlug]/drive/`
         | `/a/[orgSlug]/mail`
         | `/a/[orgSlug]/mail/`
         | `/a/[orgSlug]/settings`
