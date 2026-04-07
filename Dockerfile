@@ -70,7 +70,7 @@ COPY react-native.config.cjs tamagui.config.ts ./
 
 # Copy generated addon wiring from generator stage
 COPY --from=addon-generator /app/lib/generated/ ./lib/generated/
-COPY --from=addon-generator /app/app/app/ ./app/app/
+COPY --from=addon-generator /app/app/a/ ./app/a/
 
 # Build web app directly (skip prebuild:web which re-runs addons:generate)
 ARG ONE_SERVER_URL
