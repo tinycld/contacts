@@ -28,6 +28,10 @@ WORKDIR /build
 # Copy Go module files first for better caching
 COPY server/go.mod server/go.sum ./
 
+# Copy shared Go packages (needed for go.mod replace directives)
+COPY server/mailer/ ./mailer/
+COPY server/textextract/ ./textextract/
+
 # Copy all addon server modules (needed for go.mod replace directives)
 COPY packages/ ../packages/
 
@@ -78,6 +82,7 @@ RUN npx one build
 FROM debian:bookworm-slim
 
 ENV SENTRY_DSN=""
+ENV SERVE_ON_DOMAINS=""
 
 # Install CA certificates for HTTPS
 RUN apt-get update \
@@ -109,7 +114,11 @@ COPY CHECKS ./
 # 465: SMTPS (implicit TLS)
 EXPOSE 7090 80 443 993 465
 
-# Default: HTTP on port 7090 without TLS.
-# For production with autocert, override CMD:
-#   CMD ["./tinycld", "serve", "mail.example.com"]
-CMD ["./tinycld", "serve", "--http=0.0.0.0:7090"]
+# When SERVE_ON_DOMAINS is set (space-separated), serve with autocert on those domains.
+# Otherwise fall back to plain HTTP on port 7090.
+#   dokku config:set myapp SERVE_ON_DOMAINS="tinycld.com tinycld.org www.tinycld.org"
+CMD if [ -n "$SERVE_ON_DOMAINS" ]; then \
+        exec ./tinycld serve $SERVE_ON_DOMAINS; \
+    else \
+        exec ./tinycld serve --http=0.0.0.0:7090; \
+    fi
