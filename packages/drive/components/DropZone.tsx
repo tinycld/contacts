@@ -13,11 +13,12 @@ export function DropZone({ children, onDrop, isEnabled }: DropZoneProps) {
     const [isDragging, setIsDragging] = useState(false)
     const theme = useTheme()
 
-    if (Platform.OS !== 'web' || !isEnabled) {
+    if (Platform.OS !== 'web') {
         return <View style={{ flex: 1 }}>{children}</View>
     }
 
     const handleDragEnter = (e: React.DragEvent) => {
+        if (!isEnabled) return
         e.preventDefault()
         e.stopPropagation()
         if (e.dataTransfer.types.includes('Files')) {
@@ -26,11 +27,13 @@ export function DropZone({ children, onDrop, isEnabled }: DropZoneProps) {
     }
 
     const handleDragOver = (e: React.DragEvent) => {
+        if (!isEnabled) return
         e.preventDefault()
         e.stopPropagation()
     }
 
     const handleDragLeave = (e: React.DragEvent) => {
+        if (!isEnabled) return
         e.preventDefault()
         e.stopPropagation()
         const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
@@ -46,6 +49,7 @@ export function DropZone({ children, onDrop, isEnabled }: DropZoneProps) {
     }
 
     const handleDrop = (e: React.DragEvent) => {
+        if (!isEnabled) return
         e.preventDefault()
         e.stopPropagation()
         setIsDragging(false)
@@ -66,7 +70,7 @@ export function DropZone({ children, onDrop, isEnabled }: DropZoneProps) {
             onDrop={handleDrop}
         >
             {children}
-            {isDragging && (
+            {isDragging && isEnabled && (
                 <View
                     style={{
                         position: 'absolute',
