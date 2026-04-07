@@ -1,0 +1,16 @@
+{
+    "healthchecks": {
+        "web": [
+            {
+                "type": "startup",
+                "name": "api health",
+                "path": "/api/health",
+                "port": 443,
+                "scheme": "https",
+                "attempts": 5,
+                "wait": 5,
+                "timeout": 10
+            }
+        ]
+    }
+}

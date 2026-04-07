@@ -106,13 +106,13 @@ COPY --from=addon-generator /app/server/pb_migrations ./pb_migrations
 # Create necessary directories
 RUN mkdir -p pb_data types
 
-COPY CHECKS ./
+COPY config/dokku.app.json ./app.json
 
 # 7090: default HTTP (backward compat / dev)
 # 80/443: autocert HTTP/HTTPS (production with domain)
 # 993: IMAPS (implicit TLS)
 # 465: SMTPS (implicit TLS)
-EXPOSE 7090 80 443 993 465
+EXPOSE 80 443 993 465
 
 # When SERVE_ON_DOMAINS is set (space-separated), serve with autocert on those domains.
 # Otherwise fall back to plain HTTP on port 7090.

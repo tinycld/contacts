@@ -1,6 +1,6 @@
 {
     "expo": {
-        "name": "ogmail",
+        "name": "tinycld",
         "slug": "ogmail",
         "platforms": ["ios", "android"],
         "plugins": ["vxrn/expo-plugin"],
