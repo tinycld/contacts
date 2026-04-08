@@ -83,14 +83,15 @@ function ListView({ items, isTrash }: { items: DriveItemView[]; isTrash: boolean
 
 function FilesListRow({ item }: { item: DriveItemView }) {
     const theme = useTheme()
-    const { selectedItemId, openItem, openPreview } = useDrive()
+    const { selectedItemId, selectItem, openPreview, navigateToFolder } = useDrive()
     const isSelected = selectedItemId === item.id
     const { icon: FileIcon, color: iconColor } = getFileIcon(item.category, theme.color8.val)
 
-    const handleSingle = useCallback(() => openItem(item), [item, openItem])
+    const handleSingle = useCallback(() => selectItem(item.id), [item.id, selectItem])
     const handleDouble = useCallback(() => {
-        if (!item.isFolder) openPreview(item)
-    }, [item, openPreview])
+        if (item.isFolder) navigateToFolder(item.id)
+        else openPreview(item)
+    }, [item, openPreview, navigateToFolder])
     const handlePress = useDoubleClick(handleSingle, handleDouble)
 
     return (
@@ -215,13 +216,17 @@ function GridSectionHeader({ title }: { title: string }) {
 
 function FolderGridCard({ item }: { item: DriveItemView }) {
     const theme = useTheme()
-    const { selectedItemId, openItem } = useDrive()
+    const { selectedItemId, selectItem, navigateToFolder } = useDrive()
     const isSelected = selectedItemId === item.id
     const { icon: FileIcon, color: iconColor } = getFileIcon(item.category, theme.color8.val)
 
+    const handleSingle = useCallback(() => selectItem(item.id), [item.id, selectItem])
+    const handleDouble = useCallback(() => navigateToFolder(item.id), [item.id, navigateToFolder])
+    const handlePress = useDoubleClick(handleSingle, handleDouble)
+
     return (
         <Pressable
-            onPress={() => openItem(item)}
+            onPress={handlePress}
             style={[
                 styles.folderCard,
                 { borderColor: theme.borderColor.val },
@@ -238,17 +243,13 @@ function FolderGridCard({ item }: { item: DriveItemView }) {
 
 function FileGridCard({ item }: { item: DriveItemView }) {
     const theme = useTheme()
-    const { selectedItemId, openItem, openPreview } = useDrive()
+    const { selectedItemId, selectItem, openPreview } = useDrive()
     const isSelected = selectedItemId === item.id
     const { icon: FileIcon, color: iconColor } = getFileIcon(item.category, theme.color8.val)
 
-    const handleSingle = useCallback(() => openItem(item), [item, openItem])
+    const handleSingle = useCallback(() => selectItem(item.id), [item.id, selectItem])
     const handleDouble = useCallback(() => openPreview(item), [item, openPreview])
     const handlePress = useDoubleClick(handleSingle, handleDouble)
-
-    const handleThumbnailPress = useCallback(() => {
-        openPreview(item)
-    }, [item, openPreview])
 
     return (
         <Pressable
@@ -265,12 +266,9 @@ function FileGridCard({ item }: { item: DriveItemView }) {
                     {item.name}
                 </Text>
             </View>
-            <Pressable
-                onPress={handleThumbnailPress}
-                style={[styles.fileCardBody, { backgroundColor: `${theme.color8.val}08` }]}
-            >
+            <View style={[styles.fileCardBody, { backgroundColor: `${theme.color8.val}08` }]}>
                 <Thumbnail item={item} size={120} />
-            </Pressable>
+            </View>
         </Pressable>
     )
 }
