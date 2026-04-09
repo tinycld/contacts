@@ -1,6 +1,13 @@
 import type React from 'react'
 import { useCallback, useMemo } from 'react'
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import {
+    type GestureResponderEvent,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
+} from 'react-native'
 import { useTheme } from 'tamagui'
 import { useCalendarMap } from '../hooks/useCalendarEvents'
 import { getTimeLabel, isToday } from '../hooks/useCalendarNavigation'
@@ -22,7 +29,7 @@ interface TimeGridProps {
     startHour?: number
     endHour?: number
     onSlotPress: (date: Date, hour: number) => void
-    onEventPress: (eventId: string) => void
+    onEventPress: (eventId: string, e: GestureResponderEvent) => void
 }
 
 function formatEventTime(event: CalendarEvents): string {
@@ -144,7 +151,7 @@ export function TimeGrid({
                                             height={layout.height}
                                             left={layout.left}
                                             width={layout.width}
-                                            onPress={() => onEventPress(event.id)}
+                                            onPress={e => onEventPress(event.id, e)}
                                         />
                                     )
                                 })}

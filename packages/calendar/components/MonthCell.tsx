@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { type GestureResponderEvent, Pressable, StyleSheet, Text, View } from 'react-native'
 import { useTheme } from 'tamagui'
 import { useCalendarMap } from '../hooks/useCalendarEvents'
 import { formatShortTime } from '../hooks/useCalendarNavigation'
@@ -13,7 +13,7 @@ interface MonthCellProps {
     cellLayout: MonthCellLayout | undefined
     eventMap: Map<string, CalendarEvents>
     onDatePress: (date: Date) => void
-    onEventPress: (eventId: string) => void
+    onEventPress: (eventId: string, e: GestureResponderEvent) => void
 }
 
 export function MonthCell({
@@ -71,7 +71,7 @@ export function MonthCell({
 
                 if (event.all_day) {
                     return (
-                        <Pressable key={event.id} onPress={() => onEventPress(event.id)}>
+                        <Pressable key={event.id} onPress={e => onEventPress(event.id, e)}>
                             <View style={[styles.allDayPill, { backgroundColor: colors.bg }]}>
                                 <Text
                                     style={[styles.allDayText, { color: colors.text }]}
@@ -87,7 +87,7 @@ export function MonthCell({
                 const timeStr = formatShortTime(new Date(event.start))
 
                 return (
-                    <Pressable key={event.id} onPress={() => onEventPress(event.id)}>
+                    <Pressable key={event.id} onPress={e => onEventPress(event.id, e)}>
                         <View style={styles.timedEvent}>
                             <View style={[styles.eventDot, { backgroundColor: colors.bg }]} />
                             <Text style={[styles.eventTime, { color: theme.color8.val }]}>

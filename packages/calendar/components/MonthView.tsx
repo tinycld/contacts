@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { type GestureResponderEvent, Pressable, StyleSheet, Text, View } from 'react-native'
 import { useTheme } from 'tamagui'
 import { useCalendarEvents, useCalendarMap } from '../hooks/useCalendarEvents'
 import { addDays, eventOverlapsRange } from '../hooks/useCalendarNavigation'
@@ -113,7 +113,7 @@ interface MultiDayBarsProps {
     cellLayoutMap: Map<number, MonthCellLayout>
     eventMap: Map<string, CalendarEvents>
     calendarMap: Map<string, { color: string }>
-    onEventPress: (eventId: string) => void
+    onEventPress: (eventId: string, e: GestureResponderEvent) => void
 }
 
 function MultiDayBars({ cellLayoutMap, eventMap, calendarMap, onEventPress }: MultiDayBarsProps) {
@@ -135,7 +135,7 @@ function MultiDayBars({ cellLayoutMap, eventMap, calendarMap, onEventPress }: Mu
             bars.push(
                 <Pressable
                     key={layout.id}
-                    onPress={() => onEventPress(layout.id)}
+                    onPress={e => onEventPress(layout.id, e)}
                     style={{
                         position: 'absolute',
                         top,

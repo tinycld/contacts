@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { type GestureResponderEvent, Pressable, StyleSheet, Text, View } from 'react-native'
 import { useTheme } from 'tamagui'
 import { useCalendarMap } from '../hooks/useCalendarEvents'
 import { type LayoutEvent, layoutAllDayEvents } from '../layout'
@@ -12,7 +12,7 @@ interface AllDayBarProps {
     events: CalendarEvents[]
     weekStart: Date
     dayCount: number
-    onEventPress: (eventId: string) => void
+    onEventPress: (eventId: string, e: GestureResponderEvent) => void
 }
 
 export function AllDayBar({ events, weekStart, dayCount, onEventPress }: AllDayBarProps) {
@@ -57,7 +57,7 @@ export function AllDayBar({ events, weekStart, dayCount, onEventPress }: AllDayB
                     return (
                         <Pressable
                             key={event.id}
-                            onPress={() => onEventPress(event.id)}
+                            onPress={e => onEventPress(event.id, e)}
                             style={{
                                 position: 'absolute',
                                 top: layout.row * ROW_HEIGHT + 2,

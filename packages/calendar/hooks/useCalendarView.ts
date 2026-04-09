@@ -8,6 +8,7 @@ import {
     useMemo,
     useState,
 } from 'react'
+import type { GestureResponderEvent } from 'react-native'
 import { useBreakpoint } from '~/components/workspace/useBreakpoint'
 import { useOrgHref } from '~/lib/org-routes'
 import { addDays, addMonths, addWeeks, parseDate, toDateString } from './useCalendarNavigation'
@@ -21,10 +22,17 @@ function parseViewMode(str: string | undefined): ViewMode {
     return 'week'
 }
 
+export interface AnchorRect {
+    x: number
+    y: number
+    width: number
+    height: number
+}
+
 type PopoverState =
     | { type: 'closed' }
     | { type: 'quick-create'; date: Date; hour: number }
-    | { type: 'event-detail'; eventId: string }
+    | { type: 'event-detail'; eventId: string; anchorRect?: AnchorRect }
 
 interface CalendarViewState {
     viewMode: ViewMode
@@ -36,7 +44,7 @@ interface CalendarViewState {
     goPrevious: () => void
     goToDate: (date: Date) => void
     openQuickCreate: (date: Date, hour: number) => void
-    openEventDetail: (eventId: string) => void
+    openEventDetail: (eventId: string, e?: GestureResponderEvent) => void
     closePopover: () => void
 }
 
@@ -104,7 +112,22 @@ export function useCalendarView(): CalendarViewState {
     )
 
     const openEventDetail = useCallback(
-        (eventId: string) => setPopover({ type: 'event-detail', eventId }),
+        (eventId: string, e?: GestureResponderEvent) => {
+            let anchorRect: AnchorRect | undefined
+            if (e?.currentTarget) {
+                const target = e.currentTarget as unknown as Element
+                if ('getBoundingClientRect' in target) {
+                    const rect = target.getBoundingClientRect()
+                    anchorRect = {
+                        x: rect.left,
+                        y: rect.top,
+                        width: rect.width,
+                        height: rect.height,
+                    }
+                }
+            }
+            setPopover({ type: 'event-detail', eventId, anchorRect })
+        },
         [setPopover]
     )
 

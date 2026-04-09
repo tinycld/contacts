@@ -47,6 +47,7 @@ function CalendarLayoutInner() {
                 event={event}
                 calendarName={calendar?.name ?? ''}
                 calendarColorKey={calendar?.color ?? 'blue'}
+                anchorRect={popover.type === 'event-detail' ? popover.anchorRect : undefined}
                 onClose={closePopover}
                 onDelete={id => deleteEvent.mutate(id)}
             />

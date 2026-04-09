@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { type GestureResponderEvent, Pressable, StyleSheet, Text, View } from 'react-native'
 
 interface EventBlockProps {
     title: string
@@ -9,7 +9,7 @@ interface EventBlockProps {
     height: number
     left?: number
     width?: number
-    onPress: () => void
+    onPress: (e: GestureResponderEvent) => void
 }
 
 export function EventBlock({

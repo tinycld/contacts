@@ -1,5 +1,12 @@
 import { useMemo } from 'react'
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
+import {
+    FlatList,
+    type GestureResponderEvent,
+    Pressable,
+    StyleSheet,
+    Text,
+    View,
+} from 'react-native'
 import { useTheme } from 'tamagui'
 import { useCalendarEvents, useCalendarMap } from '../hooks/useCalendarEvents'
 import {
@@ -30,7 +37,13 @@ function formatTimeRange(event: CalendarEvents): string {
     return `${fmt(start)} – ${fmt(end)}`
 }
 
-function EventCard({ event, onPress }: { event: CalendarEvents; onPress: (id: string) => void }) {
+function EventCard({
+    event,
+    onPress,
+}: {
+    event: CalendarEvents
+    onPress: (id: string, e: GestureResponderEvent) => void
+}) {
     const theme = useTheme()
     const calendarMap = useCalendarMap()
     const cal = calendarMap.get(event.calendar)
@@ -39,7 +52,7 @@ function EventCard({ event, onPress }: { event: CalendarEvents; onPress: (id: st
     return (
         <Pressable
             style={[styles.eventCard, { backgroundColor: theme.color2.val }]}
-            onPress={() => onPress(event.id)}
+            onPress={e => onPress(event.id, e)}
         >
             <View style={[styles.colorStrip, { backgroundColor: colors.bg }]} />
             <View style={styles.eventContent}>
@@ -68,7 +81,7 @@ function DaySection({
     onEmptyPress,
 }: {
     row: DayRow
-    onEventPress: (id: string) => void
+    onEventPress: (id: string, e: GestureResponderEvent) => void
     onEmptyPress: (date: Date) => void
 }) {
     const theme = useTheme()
