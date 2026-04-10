@@ -1,4 +1,4 @@
-import { and, eq, not } from '@tanstack/db'
+import { eq } from '@tanstack/db'
 import { useLiveQuery } from '@tanstack/react-db'
 import { Building2, Settings, Star, Trash2, Users } from 'lucide-react-native'
 import { useActiveParams, usePathname, useRouter } from 'one'
@@ -36,22 +36,8 @@ export default function ContactsSidebar(_props: ContactsSidebarProps) {
     const [assignmentsCollection] = useStore('label_assignments')
     const { labels: orgLabels } = useLabels()
 
-    const { data: allContacts } = useLiveQuery(query =>
-        query
-            .from({ contacts: contactsCollection })
-            .where(({ contacts }) => eq(contacts.deleted_at, ''))
-    )
-
-    const { data: favoriteContacts } = useLiveQuery(query =>
-        query
-            .from({ contacts: contactsCollection })
-            .where(({ contacts }) => and(eq(contacts.favorite, true), eq(contacts.deleted_at, '')))
-    )
-
-    const { data: deletedContacts } = useLiveQuery(query =>
-        query
-            .from({ contacts: contactsCollection })
-            .where(({ contacts }) => not(eq(contacts.deleted_at, '')))
+    const { data: allContactsRaw } = useLiveQuery(query =>
+        query.from({ contacts: contactsCollection })
     )
 
     const { data: contactAssignments } = useLiveQuery(query =>
@@ -60,9 +46,20 @@ export default function ContactsSidebar(_props: ContactsSidebarProps) {
             .where(({ label_assignments }) => eq(label_assignments.collection, 'contacts'))
     )
 
-    const totalCount = allContacts?.length ?? 0
-    const favoriteCount = favoriteContacts?.length ?? 0
-    const deletedCount = deletedContacts?.length ?? 0
+    const { totalCount, favoriteCount, deletedCount } = useMemo(() => {
+        let total = 0,
+            favorites = 0,
+            deleted = 0
+        for (const c of allContactsRaw ?? []) {
+            if (c.deleted_at) {
+                deleted++
+                continue
+            }
+            total++
+            if (c.favorite) favorites++
+        }
+        return { totalCount: total, favoriteCount: favorites, deletedCount: deleted }
+    }, [allContactsRaw])
 
     const labelCounts = useMemo(() => {
         const counts = new Map<string, number>()

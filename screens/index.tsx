@@ -1,16 +1,13 @@
-import { eq, not } from '@tanstack/db'
-import { useLiveQuery } from '@tanstack/react-db'
 import { useActiveParams } from 'one'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { FlatList } from 'react-native'
 import { Input, SizableText, XStack, YStack } from 'tamagui'
 import { DataTableHeader } from '~/components/DataTableHeader'
 import { EmptyState } from '~/components/EmptyState'
-import { useMutation } from '~/lib/mutations'
 import { useOrgHref } from '~/lib/org-routes'
-import { useStore } from '~/lib/pocketbase'
 import { useLabels } from '~/ui/hooks/useLabels'
 import { ContactRow } from '../components/ContactRow'
+import { useContactList } from '../hooks/useContactList'
 import { useContactSearch } from '../hooks/useContactSearch'
 
 const CONTACT_COLUMNS = [
@@ -20,8 +17,6 @@ const CONTACT_COLUMNS = [
 ]
 
 export default function ContactListScreen() {
-    const [contactsCollection] = useStore('contacts')
-    const [assignmentsCollection] = useStore('label_assignments')
     const [searchQuery, setSearchQuery] = useState('')
     const orgHref = useOrgHref()
     const newContactHref = orgHref('contacts/new')
@@ -32,105 +27,25 @@ export default function ContactListScreen() {
 
     const { labelMap } = useLabels()
 
-    const isDeleted = filter === 'deleted'
-
-    const { data: contacts, isLoading } = useLiveQuery(query =>
-        query
-            .from({ contacts: contactsCollection })
-            .where(({ contacts }) =>
-                isDeleted ? not(eq(contacts.deleted_at, '')) : eq(contacts.deleted_at, '')
-            )
-            .orderBy(({ contacts }) => contacts.first_name, 'asc')
-    )
-
-    const { data: contactAssignments } = useLiveQuery(query =>
-        query
-            .from({ label_assignments: assignmentsCollection })
-            .where(({ label_assignments }) => eq(label_assignments.collection, 'contacts'))
-    )
-
-    const toggleFavorite = useMutation({
-        mutationFn: function* ({ id, currentFavorite }: { id: string; currentFavorite: boolean }) {
-            yield contactsCollection.update(id, draft => {
-                draft.favorite = !currentFavorite
-            })
-        },
-    })
-
-    const deleteContact = useMutation({
-        mutationFn: function* (id: string) {
-            yield contactsCollection.update(id, draft => {
-                draft.deleted_at = new Date().toISOString()
-            })
-        },
-    })
-
-    const restoreContact = useMutation({
-        mutationFn: function* (id: string) {
-            yield contactsCollection.update(id, draft => {
-                draft.deleted_at = ''
-            })
-        },
-    })
-
-    const permanentlyDeleteContact = useMutation({
-        mutationFn: function* (id: string) {
-            yield contactsCollection.delete(id)
-        },
-    })
-
     const useServerSearch = searchQuery.length >= 2
     const { results: serverResults } = useContactSearch(useServerSearch ? searchQuery : '')
 
-    const assignmentsByContact = useMemo(() => {
-        const map = new Map<string, Set<string>>()
-        for (const a of contactAssignments ?? []) {
-            const existing = map.get(a.record_id)
-            if (existing) {
-                existing.add(a.label)
-            } else {
-                map.set(a.record_id, new Set([a.label]))
-            }
-        }
-        return map
-    }, [contactAssignments])
-
-    const contactIdsForLabel = useMemo(() => {
-        if (!activeLabelId) return null
-        const ids = new Set<string>()
-        for (const a of contactAssignments ?? []) {
-            if (a.label === activeLabelId) ids.add(a.record_id)
-        }
-        return ids
-    }, [activeLabelId, contactAssignments])
-
-    const filteredContacts = useMemo(() => {
-        if (useServerSearch) return serverResults
-
-        let list = contacts ?? []
-
-        if (filter === 'favorites') {
-            list = list.filter(c => c.favorite)
-        }
-
-        if (contactIdsForLabel) {
-            list = list.filter(c => contactIdsForLabel.has(c.id))
-        }
-
-        const q = searchQuery.toLowerCase()
-        if (q) {
-            list = list.filter(c => {
-                const fullName = `${c.first_name} ${c.last_name}`.toLowerCase()
-                return (
-                    fullName.includes(q) ||
-                    c.email?.toLowerCase().includes(q) ||
-                    c.company?.toLowerCase().includes(q)
-                )
-            })
-        }
-
-        return list
-    }, [useServerSearch, serverResults, searchQuery, contacts, filter, contactIdsForLabel])
+    const {
+        contacts,
+        filteredContacts,
+        isLoading,
+        isDeleted,
+        assignmentsByContact,
+        toggleFavorite,
+        deleteContact,
+        restoreContact,
+        permanentlyDeleteContact,
+    } = useContactList({
+        filter,
+        activeLabelId,
+        searchQuery,
+        serverSearchResults: serverResults,
+    })
 
     const count = filteredContacts?.length ?? 0
 
