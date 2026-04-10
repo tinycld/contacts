@@ -1,16 +1,5 @@
 import { expect, test } from '@playwright/test'
-
-const TEST_USER_EMAIL = process.env.TEST_USER_LOGIN || 'user@tinycld.org'
-const TEST_USER_PASSWORD = process.env.TEST_USER_PW || 'TestUser1234!'
-const ORG_SLUG = 'test-org'
-
-async function login(page: import('@playwright/test').Page) {
-    await page.goto('/')
-    await page.getByPlaceholder('you@example.com').fill(TEST_USER_EMAIL)
-    await page.getByPlaceholder('Password').fill(TEST_USER_PASSWORD)
-    await page.getByText('Sign in', { exact: true }).last().click()
-    await page.waitForURL(/\/app\//)
-}
+import { login, navigateToAddon } from '../../../tests/e2e/helpers'
 
 test.describe('Contacts', () => {
     test.beforeEach(async ({ page }) => {
@@ -18,14 +7,14 @@ test.describe('Contacts', () => {
     })
 
     test('list screen renders with seed data', async ({ page }) => {
-        await page.goto(`/a/${ORG_SLUG}/contacts`)
+        await navigateToAddon(page, 'contacts')
         await expect(page.getByText(/Contacts \(\d+\)/)).toBeVisible()
-        await expect(page.getByRole('link', { name: /Alice Johnson/ })).toBeVisible()
-        await expect(page.getByRole('link', { name: /Bob Smith/ })).toBeVisible()
+        await expect(page.getByText('Alice Johnson')).toBeVisible()
+        await expect(page.getByText('Bob Smith')).toBeVisible()
     })
 
     test('create a new contact and verify it appears', async ({ page }) => {
-        await page.goto(`/a/${ORG_SLUG}/contacts`)
+        await navigateToAddon(page, 'contacts')
         await page.getByText('+ Create contact').click()
         await page.waitForURL(/\/contacts\/new/)
 
@@ -36,14 +25,14 @@ test.describe('Contacts', () => {
         await page.getByRole('button', { name: 'Create' }).click()
 
         await page.waitForURL(url => !url.pathname.includes('/new'), { timeout: 10_000 })
-        await expect(page.getByRole('link', { name: /Tester McTest/ })).toBeVisible({
+        await expect(page.getByText('Tester McTest')).toBeVisible({
             timeout: 10_000,
         })
     })
 
     test('click a contact, edit fields, save, verify changes persist', async ({ page }) => {
-        await page.goto(`/a/${ORG_SLUG}/contacts`)
-        await page.getByRole('link', { name: /Alice Johnson/ }).click()
+        await navigateToAddon(page, 'contacts')
+        await page.getByText('Alice Johnson').click()
         await page.waitForURL(/\/contacts\//)
 
         const firstNameInput = page.getByTestId('first_name')
@@ -57,11 +46,10 @@ test.describe('Contacts', () => {
     })
 
     test('toggle favorite from detail view', async ({ page }) => {
-        await page.goto(`/a/${ORG_SLUG}/contacts`)
-        await page.getByRole('link', { name: /Bob Smith/ }).click()
+        await navigateToAddon(page, 'contacts')
+        await page.getByText('Bob Smith').click()
         await page.waitForURL(/\/contacts\//)
 
-        // Click the star/favorite toggle button
         const favoriteButton = page
             .locator('[data-testid="favorite-toggle"]')
             .or(page.locator('svg').filter({ hasText: '' }).first())
@@ -69,12 +57,12 @@ test.describe('Contacts', () => {
     })
 
     test('search filters contacts', async ({ page }) => {
-        await page.goto(`/a/${ORG_SLUG}/contacts`)
+        await navigateToAddon(page, 'contacts')
 
         const searchInput = page.getByPlaceholder('Search contacts...')
         await searchInput.fill('carol')
 
-        await expect(page.getByRole('link', { name: /Carol Williams/ })).toBeVisible()
-        await expect(page.getByRole('link', { name: /Bob Smith/ })).not.toBeVisible()
+        await expect(page.getByText('Carol Williams')).toBeVisible()
+        await expect(page.getByText('Bob Smith')).not.toBeVisible()
     })
 })

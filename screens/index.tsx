@@ -1,15 +1,16 @@
+import { eq, not } from '@tanstack/db'
 import { useLiveQuery } from '@tanstack/react-db'
-import { Star } from 'lucide-react-native'
-import { Link } from 'one'
-import { useMemo, useState } from 'react'
-import { Pressable, View } from 'react-native'
-import { Input, SizableText, useTheme, XStack, YStack } from 'tamagui'
+import { useActiveParams } from 'one'
+import { useCallback, useMemo, useState } from 'react'
+import { FlatList } from 'react-native'
+import { Input, SizableText, XStack, YStack } from 'tamagui'
 import { DataTableHeader } from '~/components/DataTableHeader'
 import { EmptyState } from '~/components/EmptyState'
 import { useMutation } from '~/lib/mutations'
 import { useOrgHref } from '~/lib/org-routes'
 import { useStore } from '~/lib/pocketbase'
-import { ContactAvatar } from '../components/ContactAvatar'
+import { useLabels } from '~/ui/hooks/useLabels'
+import { ContactRow } from '../components/ContactRow'
 import { useContactSearch } from '../hooks/useContactSearch'
 
 const CONTACT_COLUMNS = [
@@ -20,14 +21,32 @@ const CONTACT_COLUMNS = [
 
 export default function ContactListScreen() {
     const [contactsCollection] = useStore('contacts')
+    const [assignmentsCollection] = useStore('label_assignments')
     const [searchQuery, setSearchQuery] = useState('')
     const orgHref = useOrgHref()
     const newContactHref = orgHref('contacts/new')
+    const { filter, label: activeLabelId } = useActiveParams<{
+        filter?: string
+        label?: string
+    }>()
+
+    const { labelMap } = useLabels()
+
+    const isDeleted = filter === 'deleted'
 
     const { data: contacts, isLoading } = useLiveQuery(query =>
         query
             .from({ contacts: contactsCollection })
+            .where(({ contacts }) =>
+                isDeleted ? not(eq(contacts.deleted_at, '')) : eq(contacts.deleted_at, '')
+            )
             .orderBy(({ contacts }) => contacts.first_name, 'asc')
+    )
+
+    const { data: contactAssignments } = useLiveQuery(query =>
+        query
+            .from({ label_assignments: assignmentsCollection })
+            .where(({ label_assignments }) => eq(label_assignments.collection, 'contacts'))
     )
 
     const toggleFavorite = useMutation({
@@ -38,26 +57,136 @@ export default function ContactListScreen() {
         },
     })
 
+    const deleteContact = useMutation({
+        mutationFn: function* (id: string) {
+            yield contactsCollection.update(id, draft => {
+                draft.deleted_at = new Date().toISOString()
+            })
+        },
+    })
+
+    const restoreContact = useMutation({
+        mutationFn: function* (id: string) {
+            yield contactsCollection.update(id, draft => {
+                draft.deleted_at = ''
+            })
+        },
+    })
+
+    const permanentlyDeleteContact = useMutation({
+        mutationFn: function* (id: string) {
+            yield contactsCollection.delete(id)
+        },
+    })
+
     const useServerSearch = searchQuery.length >= 2
     const { results: serverResults } = useContactSearch(useServerSearch ? searchQuery : '')
+
+    const assignmentsByContact = useMemo(() => {
+        const map = new Map<string, Set<string>>()
+        for (const a of contactAssignments ?? []) {
+            const existing = map.get(a.record_id)
+            if (existing) {
+                existing.add(a.label)
+            } else {
+                map.set(a.record_id, new Set([a.label]))
+            }
+        }
+        return map
+    }, [contactAssignments])
+
+    const contactIdsForLabel = useMemo(() => {
+        if (!activeLabelId) return null
+        const ids = new Set<string>()
+        for (const a of contactAssignments ?? []) {
+            if (a.label === activeLabelId) ids.add(a.record_id)
+        }
+        return ids
+    }, [activeLabelId, contactAssignments])
 
     const filteredContacts = useMemo(() => {
         if (useServerSearch) return serverResults
 
-        const q = searchQuery.toLowerCase()
-        if (!q) return contacts ?? []
+        let list = contacts ?? []
 
-        return (contacts ?? []).filter(c => {
-            const fullName = `${c.first_name} ${c.last_name}`.toLowerCase()
-            return (
-                fullName.includes(q) ||
-                c.email?.toLowerCase().includes(q) ||
-                c.company?.toLowerCase().includes(q)
-            )
-        })
-    }, [useServerSearch, serverResults, searchQuery, contacts])
+        if (filter === 'favorites') {
+            list = list.filter(c => c.favorite)
+        }
+
+        if (contactIdsForLabel) {
+            list = list.filter(c => contactIdsForLabel.has(c.id))
+        }
+
+        const q = searchQuery.toLowerCase()
+        if (q) {
+            list = list.filter(c => {
+                const fullName = `${c.first_name} ${c.last_name}`.toLowerCase()
+                return (
+                    fullName.includes(q) ||
+                    c.email?.toLowerCase().includes(q) ||
+                    c.company?.toLowerCase().includes(q)
+                )
+            })
+        }
+
+        return list
+    }, [useServerSearch, serverResults, searchQuery, contacts, filter, contactIdsForLabel])
 
     const count = filteredContacts?.length ?? 0
+
+    const activeLabel = activeLabelId ? labelMap.get(activeLabelId) : null
+    const title = activeLabel
+        ? activeLabel.name
+        : isDeleted
+          ? 'Deleted'
+          : filter === 'favorites'
+            ? 'Favorites'
+            : 'Contacts'
+
+    const renderContact = useCallback(
+        ({
+            item: contact,
+            index,
+        }: {
+            item: NonNullable<typeof filteredContacts>[number]
+            index: number
+        }) => {
+            const labelIds = assignmentsByContact.get(contact.id)
+            const contactLabels = labelIds
+                ? Array.from(labelIds)
+                      .map(id => labelMap.get(id))
+                      .filter((l): l is { id: string; name: string; color: string } => l != null)
+                : []
+
+            return (
+                <ContactRow
+                    contact={contact}
+                    labels={contactLabels}
+                    onToggleFavorite={() =>
+                        toggleFavorite.mutate({
+                            id: contact.id,
+                            currentFavorite: contact.favorite,
+                        })
+                    }
+                    onDelete={() => deleteContact.mutate(contact.id)}
+                    onRestore={isDeleted ? () => restoreContact.mutate(contact.id) : undefined}
+                    onPermanentDelete={
+                        isDeleted ? () => permanentlyDeleteContact.mutate(contact.id) : undefined
+                    }
+                    index={index}
+                />
+            )
+        },
+        [
+            assignmentsByContact,
+            labelMap,
+            toggleFavorite,
+            deleteContact,
+            restoreContact,
+            permanentlyDeleteContact,
+            isDeleted,
+        ]
+    )
 
     if (isLoading) {
         return (
@@ -71,7 +200,7 @@ export default function ContactListScreen() {
 
     const isEmpty = !contacts || contacts.length === 0
 
-    if (isEmpty) {
+    if (isEmpty && !filter && !activeLabelId) {
         return (
             <EmptyState
                 message="No contacts yet."
@@ -81,96 +210,44 @@ export default function ContactListScreen() {
     }
 
     return (
-        <YStack flex={1} padding="$5" backgroundColor="$background">
-            <XStack justifyContent="space-between" alignItems="center" marginBottom="$4">
-                <SizableText size="$7" fontWeight="bold" color="$color">
-                    Contacts ({count})
-                </SizableText>
-                <Input
-                    size="$3"
-                    placeholder="Search contacts..."
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                    width={250}
-                    backgroundColor="$background"
-                    borderColor="$borderColor"
-                    placeholderTextColor="$placeholderColor"
-                    color="$color"
-                />
-            </XStack>
-
-            <DataTableHeader columns={CONTACT_COLUMNS} trailing={<View style={{ width: 32 }} />} />
-
-            <YStack>
-                {filteredContacts?.map(contact => (
-                    <ContactRow
-                        key={contact.id}
-                        contact={contact}
-                        onToggleFavorite={() =>
-                            toggleFavorite.mutate({
-                                id: contact.id,
-                                currentFavorite: contact.favorite,
-                            })
-                        }
-                    />
-                ))}
-            </YStack>
-        </YStack>
-    )
-}
-
-interface ContactRowProps {
-    contact: {
-        id: string
-        first_name: string
-        last_name: string
-        email: string
-        phone: string
-        favorite: boolean
-    }
-    onToggleFavorite: () => void
-}
-
-function ContactRow({ contact, onToggleFavorite }: ContactRowProps) {
-    const theme = useTheme()
-    const orgHref = useOrgHref()
-    const displayName = [contact.first_name, contact.last_name].filter(Boolean).join(' ')
-
-    return (
-        <Link href={orgHref('contacts/[id]', { id: contact.id })}>
-            <XStack
-                paddingHorizontal="$3"
-                paddingVertical="$3"
-                alignItems="center"
-                borderBottomWidth={1}
-                borderBottomColor="$borderColor"
-                hoverStyle={{ backgroundColor: '$backgroundHover' }}
-            >
-                <XStack flex={2} alignItems="center" gap="$3">
-                    <ContactAvatar firstName={contact.first_name} lastName={contact.last_name} />
-                    <SizableText size="$4" color="$color" fontWeight="500" numberOfLines={1}>
-                        {displayName}
+        <YStack flex={1} backgroundColor="$background">
+            <YStack padding="$5" paddingBottom={0}>
+                <XStack justifyContent="space-between" alignItems="center" marginBottom="$4">
+                    <SizableText size="$7" fontWeight="bold" color="$color">
+                        {title} ({count})
                     </SizableText>
-                </XStack>
-                <SizableText size="$3" color="$color8" flex={2} numberOfLines={1}>
-                    {contact.email}
-                </SizableText>
-                <SizableText size="$3" color="$color8" flex={1} numberOfLines={1}>
-                    {contact.phone}
-                </SizableText>
-                <Pressable
-                    onPress={e => {
-                        e.stopPropagation()
-                        onToggleFavorite()
-                    }}
-                >
-                    <Star
-                        size={18}
-                        color={contact.favorite ? theme.yellow8.val : theme.color8.val}
-                        fill={contact.favorite ? theme.yellow8.val : 'transparent'}
+                    <Input
+                        size="$3"
+                        placeholder="Search contacts..."
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        width={250}
+                        backgroundColor="$background"
+                        borderColor="$borderColor"
+                        placeholderTextColor="$placeholderColor"
+                        color="$color"
                     />
-                </Pressable>
-            </XStack>
-        </Link>
+                </XStack>
+
+                <DataTableHeader columns={CONTACT_COLUMNS} />
+            </YStack>
+
+            {count === 0 && (filter || activeLabelId) ? (
+                <YStack flex={1} alignItems="center" justifyContent="center" padding="$10">
+                    <SizableText size="$4" color="$color8">
+                        No {filter === 'favorites' ? 'favorite ' : ''}contacts
+                        {activeLabel ? ` with label "${activeLabel.name}"` : ''}.
+                    </SizableText>
+                </YStack>
+            ) : (
+                <FlatList
+                    data={filteredContacts ?? []}
+                    keyExtractor={item => item.id}
+                    renderItem={renderContact}
+                    contentContainerStyle={{ paddingHorizontal: 24 }}
+                    style={{ flex: 1 }}
+                />
+            )}
+        </YStack>
     )
 }
