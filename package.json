@@ -12,6 +12,7 @@
         "./screens/index": "./screens/index.tsx",
         "./screens/new": "./screens/new.tsx",
         "./screens/[id]": "./screens/[id].tsx",
+        "./screens/directory": "./screens/directory.tsx",
         "./seed": "./seed.ts",
         "./sidebar": "./sidebar.tsx",
         "./hooks/*": "./hooks/*",
