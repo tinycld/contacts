@@ -2,12 +2,16 @@ import { eq } from '@tanstack/db'
 import { useLiveQuery } from '@tanstack/react-db'
 import { ArrowLeft, Star } from 'lucide-react-native'
 import { useParams, useRouter } from 'one'
+import { useMemo } from 'react'
 import { Pressable } from 'react-native'
 import { Button, ScrollView, SizableText, useTheme, XStack, YStack } from 'tamagui'
+import { LabelBadge } from '~/components/LabelBadge'
 import { handleMutationErrorsWithForm } from '~/lib/errors'
 import { useMutation } from '~/lib/mutations'
 import { useStore } from '~/lib/pocketbase'
 import { useForm, zodResolver } from '~/ui/form'
+import { useLabelMutations } from '~/ui/hooks/useLabelMutations'
+import { useLabels, useLabelsForRecord } from '~/ui/hooks/useLabels'
 import { ContactAvatar } from '../components/ContactAvatar'
 import { ContactForm } from '../components/ContactForm'
 import { contactSchema } from '../components/contactSchema'
@@ -17,6 +21,15 @@ export default function ContactDetailScreen() {
     const theme = useTheme()
     const { id = '' } = useParams<{ id: string }>()
     const [contactsCollection] = useStore('contacts')
+
+    const { labels: orgLabels } = useLabels()
+    const recordLabels = useLabelsForRecord(id, 'contacts')
+    const { assignLabel, unassignLabel } = useLabelMutations()
+
+    const assignedLabelIds = useMemo(
+        () => new Set(recordLabels.labels.map(l => l.id)),
+        [recordLabels.labels]
+    )
 
     const { data } = useLiveQuery(
         query =>
@@ -97,6 +110,14 @@ export default function ContactDetailScreen() {
 
     const onSubmit = handleSubmit(formData => updateContact.mutate(formData))
 
+    const handleToggleLabel = (labelId: string) => {
+        if (assignedLabelIds.has(labelId)) {
+            unassignLabel.mutate({ labelId, recordId: id, collection: 'contacts' })
+        } else {
+            assignLabel.mutate({ labelId, recordId: id, collection: 'contacts' })
+        }
+    }
+
     if (!contact) {
         return (
             <YStack flex={1} padding="$5" backgroundColor="$background">
@@ -120,8 +141,8 @@ export default function ContactDetailScreen() {
                         <Pressable onPress={() => toggleFavorite.mutate()}>
                             <Star
                                 size={24}
-                                color={contact.favorite ? theme.yellow8.val : theme.color8.val}
-                                fill={contact.favorite ? theme.yellow8.val : 'transparent'}
+                                color={contact.favorite ? theme.color8.val : theme.yellow8.val}
+                                fill={contact.favorite ? 'transparent' : theme.yellow8.val}
                             />
                         </Pressable>
                         <Button
@@ -153,6 +174,30 @@ export default function ContactDetailScreen() {
                         </SizableText>
                     ) : null}
                 </YStack>
+
+                {orgLabels.length > 0 ? (
+                    <YStack marginBottom="$5" gap="$2">
+                        <SizableText size="$3" fontWeight="600" color="$color8">
+                            Labels
+                        </SizableText>
+                        <XStack flexWrap="wrap" gap="$2">
+                            {orgLabels.map(label => {
+                                const assigned = assignedLabelIds.has(label.id)
+                                return (
+                                    <Pressable
+                                        key={label.id}
+                                        onPress={() => handleToggleLabel(label.id)}
+                                    >
+                                        <LabelBadge
+                                            name={label.name}
+                                            color={assigned ? label.color : theme.color8.val}
+                                        />
+                                    </Pressable>
+                                )
+                            })}
+                        </XStack>
+                    </YStack>
+                ) : null}
 
                 <ContactForm control={control} errors={errors} isSubmitted={isSubmitted} />
             </YStack>
