@@ -79,6 +79,17 @@ const SAMPLE_CONTACTS = [
         favorite: false,
         notes: '',
     },
+    {
+        first_name: 'Henry',
+        last_name: 'Taylor',
+        email: 'henry.t@example.com',
+        phone: '(555) 890-1234',
+        company: 'Wayne Enterprises',
+        job_title: 'Accountant',
+        favorite: false,
+        notes: 'Old vendor contact.',
+        deleted_at: new Date('2026-03-15').toISOString(),
+    },
 ]
 
 export default async function seed(pb: PocketBase, { userOrg }: SeedContext) {

@@ -11,7 +11,7 @@ export function registerCollections(
     coreStores: CoreStores
 ) {
     const contacts = newCollection('contacts', {
-        omitOnInsert: ['created', 'updated'] as const,
+        omitOnInsert: ['created', 'updated', 'deleted_at'] as const,
         expand: { owner: coreStores.user_org },
         collectionOptions: {
             autoIndex: 'eager' as const,

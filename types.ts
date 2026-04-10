@@ -12,6 +12,7 @@ export interface Contacts {
     owner: string
     notes: string
     vcard_uid: string
+    deleted_at: string
     created: string
     updated: string
 }
