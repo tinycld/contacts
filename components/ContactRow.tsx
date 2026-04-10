@@ -214,7 +214,7 @@ function HoverAction({
             }}
             accessibilityLabel={label}
         >
-            <Icon size={16} color={iconColor ?? theme.color8.val} fill={iconFill} />
+            <Icon size={16} color={iconColor ?? theme.color8.val} fill={iconFill ?? 'none'} />
         </Pressable>
     )
 
