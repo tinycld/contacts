@@ -1,5 +1,5 @@
+import { useRouter } from 'expo-router'
 import { Edit3, RotateCcw, Star, Trash2 } from 'lucide-react-native'
-import { useRouter } from 'one'
 import { useState } from 'react'
 import { Platform, Pressable, StyleSheet, View } from 'react-native'
 import { SizableText, useTheme } from 'tamagui'
@@ -151,7 +151,7 @@ export function ContactRow({
                             <HoverAction
                                 icon={Edit3}
                                 label="Edit"
-                                onPress={navigateToContact!}
+                                onPress={() => navigateToContact?.()}
                                 theme={theme}
                                 tooltipPosition={tooltipPosition}
                             />
