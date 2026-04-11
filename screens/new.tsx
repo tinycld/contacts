@@ -1,5 +1,5 @@
+import { useRouter } from 'expo-router'
 import { ArrowLeft } from 'lucide-react-native'
-import { useRouter } from 'one'
 import { newRecordId } from 'pbtsdb'
 import { Pressable } from 'react-native'
 import { Button, ScrollView, SizableText, useTheme, XStack, YStack } from 'tamagui'

@@ -1,7 +1,7 @@
 import { eq } from '@tanstack/db'
 import { useLiveQuery } from '@tanstack/react-db'
+import { useLocalSearchParams, usePathname, useRouter } from 'expo-router'
 import { Building2, Settings, Star, Trash2, Users } from 'lucide-react-native'
-import { useActiveParams, usePathname, useRouter } from 'one'
 import { useMemo, useState } from 'react'
 import { Pressable } from 'react-native'
 import { useTheme } from 'tamagui'
@@ -26,7 +26,7 @@ export default function ContactsSidebar(_props: ContactsSidebarProps) {
     const theme = useTheme()
     const pathname = usePathname()
     const orgHref = useOrgHref()
-    const { filter, label: activeLabel } = useActiveParams<{
+    const { filter, label: activeLabel } = useLocalSearchParams<{
         filter?: string
         label?: string
     }>()

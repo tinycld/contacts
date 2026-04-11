@@ -1,7 +1,7 @@
 import { eq } from '@tanstack/db'
 import { useLiveQuery } from '@tanstack/react-db'
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ArrowLeft, Star } from 'lucide-react-native'
-import { useParams, useRouter } from 'one'
 import { useMemo } from 'react'
 import { Pressable } from 'react-native'
 import { Button, ScrollView, SizableText, useTheme, XStack, YStack } from 'tamagui'
@@ -19,7 +19,7 @@ import { contactSchema } from '../components/contactSchema'
 export default function ContactDetailScreen() {
     const router = useRouter()
     const theme = useTheme()
-    const { id = '' } = useParams<{ id: string }>()
+    const { id = '' } = useLocalSearchParams<{ id: string }>()
     const [contactsCollection] = useStore('contacts')
 
     const { labels: orgLabels } = useLabels()

@@ -1,4 +1,4 @@
-import { useActiveParams } from 'one'
+import { useLocalSearchParams } from 'expo-router'
 import { useCallback, useState } from 'react'
 import { FlatList } from 'react-native'
 import { Input, SizableText, XStack, YStack } from 'tamagui'
@@ -20,7 +20,7 @@ export default function ContactListScreen() {
     const [searchQuery, setSearchQuery] = useState('')
     const orgHref = useOrgHref()
     const newContactHref = orgHref('contacts/new')
-    const { filter, label: activeLabelId } = useActiveParams<{
+    const { filter, label: activeLabelId } = useLocalSearchParams<{
         filter?: string
         label?: string
     }>()
