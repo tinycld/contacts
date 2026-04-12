@@ -1,6 +1,6 @@
 import { eq } from '@tanstack/db'
 import { useLiveQuery } from '@tanstack/react-db'
-import { useLocalSearchParams, usePathname, useRouter } from 'expo-router'
+import { useGlobalSearchParams, usePathname, useRouter } from 'expo-router'
 import { Building2, Settings, Star, Trash2, Users } from 'lucide-react-native'
 import { useMemo, useState } from 'react'
 import { Pressable } from 'react-native'
@@ -26,7 +26,7 @@ export default function ContactsSidebar(_props: ContactsSidebarProps) {
     const theme = useTheme()
     const pathname = usePathname()
     const orgHref = useOrgHref()
-    const { filter, label: activeLabel } = useLocalSearchParams<{
+    const { filter, label: activeLabel } = useGlobalSearchParams<{
         filter?: string
         label?: string
     }>()
@@ -81,6 +81,7 @@ export default function ContactsSidebar(_props: ContactsSidebarProps) {
             colorDot={label.color}
             badge={labelCounts.get(label.id) || undefined}
             isActive={activeLabel === label.id}
+            closesDrawer
             onPress={() => router.push(orgHref('contacts', { label: label.id }))}
         />
     ))
@@ -96,6 +97,7 @@ export default function ContactsSidebar(_props: ContactsSidebarProps) {
                 icon={Users}
                 badge={totalCount}
                 isActive={isContactsActive}
+                closesDrawer
                 onPress={() => router.push(orgHref('contacts'))}
             />
             <SidebarItem
@@ -103,12 +105,14 @@ export default function ContactsSidebar(_props: ContactsSidebarProps) {
                 icon={Star}
                 badge={favoriteCount}
                 isActive={filter === 'favorites'}
+                closesDrawer
                 onPress={() => router.push(orgHref('contacts', { filter: 'favorites' }))}
             />
             <SidebarItem
                 label="Directory"
                 icon={Building2}
                 isActive={pathname.includes('/contacts/directory')}
+                closesDrawer
                 onPress={() => router.push(orgHref('contacts/directory'))}
             />
             <SidebarItem
@@ -116,6 +120,7 @@ export default function ContactsSidebar(_props: ContactsSidebarProps) {
                 icon={Trash2}
                 badge={deletedCount || undefined}
                 isActive={filter === 'deleted'}
+                closesDrawer
                 onPress={() => router.push(orgHref('contacts', { filter: 'deleted' }))}
             />
 
