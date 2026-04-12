@@ -1,7 +1,7 @@
 import { eq, not } from '@tanstack/db'
 import { useLiveQuery } from '@tanstack/react-db'
 import { useMemo } from 'react'
-import { useMutation } from '~/lib/mutations'
+import { mutation, useMutation } from '~/lib/mutations'
 import { useStore } from '~/lib/pocketbase'
 import type { ContactSearchResult } from './useContactSearch'
 
@@ -33,33 +33,39 @@ export function useContactList(params: {
     )
 
     const toggleFavorite = useMutation({
-        mutationFn: function* ({ id, currentFavorite }: { id: string; currentFavorite: boolean }) {
+        mutationFn: mutation(function* ({
+            id,
+            currentFavorite,
+        }: {
+            id: string
+            currentFavorite: boolean
+        }) {
             yield contactsCollection.update(id, draft => {
                 draft.favorite = !currentFavorite
             })
-        },
+        }),
     })
 
     const deleteContact = useMutation({
-        mutationFn: function* (id: string) {
+        mutationFn: mutation(function* (id: string) {
             yield contactsCollection.update(id, draft => {
                 draft.deleted_at = new Date().toISOString()
             })
-        },
+        }),
     })
 
     const restoreContact = useMutation({
-        mutationFn: function* (id: string) {
+        mutationFn: mutation(function* (id: string) {
             yield contactsCollection.update(id, draft => {
                 draft.deleted_at = ''
             })
-        },
+        }),
     })
 
     const permanentlyDeleteContact = useMutation({
-        mutationFn: function* (id: string) {
+        mutationFn: mutation(function* (id: string) {
             yield contactsCollection.delete(id)
-        },
+        }),
     })
 
     const assignmentsByContact = useMemo(() => {

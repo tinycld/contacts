@@ -4,7 +4,7 @@ import { newRecordId } from 'pbtsdb'
 import { Pressable } from 'react-native'
 import { Button, ScrollView, SizableText, useTheme, XStack, YStack } from 'tamagui'
 import { handleMutationErrorsWithForm } from '~/lib/errors'
-import { useMutation } from '~/lib/mutations'
+import { mutation, useMutation } from '~/lib/mutations'
 import { useStore } from '~/lib/pocketbase'
 import { useCurrentUserOrg } from '~/lib/use-current-user-org'
 import { useOrgInfo } from '~/lib/use-org-info'
@@ -41,7 +41,7 @@ export default function NewContactScreen() {
     })
 
     const createContact = useMutation({
-        mutationFn: function* (data: z.infer<typeof contactSchema>) {
+        mutationFn: mutation(function* (data: z.infer<typeof contactSchema>) {
             if (!userOrg) throw new Error('No organization context')
             yield contactsCollection.insert({
                 id: newRecordId(),
@@ -56,7 +56,7 @@ export default function NewContactScreen() {
                 owner: userOrg.id,
                 vcard_uid: crypto.randomUUID(),
             })
-        },
+        }),
         onSuccess: () => router.back(),
         onError: handleMutationErrorsWithForm({ setError, getValues }),
     })

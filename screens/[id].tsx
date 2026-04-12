@@ -7,7 +7,7 @@ import { Pressable } from 'react-native'
 import { Button, ScrollView, SizableText, useTheme, XStack, YStack } from 'tamagui'
 import { LabelBadge } from '~/components/LabelBadge'
 import { handleMutationErrorsWithForm } from '~/lib/errors'
-import { useMutation } from '~/lib/mutations'
+import { mutation, useMutation } from '~/lib/mutations'
 import { useStore } from '~/lib/pocketbase'
 import { useForm, zodResolver } from '~/ui/form'
 import { useLabelMutations } from '~/ui/hooks/useLabelMutations'
@@ -75,7 +75,7 @@ export default function ContactDetailScreen() {
     })
 
     const updateContact = useMutation({
-        mutationFn: function* (formData: {
+        mutationFn: mutation(function* (formData: {
             first_name: string
             last_name: string
             email: string
@@ -95,17 +95,17 @@ export default function ContactDetailScreen() {
                 draft.notes = formData.notes
                 draft.favorite = formData.favorite
             })
-        },
+        }),
         onError: handleMutationErrorsWithForm({ setError, getValues }),
     })
 
     const toggleFavorite = useMutation({
-        mutationFn: function* () {
+        mutationFn: mutation(function* () {
             if (!contact) return
             yield contactsCollection.update(id, draft => {
                 draft.favorite = !contact.favorite
             })
-        },
+        }),
     })
 
     const onSubmit = handleSubmit(formData => updateContact.mutate(formData))
