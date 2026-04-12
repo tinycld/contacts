@@ -1,10 +1,10 @@
 import { eq } from '@tanstack/db'
 import { useLiveQuery } from '@tanstack/react-db'
 import { useLocalSearchParams, useRouter } from 'expo-router'
+import { Button, useThemeColor } from 'heroui-native'
 import { ArrowLeft, Star } from 'lucide-react-native'
 import { useMemo } from 'react'
-import { Pressable } from 'react-native'
-import { Button, ScrollView, SizableText, useTheme, XStack, YStack } from 'tamagui'
+import { Pressable, ScrollView, Text, View } from 'react-native'
 import { LabelBadge } from '~/components/LabelBadge'
 import { handleMutationErrorsWithForm } from '~/lib/errors'
 import { mutation, useMutation } from '~/lib/mutations'
@@ -18,9 +18,14 @@ import { contactSchema } from '../components/contactSchema'
 
 export default function ContactDetailScreen() {
     const router = useRouter()
-    const theme = useTheme()
     const { id = '' } = useLocalSearchParams<{ id: string }>()
     const [contactsCollection] = useStore('contacts')
+    const [fgColor, mutedColor, warningColor, bgColor] = useThemeColor([
+        'foreground',
+        'muted',
+        'warning',
+        'background',
+    ])
 
     const { labels: orgLabels } = useLabels()
     const recordLabels = useLabelsForRecord(id, 'contacts')
@@ -120,67 +125,68 @@ export default function ContactDetailScreen() {
 
     if (!contact) {
         return (
-            <YStack flex={1} padding="$5" backgroundColor="$background">
-                <SizableText size="$4" color="$color8">
-                    Contact not found
-                </SizableText>
-            </YStack>
+            <View style={{ flex: 1, padding: 20, backgroundColor: bgColor }}>
+                <Text style={{ fontSize: 16, color: mutedColor }}>Contact not found</Text>
+            </View>
         )
     }
 
     const displayName = [contact.first_name, contact.last_name].filter(Boolean).join(' ')
 
     return (
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} backgroundColor="$background">
-            <YStack flex={1} padding="$5">
-                <XStack justifyContent="space-between" alignItems="center" marginBottom="$5">
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} style={{ backgroundColor: bgColor }}>
+            <View style={{ flex: 1, padding: 20 }}>
+                <View
+                    style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: 20,
+                    }}
+                >
                     <Pressable onPress={() => router.back()}>
-                        <ArrowLeft size={24} color={theme.color.val} />
+                        <ArrowLeft size={24} color={fgColor} />
                     </Pressable>
-                    <XStack gap="$3" alignItems="center">
+                    <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
                         <Pressable onPress={() => toggleFavorite.mutate()}>
                             <Star
                                 size={24}
-                                color={contact.favorite ? theme.color8.val : theme.yellow8.val}
-                                fill={contact.favorite ? 'transparent' : theme.yellow8.val}
+                                color={contact.favorite ? mutedColor : warningColor}
+                                fill={contact.favorite ? 'transparent' : warningColor}
                             />
                         </Pressable>
-                        <Button
-                            theme="accent"
-                            size="$3"
-                            onPress={onSubmit}
-                            disabled={updateContact.isPending}
-                            opacity={updateContact.isPending ? 0.5 : 1}
-                        >
-                            <Button.Text fontWeight="600">
-                                {updateContact.isPending ? 'Saving...' : 'Save'}
-                            </Button.Text>
+                        <Button onPress={onSubmit} isDisabled={updateContact.isPending} size="sm">
+                            {updateContact.isPending ? 'Saving...' : 'Save'}
                         </Button>
-                    </XStack>
-                </XStack>
+                    </View>
+                </View>
 
-                <YStack alignItems="center" marginBottom="$5" gap="$2">
+                <View style={{ alignItems: 'center', marginBottom: 20, gap: 8 }}>
                     <ContactAvatar
                         firstName={contact.first_name}
                         lastName={contact.last_name}
                         size={80}
                     />
-                    <SizableText size="$7" fontWeight="bold" color="$color">
+                    <Text
+                        style={{
+                            fontSize: 24,
+                            fontWeight: 'bold',
+                            color: fgColor,
+                        }}
+                    >
                         {displayName}
-                    </SizableText>
+                    </Text>
                     {contact.email ? (
-                        <SizableText size="$3" color="$color8">
-                            {contact.email}
-                        </SizableText>
+                        <Text style={{ fontSize: 14, color: mutedColor }}>{contact.email}</Text>
                     ) : null}
-                </YStack>
+                </View>
 
                 {orgLabels.length > 0 ? (
-                    <YStack marginBottom="$5" gap="$2">
-                        <SizableText size="$3" fontWeight="600" color="$color8">
+                    <View style={{ marginBottom: 20, gap: 8 }}>
+                        <Text style={{ fontSize: 14, fontWeight: '600', color: mutedColor }}>
                             Labels
-                        </SizableText>
-                        <XStack flexWrap="wrap" gap="$2">
+                        </Text>
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                             {orgLabels.map(label => {
                                 const assigned = assignedLabelIds.has(label.id)
                                 return (
@@ -190,17 +196,17 @@ export default function ContactDetailScreen() {
                                     >
                                         <LabelBadge
                                             name={label.name}
-                                            color={assigned ? label.color : theme.color8.val}
+                                            color={assigned ? label.color : mutedColor}
                                         />
                                     </Pressable>
                                 )
                             })}
-                        </XStack>
-                    </YStack>
+                        </View>
+                    </View>
                 ) : null}
 
                 <ContactForm control={control} errors={errors} isSubmitted={isSubmitted} />
-            </YStack>
+            </View>
         </ScrollView>
     )
 }

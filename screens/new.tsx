@@ -1,8 +1,8 @@
 import { useRouter } from 'expo-router'
+import { Button, useThemeColor } from 'heroui-native'
 import { ArrowLeft } from 'lucide-react-native'
 import { newRecordId } from 'pbtsdb'
-import { Pressable } from 'react-native'
-import { Button, ScrollView, SizableText, useTheme, XStack, YStack } from 'tamagui'
+import { Pressable, ScrollView, Text, View } from 'react-native'
 import { handleMutationErrorsWithForm } from '~/lib/errors'
 import { mutation, useMutation } from '~/lib/mutations'
 import { useStore } from '~/lib/pocketbase'
@@ -14,10 +14,10 @@ import { contactSchema } from '../components/contactSchema'
 
 export default function NewContactScreen() {
     const router = useRouter()
-    const theme = useTheme()
     const { orgSlug } = useOrgInfo()
     const userOrg = useCurrentUserOrg(orgSlug)
     const [contactsCollection] = useStore('contacts')
+    const [fgColor, bgColor] = useThemeColor(['foreground', 'background'])
 
     const {
         control,
@@ -65,32 +65,37 @@ export default function NewContactScreen() {
     const canSubmit = !createContact.isPending && !!userOrg
 
     return (
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} backgroundColor="$background">
-            <YStack flex={1} padding="$5">
-                <XStack justifyContent="space-between" alignItems="center" marginBottom="$5">
-                    <XStack gap="$3" alignItems="center">
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} style={{ backgroundColor: bgColor }}>
+            <View style={{ flex: 1, padding: 20 }}>
+                <View
+                    style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: 20,
+                    }}
+                >
+                    <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
                         <Pressable onPress={() => router.back()}>
-                            <ArrowLeft size={24} color={theme.color.val} />
+                            <ArrowLeft size={24} color={fgColor} />
                         </Pressable>
-                        <SizableText size="$7" fontWeight="bold" color="$color">
+                        <Text
+                            style={{
+                                fontSize: 24,
+                                fontWeight: 'bold',
+                                color: fgColor,
+                            }}
+                        >
                             Create Contact
-                        </SizableText>
-                    </XStack>
-                    <Button
-                        theme="accent"
-                        size="$3"
-                        onPress={onSubmit}
-                        disabled={!canSubmit}
-                        opacity={canSubmit ? 1 : 0.5}
-                    >
-                        <Button.Text fontWeight="600">
-                            {createContact.isPending ? 'Creating...' : 'Create'}
-                        </Button.Text>
+                        </Text>
+                    </View>
+                    <Button onPress={onSubmit} isDisabled={!canSubmit} size="sm">
+                        {createContact.isPending ? 'Creating...' : 'Create'}
                     </Button>
-                </XStack>
+                </View>
 
                 <ContactForm control={control} errors={errors} isSubmitted={isSubmitted} />
-            </YStack>
+            </View>
         </ScrollView>
     )
 }
