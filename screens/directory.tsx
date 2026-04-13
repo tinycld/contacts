@@ -1,30 +1,40 @@
 import { eq } from '@tanstack/db'
 import { useLiveQuery } from '@tanstack/react-db'
+import { useThemeColor } from 'heroui-native'
 import { useMemo, useState } from 'react'
-import { Card, Input, SizableText, Theme, XStack, YStack } from 'tamagui'
+import { Text, TextInput, View } from 'react-native'
 import { NameAvatar } from '~/components/NameAvatar'
 import { useStore } from '~/lib/pocketbase'
 import { useOrgInfo } from '~/lib/use-org-info'
 
-const BADGE_THEME = {
-    owner: 'purple',
-    admin: 'blue',
-    member: 'green',
-    guest: 'orange',
-} as const
+const BADGE_COLORS: Record<string, { bg: string; fg: string; border: string }> = {
+    owner: { bg: '#f3e8ff', fg: '#7c3aed', border: '#d8b4fe' },
+    admin: { bg: '#dbeafe', fg: '#2563eb', border: '#93c5fd' },
+    member: { bg: '#dcfce7', fg: '#16a34a', border: '#86efac' },
+    guest: { bg: '#ffedd5', fg: '#ea580c', border: '#fdba74' },
+}
+
+const DEFAULT_BADGE = { bg: '#f3f4f6', fg: '#6b7280', border: '#d1d5db' }
 
 interface MemberCard {
     id: string
     firstName: string
     lastName: string
     email: string
-    role: keyof typeof BADGE_THEME
+    role: string
 }
 
 export default function DirectoryScreen() {
     const { orgId } = useOrgInfo()
     const [searchQuery, setSearchQuery] = useState('')
     const [userOrgCollection] = useStore('user_org')
+    const [fgColor, mutedColor, bgColor, borderColor, placeholderColor] = useThemeColor([
+        'foreground',
+        'muted',
+        'background',
+        'border',
+        'field-placeholder',
+    ])
 
     const { data: userOrgs } = useLiveQuery(
         query =>
@@ -46,7 +56,7 @@ export default function DirectoryScreen() {
                 firstName: nameParts[0] || user.email.split('@')[0],
                 lastName: nameParts.slice(1).join(' '),
                 email: user.email,
-                role: uo.role as keyof typeof BADGE_THEME,
+                role: uo.role,
             })
         }
         return result
@@ -62,82 +72,117 @@ export default function DirectoryScreen() {
     }, [members, searchQuery])
 
     return (
-        <YStack flex={1} padding="$5" backgroundColor="$background">
-            <XStack justifyContent="space-between" alignItems="center" marginBottom="$4">
-                <SizableText size="$7" fontWeight="bold" color="$color">
+        <View style={{ flex: 1, padding: 20, backgroundColor: bgColor }}>
+            <View
+                style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: 16,
+                }}
+            >
+                <Text style={{ fontSize: 24, fontWeight: 'bold', color: fgColor }}>
                     Directory ({filtered.length})
-                </SizableText>
+                </Text>
                 {members.length > 5 ? (
-                    <Input
-                        size="$3"
+                    <TextInput
                         placeholder="Search members..."
                         value={searchQuery}
                         onChangeText={setSearchQuery}
-                        width={250}
-                        backgroundColor="$background"
-                        borderColor="$borderColor"
-                        placeholderTextColor="$placeholderColor"
-                        color="$color"
+                        style={{
+                            width: 250,
+                            backgroundColor: bgColor,
+                            borderColor: borderColor,
+                            borderWidth: 1,
+                            borderRadius: 8,
+                            paddingHorizontal: 12,
+                            paddingVertical: 8,
+                            fontSize: 14,
+                            color: fgColor,
+                        }}
+                        placeholderTextColor={placeholderColor}
                     />
                 ) : null}
-            </XStack>
+            </View>
 
-            <XStack flexWrap="wrap" gap="$4">
-                {filtered.map(member => (
-                    <Card
-                        key={member.id}
-                        width={220}
-                        backgroundColor="$background"
-                        borderColor="$borderColor"
-                        borderWidth={1}
-                        padding="$3"
-                    >
-                        <YStack alignItems="center" gap="$3">
-                            <NameAvatar
-                                firstName={member.firstName}
-                                lastName={member.lastName}
-                                size={56}
-                            />
-                            <YStack alignItems="center" gap="$1">
-                                <SizableText
-                                    size="$4"
-                                    fontWeight="600"
-                                    color="$color"
-                                    numberOfLines={1}
-                                >
-                                    {member.firstName} {member.lastName}
-                                </SizableText>
-                                <SizableText size="$2" color="$color8" numberOfLines={1}>
-                                    {member.email}
-                                </SizableText>
-                                <Theme name={BADGE_THEME[member.role] ?? 'gray'}>
-                                    <XStack
-                                        paddingHorizontal="$2"
-                                        paddingVertical="$0.5"
-                                        borderRadius="$2"
-                                        backgroundColor="$background"
-                                        borderWidth={1}
-                                        borderColor="$borderColor"
-                                        marginTop="$1"
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
+                {filtered.map(member => {
+                    const badge = BADGE_COLORS[member.role] ?? DEFAULT_BADGE
+                    return (
+                        <View
+                            key={member.id}
+                            style={{
+                                width: 220,
+                                backgroundColor: bgColor,
+                                borderColor: borderColor,
+                                borderWidth: 1,
+                                borderRadius: 8,
+                                padding: 12,
+                            }}
+                        >
+                            <View style={{ alignItems: 'center', gap: 12 }}>
+                                <NameAvatar
+                                    firstName={member.firstName}
+                                    lastName={member.lastName}
+                                    size={56}
+                                />
+                                <View style={{ alignItems: 'center', gap: 4 }}>
+                                    <Text
+                                        style={{
+                                            fontSize: 16,
+                                            fontWeight: '600',
+                                            color: fgColor,
+                                        }}
+                                        numberOfLines={1}
                                     >
-                                        <SizableText size="$1" color="$color" fontWeight="500">
+                                        {member.firstName} {member.lastName}
+                                    </Text>
+                                    <Text
+                                        style={{ fontSize: 12, color: mutedColor }}
+                                        numberOfLines={1}
+                                    >
+                                        {member.email}
+                                    </Text>
+                                    <View
+                                        style={{
+                                            paddingHorizontal: 8,
+                                            paddingVertical: 2,
+                                            borderRadius: 6,
+                                            backgroundColor: badge.bg,
+                                            borderWidth: 1,
+                                            borderColor: badge.border,
+                                            marginTop: 4,
+                                        }}
+                                    >
+                                        <Text
+                                            style={{
+                                                fontSize: 11,
+                                                color: badge.fg,
+                                                fontWeight: '500',
+                                            }}
+                                        >
                                             {member.role}
-                                        </SizableText>
-                                    </XStack>
-                                </Theme>
-                            </YStack>
-                        </YStack>
-                    </Card>
-                ))}
-            </XStack>
+                                        </Text>
+                                    </View>
+                                </View>
+                            </View>
+                        </View>
+                    )
+                })}
+            </View>
 
             {filtered.length === 0 ? (
-                <YStack flex={1} alignItems="center" justifyContent="center" padding="$10">
-                    <SizableText size="$4" color="$color8">
-                        No members found.
-                    </SizableText>
-                </YStack>
+                <View
+                    style={{
+                        flex: 1,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: 40,
+                    }}
+                >
+                    <Text style={{ fontSize: 16, color: mutedColor }}>No members found.</Text>
+                </View>
             ) : null}
-        </YStack>
+        </View>
     )
 }

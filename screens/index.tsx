@@ -1,9 +1,11 @@
 import { useLocalSearchParams } from 'expo-router'
+import { useThemeColor } from 'heroui-native'
 import { useCallback, useState } from 'react'
-import { FlatList } from 'react-native'
-import { Input, SizableText, XStack, YStack } from 'tamagui'
+import { FlatList, Text, TextInput, View } from 'react-native'
 import { DataTableHeader } from '~/components/DataTableHeader'
 import { EmptyState } from '~/components/EmptyState'
+import { SwipeableRowProvider } from '~/components/SwipeableRow'
+import { useBreakpoint } from '~/components/workspace/useBreakpoint'
 import { useOrgHref } from '~/lib/org-routes'
 import { useLabels } from '~/ui/hooks/useLabels'
 import { ContactRow } from '../components/ContactRow'
@@ -26,6 +28,14 @@ export default function ContactListScreen() {
     }>()
 
     const { labelMap } = useLabels()
+    const isCompact = useBreakpoint() === 'mobile'
+    const [fgColor, mutedColor, bgColor, borderColor, placeholderColor] = useThemeColor([
+        'foreground',
+        'muted',
+        'background',
+        'border',
+        'field-placeholder',
+    ])
 
     const useServerSearch = searchQuery.length >= 2
     const { results: serverResults } = useContactSearch(useServerSearch ? searchQuery : '')
@@ -105,11 +115,9 @@ export default function ContactListScreen() {
 
     if (isLoading) {
         return (
-            <YStack flex={1} padding="$5" backgroundColor="$background">
-                <SizableText size="$4" color="$color8">
-                    Loading contacts...
-                </SizableText>
-            </YStack>
+            <View style={{ flex: 1, padding: 20, backgroundColor: bgColor }}>
+                <Text style={{ fontSize: 16, color: mutedColor }}>Loading contacts...</Text>
+            </View>
         )
     }
 
@@ -125,44 +133,74 @@ export default function ContactListScreen() {
     }
 
     return (
-        <YStack flex={1} backgroundColor="$background">
-            <YStack padding="$5" paddingBottom={0}>
-                <XStack justifyContent="space-between" alignItems="center" marginBottom="$4">
-                    <SizableText size="$7" fontWeight="bold" color="$color">
+        <View style={{ flex: 1, backgroundColor: bgColor }}>
+            <View style={{ padding: isCompact ? 12 : 20, paddingBottom: 0 }}>
+                <View
+                    style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: isCompact ? 8 : 16,
+                        flexWrap: isCompact ? 'wrap' : 'nowrap',
+                        gap: isCompact ? 8 : 0,
+                    }}
+                >
+                    <Text
+                        style={{
+                            fontSize: isCompact ? 20 : 24,
+                            fontWeight: 'bold',
+                            color: fgColor,
+                        }}
+                    >
                         {title} ({count})
-                    </SizableText>
-                    <Input
-                        size="$3"
+                    </Text>
+                    <TextInput
                         placeholder="Search contacts..."
                         value={searchQuery}
                         onChangeText={setSearchQuery}
-                        width={250}
-                        backgroundColor="$background"
-                        borderColor="$borderColor"
-                        placeholderTextColor="$placeholderColor"
-                        color="$color"
+                        style={{
+                            width: isCompact ? '100%' : 250,
+                            backgroundColor: bgColor,
+                            borderColor: borderColor,
+                            borderWidth: 1,
+                            borderRadius: 8,
+                            paddingHorizontal: 12,
+                            paddingVertical: 8,
+                            fontSize: 14,
+                            color: fgColor,
+                        }}
+                        placeholderTextColor={placeholderColor}
                     />
-                </XStack>
+                </View>
 
-                <DataTableHeader columns={CONTACT_COLUMNS} />
-            </YStack>
+                {isCompact ? null : <DataTableHeader columns={CONTACT_COLUMNS} />}
+            </View>
 
             {count === 0 && (filter || activeLabelId) ? (
-                <YStack flex={1} alignItems="center" justifyContent="center" padding="$10">
-                    <SizableText size="$4" color="$color8">
+                <View
+                    style={{
+                        flex: 1,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: 40,
+                    }}
+                >
+                    <Text style={{ fontSize: 16, color: mutedColor }}>
                         No {filter === 'favorites' ? 'favorite ' : ''}contacts
                         {activeLabel ? ` with label "${activeLabel.name}"` : ''}.
-                    </SizableText>
-                </YStack>
+                    </Text>
+                </View>
             ) : (
-                <FlatList
-                    data={filteredContacts ?? []}
-                    keyExtractor={item => item.id}
-                    renderItem={renderContact}
-                    contentContainerStyle={{ paddingHorizontal: 24 }}
-                    style={{ flex: 1 }}
-                />
+                <SwipeableRowProvider>
+                    <FlatList
+                        data={filteredContacts ?? []}
+                        keyExtractor={item => item.id}
+                        renderItem={renderContact}
+                        contentContainerStyle={{ paddingHorizontal: isCompact ? 12 : 24 }}
+                        style={{ flex: 1 }}
+                    />
+                </SwipeableRowProvider>
             )}
-        </YStack>
+        </View>
     )
 }

@@ -1,10 +1,10 @@
 import { eq } from '@tanstack/db'
 import { useLiveQuery } from '@tanstack/react-db'
 import { useGlobalSearchParams, usePathname, useRouter } from 'expo-router'
+import { useThemeColor } from 'heroui-native'
 import { Building2, Settings, Star, Trash2, Users } from 'lucide-react-native'
 import { useMemo, useState } from 'react'
 import { Pressable } from 'react-native'
-import { useTheme } from 'tamagui'
 import { LabelManagerDialog } from '~/components/LabelManagerDialog'
 import {
     SidebarActionButton,
@@ -23,7 +23,6 @@ interface ContactsSidebarProps {
 
 export default function ContactsSidebar(_props: ContactsSidebarProps) {
     const router = useRouter()
-    const theme = useTheme()
     const pathname = usePathname()
     const orgHref = useOrgHref()
     const { filter, label: activeLabel } = useGlobalSearchParams<{
@@ -31,6 +30,7 @@ export default function ContactsSidebar(_props: ContactsSidebarProps) {
         label?: string
     }>()
     const [labelManagerOpen, setLabelManagerOpen] = useState(false)
+    const mutedColor = useThemeColor('muted')
 
     const [contactsCollection] = useStore('contacts')
     const [assignmentsCollection] = useStore('label_assignments')
@@ -132,7 +132,7 @@ export default function ContactsSidebar(_props: ContactsSidebarProps) {
                         onPress={() => setLabelManagerOpen(true)}
                         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     >
-                        <Settings size={14} color={theme.color8.val} />
+                        <Settings size={14} color={mutedColor} />
                     </Pressable>
                 }
             >

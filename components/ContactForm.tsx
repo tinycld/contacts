@@ -1,6 +1,6 @@
 import { Building2, FileText, Mail, Phone, User } from 'lucide-react-native'
 import type { Control, FieldErrors } from 'react-hook-form'
-import { XStack, YStack } from 'tamagui'
+import { View } from 'react-native'
 import type { z } from 'zod'
 import { FormErrorSummary, TextAreaInput, TextInput, Toggle } from '~/ui/form'
 import type { contactSchema } from './contactSchema'
@@ -15,11 +15,11 @@ interface ContactFormProps {
 
 export function ContactForm({ control, errors, isSubmitted }: ContactFormProps) {
     return (
-        <YStack gap="$1">
+        <View style={{ gap: 4 }}>
             <FormErrorSummary errors={errors} isEnabled={isSubmitted} />
 
-            <XStack gap="$2">
-                <YStack flex={1}>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+                <View style={{ flex: 1 }}>
                     <TextInput
                         name="first_name"
                         control={control}
@@ -28,16 +28,16 @@ export function ContactForm({ control, errors, isSubmitted }: ContactFormProps) 
                         placeholder="First name"
                         autoFocus
                     />
-                </YStack>
-                <YStack flex={1}>
+                </View>
+                <View style={{ flex: 1 }}>
                     <TextInput
                         name="last_name"
                         control={control}
                         label="Last name"
                         placeholder="Last name"
                     />
-                </YStack>
-            </XStack>
+                </View>
+            </View>
 
             <TextInput
                 name="company"
@@ -83,6 +83,6 @@ export function ContactForm({ control, errors, isSubmitted }: ContactFormProps) 
             />
 
             <Toggle name="favorite" control={control} label="Favorite" />
-        </YStack>
+        </View>
     )
 }
