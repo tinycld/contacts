@@ -1,5 +1,4 @@
 import { useLocalSearchParams } from 'expo-router'
-import { useThemeColor } from 'heroui-native'
 import { useCallback, useState } from 'react'
 import { FlatList, Text, TextInput, View } from 'react-native'
 import { DataTableHeader } from '~/components/DataTableHeader'
@@ -7,6 +6,7 @@ import { EmptyState } from '~/components/EmptyState'
 import { SwipeableRowProvider } from '~/components/SwipeableRow'
 import { useBreakpoint } from '~/components/workspace/useBreakpoint'
 import { useOrgHref } from '~/lib/org-routes'
+import { useThemeColor } from '~/lib/use-app-theme'
 import { useLabels } from '~/ui/hooks/useLabels'
 import { ContactRow } from '../components/ContactRow'
 import { useContactList } from '../hooks/useContactList'
@@ -29,13 +29,11 @@ export default function ContactListScreen() {
 
     const { labelMap } = useLabels()
     const isCompact = useBreakpoint() === 'mobile'
-    const [fgColor, mutedColor, bgColor, borderColor, placeholderColor] = useThemeColor([
-        'foreground',
-        'muted',
-        'background',
-        'border',
-        'field-placeholder',
-    ])
+    const fgColor = useThemeColor('foreground')
+    const mutedColor = useThemeColor('muted')
+    const bgColor = useThemeColor('background')
+    const borderColor = useThemeColor('border')
+    const placeholderColor = useThemeColor('field-placeholder')
 
     const useServerSearch = searchQuery.length >= 2
     const { results: serverResults } = useContactSearch(useServerSearch ? searchQuery : '')

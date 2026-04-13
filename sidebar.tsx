@@ -1,7 +1,6 @@
 import { eq } from '@tanstack/db'
 import { useLiveQuery } from '@tanstack/react-db'
 import { useGlobalSearchParams, usePathname, useRouter } from 'expo-router'
-import { useThemeColor } from 'heroui-native'
 import { Building2, Settings, Star, Trash2, Users } from 'lucide-react-native'
 import { useMemo, useState } from 'react'
 import { Pressable } from 'react-native'
@@ -15,6 +14,7 @@ import {
 } from '~/components/sidebar-primitives'
 import { useOrgHref } from '~/lib/org-routes'
 import { useStore } from '~/lib/pocketbase'
+import { useThemeColor } from '~/lib/use-app-theme'
 import { useLabels } from '~/ui/hooks/useLabels'
 
 interface ContactsSidebarProps {

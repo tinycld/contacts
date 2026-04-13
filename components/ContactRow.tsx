@@ -1,5 +1,4 @@
 import { useRouter } from 'expo-router'
-import { useThemeColor } from 'heroui-native'
 import { Edit3, RotateCcw, Star, Trash2 } from 'lucide-react-native'
 import { useState } from 'react'
 import { Platform, Pressable, Text, View } from 'react-native'
@@ -9,6 +8,7 @@ import { ConfirmTrash } from '~/components/SuretyGuard'
 import { SwipeableRow } from '~/components/SwipeableRow'
 import { useBreakpoint } from '~/components/workspace/useBreakpoint'
 import { useOrgHref } from '~/lib/org-routes'
+import { useThemeColor } from '~/lib/use-app-theme'
 import { ContactAvatar } from './ContactAvatar'
 
 interface ContactRowProps {
@@ -40,13 +40,11 @@ export function ContactRow({
     const router = useRouter()
     const orgHref = useOrgHref()
     const [isHovered, setIsHovered] = useState(false)
-    const [fgColor, mutedColor, borderColor, bgColor, warningColor] = useThemeColor([
-        'foreground',
-        'muted',
-        'border',
-        'background',
-        'warning',
-    ])
+    const fgColor = useThemeColor('foreground')
+    const mutedColor = useThemeColor('muted')
+    const borderColor = useThemeColor('border')
+    const bgColor = useThemeColor('background')
+    const warningColor = useThemeColor('warning')
 
     const displayName = [contact.first_name, contact.last_name].filter(Boolean).join(' ')
 

@@ -1,10 +1,10 @@
 import { eq } from '@tanstack/db'
 import { useLiveQuery } from '@tanstack/react-db'
-import { useThemeColor } from 'heroui-native'
 import { useMemo, useState } from 'react'
 import { Text, TextInput, View } from 'react-native'
 import { NameAvatar } from '~/components/NameAvatar'
 import { useStore } from '~/lib/pocketbase'
+import { useThemeColor } from '~/lib/use-app-theme'
 import { useOrgInfo } from '~/lib/use-org-info'
 
 const BADGE_COLORS: Record<string, { bg: string; fg: string; border: string }> = {
@@ -28,13 +28,11 @@ export default function DirectoryScreen() {
     const { orgId } = useOrgInfo()
     const [searchQuery, setSearchQuery] = useState('')
     const [userOrgCollection] = useStore('user_org')
-    const [fgColor, mutedColor, bgColor, borderColor, placeholderColor] = useThemeColor([
-        'foreground',
-        'muted',
-        'background',
-        'border',
-        'field-placeholder',
-    ])
+    const fgColor = useThemeColor('foreground')
+    const mutedColor = useThemeColor('muted')
+    const bgColor = useThemeColor('background')
+    const borderColor = useThemeColor('border')
+    const placeholderColor = useThemeColor('field-placeholder')
 
     const { data: userOrgs } = useLiveQuery(
         query =>

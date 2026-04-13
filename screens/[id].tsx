@@ -1,7 +1,6 @@
 import { eq } from '@tanstack/db'
 import { useLiveQuery } from '@tanstack/react-db'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { Button, useThemeColor } from 'heroui-native'
 import { ArrowLeft, Star } from 'lucide-react-native'
 import { useMemo } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
@@ -9,6 +8,8 @@ import { LabelBadge } from '~/components/LabelBadge'
 import { handleMutationErrorsWithForm } from '~/lib/errors'
 import { mutation, useMutation } from '~/lib/mutations'
 import { useStore } from '~/lib/pocketbase'
+import { useThemeColor } from '~/lib/use-app-theme'
+import { Button, ButtonText } from '~/ui/button'
 import { useForm, zodResolver } from '~/ui/form'
 import { useLabelMutations } from '~/ui/hooks/useLabelMutations'
 import { useLabels, useLabelsForRecord } from '~/ui/hooks/useLabels'
@@ -20,12 +21,10 @@ export default function ContactDetailScreen() {
     const router = useRouter()
     const { id = '' } = useLocalSearchParams<{ id: string }>()
     const [contactsCollection] = useStore('contacts')
-    const [fgColor, mutedColor, warningColor, bgColor] = useThemeColor([
-        'foreground',
-        'muted',
-        'warning',
-        'background',
-    ])
+    const fgColor = useThemeColor('foreground')
+    const mutedColor = useThemeColor('muted')
+    const warningColor = useThemeColor('warning')
+    const bgColor = useThemeColor('background')
 
     const { labels: orgLabels } = useLabels()
     const recordLabels = useLabelsForRecord(id, 'contacts')
@@ -156,7 +155,9 @@ export default function ContactDetailScreen() {
                             />
                         </Pressable>
                         <Button onPress={onSubmit} isDisabled={updateContact.isPending} size="sm">
-                            {updateContact.isPending ? 'Saving...' : 'Save'}
+                            <ButtonText>
+                                {updateContact.isPending ? 'Saving...' : 'Save'}
+                            </ButtonText>
                         </Button>
                     </View>
                 </View>
