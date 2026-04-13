@@ -22,7 +22,7 @@ export default function ContactDetailScreen() {
     const { id = '' } = useLocalSearchParams<{ id: string }>()
     const [contactsCollection] = useStore('contacts')
     const fgColor = useThemeColor('foreground')
-    const mutedColor = useThemeColor('muted')
+    const mutedColor = useThemeColor('muted-foreground')
     const warningColor = useThemeColor('warning')
     const bgColor = useThemeColor('background')
 

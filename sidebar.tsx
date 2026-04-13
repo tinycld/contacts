@@ -30,7 +30,7 @@ export default function ContactsSidebar(_props: ContactsSidebarProps) {
         label?: string
     }>()
     const [labelManagerOpen, setLabelManagerOpen] = useState(false)
-    const mutedColor = useThemeColor('muted')
+    const mutedColor = useThemeColor('muted-foreground')
 
     const [contactsCollection] = useStore('contacts')
     const [assignmentsCollection] = useStore('label_assignments')

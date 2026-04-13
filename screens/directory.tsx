@@ -29,7 +29,7 @@ export default function DirectoryScreen() {
     const [searchQuery, setSearchQuery] = useState('')
     const [userOrgCollection] = useStore('user_org')
     const fgColor = useThemeColor('foreground')
-    const mutedColor = useThemeColor('muted')
+    const mutedColor = useThemeColor('muted-foreground')
     const bgColor = useThemeColor('background')
     const borderColor = useThemeColor('border')
     const placeholderColor = useThemeColor('field-placeholder')

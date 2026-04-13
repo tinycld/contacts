@@ -30,7 +30,7 @@ export default function ContactListScreen() {
     const { labelMap } = useLabels()
     const isCompact = useBreakpoint() === 'mobile'
     const fgColor = useThemeColor('foreground')
-    const mutedColor = useThemeColor('muted')
+    const mutedColor = useThemeColor('muted-foreground')
     const bgColor = useThemeColor('background')
     const borderColor = useThemeColor('border')
     const placeholderColor = useThemeColor('field-placeholder')

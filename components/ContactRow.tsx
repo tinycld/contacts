@@ -41,7 +41,7 @@ export function ContactRow({
     const orgHref = useOrgHref()
     const [isHovered, setIsHovered] = useState(false)
     const fgColor = useThemeColor('foreground')
-    const mutedColor = useThemeColor('muted')
+    const mutedColor = useThemeColor('muted-foreground')
     const borderColor = useThemeColor('border')
     const bgColor = useThemeColor('background')
     const warningColor = useThemeColor('warning')
