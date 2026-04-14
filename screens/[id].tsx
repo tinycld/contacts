@@ -1,5 +1,4 @@
 import { eq } from '@tanstack/db'
-import { useLiveQuery } from '@tanstack/react-db'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ArrowLeft, Star } from 'lucide-react-native'
 import { useMemo } from 'react'
@@ -7,7 +6,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native'
 import { LabelBadge } from '~/components/LabelBadge'
 import { handleMutationErrorsWithForm } from '~/lib/errors'
 import { mutation, useMutation } from '~/lib/mutations'
-import { useStore } from '~/lib/pocketbase'
+import { useOrgLiveQuery, useStore } from '~/lib/pocketbase'
 import { useThemeColor } from '~/lib/use-app-theme'
 import { Button, ButtonText } from '~/ui/button'
 import { useForm, zodResolver } from '~/ui/form'
@@ -35,7 +34,7 @@ export default function ContactDetailScreen() {
         [recordLabels.labels]
     )
 
-    const { data } = useLiveQuery(
+    const { data } = useOrgLiveQuery(
         query =>
             query
                 .from({ contacts: contactsCollection })
@@ -124,8 +123,10 @@ export default function ContactDetailScreen() {
 
     if (!contact) {
         return (
-            <View style={{ flex: 1, padding: 20, backgroundColor: bgColor }}>
-                <Text style={{ fontSize: 16, color: mutedColor }}>Contact not found</Text>
+            <View className="flex-1 p-5" style={{ backgroundColor: bgColor }}>
+                <Text className="text-base" style={{ color: mutedColor }}>
+                    Contact not found
+                </Text>
             </View>
         )
     }
@@ -134,19 +135,12 @@ export default function ContactDetailScreen() {
 
     return (
         <ScrollView contentContainerStyle={{ flexGrow: 1 }} style={{ backgroundColor: bgColor }}>
-            <View style={{ flex: 1, padding: 20 }}>
-                <View
-                    style={{
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: 20,
-                    }}
-                >
+            <View className="flex-1 p-5">
+                <View className="flex-row justify-between items-center mb-5">
                     <Pressable onPress={() => router.back()}>
                         <ArrowLeft size={24} color={fgColor} />
                     </Pressable>
-                    <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+                    <View className="flex-row gap-3 items-center">
                         <Pressable onPress={() => toggleFavorite.mutate()}>
                             <Star
                                 size={24}
@@ -162,32 +156,28 @@ export default function ContactDetailScreen() {
                     </View>
                 </View>
 
-                <View style={{ alignItems: 'center', marginBottom: 20, gap: 8 }}>
+                <View className="items-center mb-5 gap-2">
                     <ContactAvatar
                         firstName={contact.first_name}
                         lastName={contact.last_name}
                         size={80}
                     />
-                    <Text
-                        style={{
-                            fontSize: 24,
-                            fontWeight: 'bold',
-                            color: fgColor,
-                        }}
-                    >
+                    <Text className="text-2xl font-bold" style={{ color: fgColor }}>
                         {displayName}
                     </Text>
                     {contact.email ? (
-                        <Text style={{ fontSize: 14, color: mutedColor }}>{contact.email}</Text>
+                        <Text className="text-sm" style={{ color: mutedColor }}>
+                            {contact.email}
+                        </Text>
                     ) : null}
                 </View>
 
                 {orgLabels.length > 0 ? (
-                    <View style={{ marginBottom: 20, gap: 8 }}>
-                        <Text style={{ fontSize: 14, fontWeight: '600', color: mutedColor }}>
+                    <View className="mb-5 gap-2">
+                        <Text className="text-sm font-semibold" style={{ color: mutedColor }}>
                             Labels
                         </Text>
-                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                        <View className="flex-row flex-wrap gap-2">
                             {orgLabels.map(label => {
                                 const assigned = assignedLabelIds.has(label.id)
                                 return (

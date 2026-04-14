@@ -1,12 +1,10 @@
 import { eq } from '@tanstack/db'
-import { useLiveQuery } from '@tanstack/react-db'
 import { useMemo, useState } from 'react'
 import { Text, TextInput, View } from 'react-native'
 import { NameAvatar } from '~/components/NameAvatar'
 import { hexToRgba } from '~/lib/color-utils'
-import { useStore } from '~/lib/pocketbase'
+import { useOrgLiveQuery, useStore } from '~/lib/pocketbase'
 import { useThemeColor } from '~/lib/use-app-theme'
-import { useOrgInfo } from '~/lib/use-org-info'
 
 interface MemberCard {
     id: string
@@ -17,7 +15,6 @@ interface MemberCard {
 }
 
 export default function DirectoryScreen() {
-    const { orgId } = useOrgInfo()
     const [searchQuery, setSearchQuery] = useState('')
     const [userOrgCollection] = useStore('user_org')
     const fgColor = useThemeColor('foreground')
@@ -54,12 +51,8 @@ export default function DirectoryScreen() {
         border: hexToRgba(mutedColor, 0.3),
     }
 
-    const { data: userOrgs } = useLiveQuery(
-        query =>
-            query
-                .from({ user_org: userOrgCollection })
-                .where(({ user_org }) => eq(user_org.org, orgId)),
-        [orgId]
+    const { data: userOrgs } = useOrgLiveQuery((query, { orgId }) =>
+        query.from({ user_org: userOrgCollection }).where(({ user_org }) => eq(user_org.org, orgId))
     )
 
     const members: MemberCard[] = useMemo(() => {
@@ -90,16 +83,9 @@ export default function DirectoryScreen() {
     }, [members, searchQuery])
 
     return (
-        <View style={{ flex: 1, padding: 20, backgroundColor: bgColor }}>
-            <View
-                style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: 16,
-                }}
-            >
-                <Text style={{ fontSize: 24, fontWeight: 'bold', color: fgColor }}>
+        <View className="flex-1 p-5" style={{ backgroundColor: bgColor }}>
+            <View className="flex-row justify-between items-center mb-4">
+                <Text className="text-2xl font-bold" style={{ color: fgColor }}>
                     Directory ({filtered.length})
                 </Text>
                 {members.length > 5 ? (
@@ -107,15 +93,10 @@ export default function DirectoryScreen() {
                         placeholder="Search members..."
                         value={searchQuery}
                         onChangeText={setSearchQuery}
+                        className="w-[250px] border rounded-lg px-3 py-2 text-sm"
                         style={{
-                            width: 250,
                             backgroundColor: bgColor,
                             borderColor: borderColor,
-                            borderWidth: 1,
-                            borderRadius: 8,
-                            paddingHorizontal: 12,
-                            paddingVertical: 8,
-                            fontSize: 14,
                             color: fgColor,
                         }}
                         placeholderTextColor={placeholderColor}
@@ -123,61 +104,49 @@ export default function DirectoryScreen() {
                 ) : null}
             </View>
 
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
+            <View className="flex-row flex-wrap gap-4">
                 {filtered.map(member => {
                     const badge = badgeColors[member.role] ?? defaultBadge
                     return (
                         <View
                             key={member.id}
+                            className="w-[220px] border rounded-lg p-3"
                             style={{
-                                width: 220,
                                 backgroundColor: bgColor,
                                 borderColor: borderColor,
-                                borderWidth: 1,
-                                borderRadius: 8,
-                                padding: 12,
                             }}
                         >
-                            <View style={{ alignItems: 'center', gap: 12 }}>
+                            <View className="items-center gap-3">
                                 <NameAvatar
                                     firstName={member.firstName}
                                     lastName={member.lastName}
                                     size={56}
                                 />
-                                <View style={{ alignItems: 'center', gap: 4 }}>
+                                <View className="items-center gap-1">
                                     <Text
-                                        style={{
-                                            fontSize: 16,
-                                            fontWeight: '600',
-                                            color: fgColor,
-                                        }}
+                                        className="text-base font-semibold"
+                                        style={{ color: fgColor }}
                                         numberOfLines={1}
                                     >
                                         {member.firstName} {member.lastName}
                                     </Text>
                                     <Text
-                                        style={{ fontSize: 12, color: mutedColor }}
+                                        className="text-xs"
+                                        style={{ color: mutedColor }}
                                         numberOfLines={1}
                                     >
                                         {member.email}
                                     </Text>
                                     <View
+                                        className="px-2 py-0.5 rounded-md border mt-1"
                                         style={{
-                                            paddingHorizontal: 8,
-                                            paddingVertical: 2,
-                                            borderRadius: 6,
                                             backgroundColor: badge.bg,
-                                            borderWidth: 1,
                                             borderColor: badge.border,
-                                            marginTop: 4,
                                         }}
                                     >
                                         <Text
-                                            style={{
-                                                fontSize: 11,
-                                                color: badge.fg,
-                                                fontWeight: '500',
-                                            }}
+                                            className="text-[11px] font-medium"
+                                            style={{ color: badge.fg }}
                                         >
                                             {member.role}
                                         </Text>
@@ -190,15 +159,10 @@ export default function DirectoryScreen() {
             </View>
 
             {filtered.length === 0 ? (
-                <View
-                    style={{
-                        flex: 1,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: 40,
-                    }}
-                >
-                    <Text style={{ fontSize: 16, color: mutedColor }}>No members found.</Text>
+                <View className="flex-1 items-center justify-center p-10">
+                    <Text className="text-base" style={{ color: mutedColor }}>
+                        No members found.
+                    </Text>
                 </View>
             ) : null}
         </View>
