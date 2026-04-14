@@ -45,6 +45,9 @@ export function ContactRow({
     const borderColor = useThemeColor('border')
     const bgColor = useThemeColor('background')
     const warningColor = useThemeColor('warning')
+    const dangerColor = useThemeColor('danger')
+    const successColor = useThemeColor('success')
+    const infoColor = useThemeColor('info')
 
     const displayName = [contact.first_name, contact.last_name].filter(Boolean).join(' ')
 
@@ -72,13 +75,13 @@ export function ContactRow({
                   icon: RotateCcw,
                   label: 'Restore',
                   onPress: () => onRestore?.(),
-                  backgroundColor: '#22c55e',
+                  backgroundColor: successColor,
               },
               {
                   icon: Trash2,
                   label: 'Delete',
                   onPress: () => onPermanentDelete?.(),
-                  backgroundColor: '#ef4444',
+                  backgroundColor: dangerColor,
               },
           ]
         : [
@@ -86,19 +89,19 @@ export function ContactRow({
                   icon: Trash2,
                   label: 'Delete',
                   onPress: onDelete,
-                  backgroundColor: '#ef4444',
+                  backgroundColor: dangerColor,
               },
               {
                   icon: Edit3,
                   label: 'Edit',
                   onPress: () => navigateToContact?.(),
-                  backgroundColor: '#3b82f6',
+                  backgroundColor: infoColor,
               },
               {
                   icon: Star,
                   label: contact.favorite ? 'Unstar' : 'Star',
                   onPress: onToggleFavorite,
-                  backgroundColor: '#eab308',
+                  backgroundColor: warningColor,
               },
           ]
 

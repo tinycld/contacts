@@ -3,18 +3,10 @@ import { useLiveQuery } from '@tanstack/react-db'
 import { useMemo, useState } from 'react'
 import { Text, TextInput, View } from 'react-native'
 import { NameAvatar } from '~/components/NameAvatar'
+import { hexToRgba } from '~/lib/color-utils'
 import { useStore } from '~/lib/pocketbase'
 import { useThemeColor } from '~/lib/use-app-theme'
 import { useOrgInfo } from '~/lib/use-org-info'
-
-const BADGE_COLORS: Record<string, { bg: string; fg: string; border: string }> = {
-    owner: { bg: '#f3e8ff', fg: '#7c3aed', border: '#d8b4fe' },
-    admin: { bg: '#dbeafe', fg: '#2563eb', border: '#93c5fd' },
-    member: { bg: '#dcfce7', fg: '#16a34a', border: '#86efac' },
-    guest: { bg: '#ffedd5', fg: '#ea580c', border: '#fdba74' },
-}
-
-const DEFAULT_BADGE = { bg: '#f3f4f6', fg: '#6b7280', border: '#d1d5db' }
 
 interface MemberCard {
     id: string
@@ -33,6 +25,34 @@ export default function DirectoryScreen() {
     const bgColor = useThemeColor('background')
     const borderColor = useThemeColor('border')
     const placeholderColor = useThemeColor('field-placeholder')
+    const primaryColor = useThemeColor('primary')
+    const infoColor = useThemeColor('info')
+    const successColor = useThemeColor('success')
+    const warningColor = useThemeColor('warning')
+
+    const badgeColors: Record<string, { bg: string; fg: string; border: string }> = {
+        owner: {
+            bg: hexToRgba(primaryColor, 0.12),
+            fg: primaryColor,
+            border: hexToRgba(primaryColor, 0.3),
+        },
+        admin: { bg: hexToRgba(infoColor, 0.12), fg: infoColor, border: hexToRgba(infoColor, 0.3) },
+        member: {
+            bg: hexToRgba(successColor, 0.12),
+            fg: successColor,
+            border: hexToRgba(successColor, 0.3),
+        },
+        guest: {
+            bg: hexToRgba(warningColor, 0.12),
+            fg: warningColor,
+            border: hexToRgba(warningColor, 0.3),
+        },
+    }
+    const defaultBadge = {
+        bg: hexToRgba(mutedColor, 0.12),
+        fg: mutedColor,
+        border: hexToRgba(mutedColor, 0.3),
+    }
 
     const { data: userOrgs } = useLiveQuery(
         query =>
@@ -105,7 +125,7 @@ export default function DirectoryScreen() {
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
                 {filtered.map(member => {
-                    const badge = BADGE_COLORS[member.role] ?? DEFAULT_BADGE
+                    const badge = badgeColors[member.role] ?? defaultBadge
                     return (
                         <View
                             key={member.id}
