@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Platform, Pressable, Text, View } from 'react-native'
 import { HoverAction } from '~/components/HoverAction'
 import { LabelDots } from '~/components/LabelBadge'
+import { StarIcon } from '~/components/StarIcon'
 import { ConfirmTrash } from '~/components/SuretyGuard'
 import { SwipeableRow } from '~/components/SwipeableRow'
 import { useBreakpoint } from '~/components/workspace/useBreakpoint'
@@ -142,11 +143,7 @@ export function ContactRow({
                                 onToggleFavorite()
                             }}
                         >
-                            <Star
-                                size={18}
-                                color={contact.favorite ? warningColor : mutedColor}
-                                fill={contact.favorite ? warningColor : 'transparent'}
-                            />
+                            <StarIcon isStarred={contact.favorite} size={18} />
                         </Pressable>
                     </View>
                 ) : (
@@ -227,8 +224,8 @@ export function ContactRow({
                                         icon={Star}
                                         label={contact.favorite ? 'Unstar' : 'Star'}
                                         onPress={onToggleFavorite}
-                                        iconColor={warningColor}
-                                        iconFill={contact.favorite ? warningColor : 'transparent'}
+                                        iconColor="#facc15"
+                                        iconFill={contact.favorite ? '#facc15' : 'transparent'}
                                         tooltipPosition={tooltipPosition}
                                     />
                                 </>
@@ -242,11 +239,7 @@ export function ContactRow({
                                     onToggleFavorite()
                                 }}
                             >
-                                <Star
-                                    size={18}
-                                    color={contact.favorite ? warningColor : mutedColor}
-                                    fill={contact.favorite ? warningColor : 'transparent'}
-                                />
+                                <StarIcon isStarred={contact.favorite} size={18} />
                             </Pressable>
                         )}
                     </>

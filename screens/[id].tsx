@@ -1,9 +1,10 @@
 import { eq } from '@tanstack/db'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { ArrowLeft, Star } from 'lucide-react-native'
+import { ArrowLeft } from 'lucide-react-native'
 import { useMemo } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { LabelBadge } from '~/components/LabelBadge'
+import { StarIcon } from '~/components/StarIcon'
 import { handleMutationErrorsWithForm } from '~/lib/errors'
 import { mutation, useMutation } from '~/lib/mutations'
 import { useOrgLiveQuery, useStore } from '~/lib/pocketbase'
@@ -22,7 +23,6 @@ export default function ContactDetailScreen() {
     const [contactsCollection] = useStore('contacts')
     const fgColor = useThemeColor('foreground')
     const mutedColor = useThemeColor('muted-foreground')
-    const warningColor = useThemeColor('warning')
     const bgColor = useThemeColor('background')
 
     const { labels: orgLabels } = useLabels()
@@ -142,11 +142,7 @@ export default function ContactDetailScreen() {
                     </Pressable>
                     <View className="flex-row gap-3 items-center">
                         <Pressable onPress={() => toggleFavorite.mutate()}>
-                            <Star
-                                size={24}
-                                color={contact.favorite ? mutedColor : warningColor}
-                                fill={contact.favorite ? 'transparent' : warningColor}
-                            />
+                            <StarIcon isStarred={contact.favorite} size={24} />
                         </Pressable>
                         <Button onPress={onSubmit} isDisabled={updateContact.isPending} size="sm">
                             <ButtonText>
