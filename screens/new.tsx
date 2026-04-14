@@ -68,26 +68,13 @@ export default function NewContactScreen() {
 
     return (
         <ScrollView contentContainerStyle={{ flexGrow: 1 }} style={{ backgroundColor: bgColor }}>
-            <View style={{ flex: 1, padding: 20 }}>
-                <View
-                    style={{
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: 20,
-                    }}
-                >
-                    <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+            <View className="flex-1 p-5">
+                <View className="flex-row justify-between items-center mb-5">
+                    <View className="flex-row gap-3 items-center">
                         <Pressable onPress={() => router.back()}>
                             <ArrowLeft size={24} color={fgColor} />
                         </Pressable>
-                        <Text
-                            style={{
-                                fontSize: 24,
-                                fontWeight: 'bold',
-                                color: fgColor,
-                            }}
-                        >
+                        <Text className="text-2xl font-bold" style={{ color: fgColor }}>
                             Create Contact
                         </Text>
                     </View>

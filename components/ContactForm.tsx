@@ -15,11 +15,11 @@ interface ContactFormProps {
 
 export function ContactForm({ control, errors, isSubmitted }: ContactFormProps) {
     return (
-        <View style={{ gap: 4 }}>
+        <View className="gap-1">
             <FormErrorSummary errors={errors} isEnabled={isSubmitted} />
 
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-                <View style={{ flex: 1 }}>
+            <View className="flex-row gap-2">
+                <View className="flex-1">
                     <TextInput
                         name="first_name"
                         control={control}
@@ -29,7 +29,7 @@ export function ContactForm({ control, errors, isSubmitted }: ContactFormProps) 
                         autoFocus
                     />
                 </View>
-                <View style={{ flex: 1 }}>
+                <View className="flex-1">
                     <TextInput
                         name="last_name"
                         control={control}

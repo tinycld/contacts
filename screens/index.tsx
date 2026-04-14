@@ -113,8 +113,10 @@ export default function ContactListScreen() {
 
     if (isLoading) {
         return (
-            <View style={{ flex: 1, padding: 20, backgroundColor: bgColor }}>
-                <Text style={{ fontSize: 16, color: mutedColor }}>Loading contacts...</Text>
+            <View className="flex-1 p-5" style={{ backgroundColor: bgColor }}>
+                <Text className="text-base" style={{ color: mutedColor }}>
+                    Loading contacts...
+                </Text>
             </View>
         )
     }
@@ -131,22 +133,15 @@ export default function ContactListScreen() {
     }
 
     return (
-        <View style={{ flex: 1, backgroundColor: bgColor }}>
-            <View style={{ padding: isCompact ? 12 : 20, paddingBottom: 0 }}>
+        <View className="flex-1" style={{ backgroundColor: bgColor }}>
+            <View className={`pb-0 ${isCompact ? 'p-3' : 'p-5'}`}>
                 <View
-                    style={{
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: isCompact ? 8 : 16,
-                        flexWrap: isCompact ? 'wrap' : 'nowrap',
-                        gap: isCompact ? 8 : 0,
-                    }}
+                    className={`flex-row justify-between items-center ${isCompact ? 'mb-2 flex-wrap gap-2' : 'mb-4 flex-nowrap'}`}
                 >
                     <Text
+                        className="font-bold"
                         style={{
                             fontSize: isCompact ? 20 : 24,
-                            fontWeight: 'bold',
                             color: fgColor,
                         }}
                     >
@@ -156,15 +151,11 @@ export default function ContactListScreen() {
                         placeholder="Search contacts..."
                         value={searchQuery}
                         onChangeText={setSearchQuery}
+                        className="border rounded-lg px-3 py-2 text-sm"
                         style={{
                             width: isCompact ? '100%' : 250,
                             backgroundColor: bgColor,
                             borderColor: borderColor,
-                            borderWidth: 1,
-                            borderRadius: 8,
-                            paddingHorizontal: 12,
-                            paddingVertical: 8,
-                            fontSize: 14,
                             color: fgColor,
                         }}
                         placeholderTextColor={placeholderColor}
@@ -175,15 +166,8 @@ export default function ContactListScreen() {
             </View>
 
             {count === 0 && (filter || activeLabelId) ? (
-                <View
-                    style={{
-                        flex: 1,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: 40,
-                    }}
-                >
-                    <Text style={{ fontSize: 16, color: mutedColor }}>
+                <View className="flex-1 items-center justify-center p-10">
+                    <Text className="text-base" style={{ color: mutedColor }}>
                         No {filter === 'favorites' ? 'favorite ' : ''}contacts
                         {activeLabel ? ` with label "${activeLabel.name}"` : ''}.
                     </Text>
@@ -195,7 +179,7 @@ export default function ContactListScreen() {
                         keyExtractor={item => item.id}
                         renderItem={renderContact}
                         contentContainerStyle={{ paddingHorizontal: isCompact ? 12 : 24 }}
-                        style={{ flex: 1 }}
+                        className="flex-1"
                     />
                 </SwipeableRowProvider>
             )}

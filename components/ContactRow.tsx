@@ -108,47 +108,35 @@ export function ContactRow({
     const row = (
         <Pressable onPress={navigateToContact} {...hoverWebProps}>
             <View
+                className="flex-row items-center px-3 py-3 w-full relative"
                 style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    paddingHorizontal: 12,
-                    paddingVertical: 12,
                     borderBottomWidth: 1,
                     borderBottomColor: borderColor,
-                    width: '100%',
-                    position: 'relative',
                     backgroundColor: bgColor,
                 }}
             >
                 {labels.length > 0 ? <LabelDots labels={labels} max={3} /> : null}
                 <ContactAvatar firstName={contact.first_name} lastName={contact.last_name} />
                 {isCompact ? (
-                    <View
-                        style={{
-                            flex: 1,
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            marginLeft: 12,
-                        }}
-                    >
-                        <View style={{ flex: 1, gap: 2 }}>
+                    <View className="flex-1 flex-row items-center justify-between ml-3">
+                        <View className="flex-1 gap-0.5">
                             <Text
-                                style={{
-                                    fontSize: 16,
-                                    color: fgColor,
-                                    fontWeight: '500',
-                                }}
+                                className="text-base font-medium"
+                                style={{ color: fgColor }}
                                 numberOfLines={1}
                             >
                                 {displayName}
                             </Text>
-                            <Text style={{ fontSize: 12, color: mutedColor }} numberOfLines={1}>
+                            <Text
+                                className="text-xs"
+                                style={{ color: mutedColor }}
+                                numberOfLines={1}
+                            >
                                 {[contact.email, contact.phone].filter(Boolean).join(' · ')}
                             </Text>
                         </View>
                         <Pressable
-                            style={{ padding: 4 }}
+                            className="p-1"
                             onPress={e => {
                                 e.stopPropagation()
                                 onToggleFavorite()
@@ -163,34 +151,25 @@ export function ContactRow({
                     </View>
                 ) : (
                     <>
-                        <View
-                            style={{
-                                flex: 2,
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                gap: 12,
-                                marginLeft: 12,
-                            }}
-                        >
+                        <View className="flex-[2] flex-row items-center gap-3 ml-3">
                             <Text
-                                style={{
-                                    fontSize: 16,
-                                    color: fgColor,
-                                    fontWeight: '500',
-                                }}
+                                className="text-base font-medium"
+                                style={{ color: fgColor }}
                                 numberOfLines={1}
                             >
                                 {displayName}
                             </Text>
                         </View>
                         <Text
-                            style={{ fontSize: 14, color: mutedColor, flex: 2 }}
+                            className="text-sm flex-[2]"
+                            style={{ color: mutedColor }}
                             numberOfLines={1}
                         >
                             {contact.email}
                         </Text>
                         <Text
-                            style={{ fontSize: 14, color: mutedColor, flex: 1 }}
+                            className="text-sm flex-1"
+                            style={{ color: mutedColor }}
                             numberOfLines={1}
                         >
                             {contact.phone}
@@ -200,18 +179,8 @@ export function ContactRow({
                 {isCompact ? null : (
                     <>
                         <Pressable
-                            style={[
-                                {
-                                    position: 'absolute',
-                                    right: 12,
-                                    top: 0,
-                                    bottom: 0,
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
-                                    backgroundColor: bgColor,
-                                },
-                                !isHovered && { opacity: 0, pointerEvents: 'none' as const },
-                            ]}
+                            className={`absolute right-3 top-0 bottom-0 flex-row items-center ${!isHovered ? 'opacity-0 pointer-events-none' : ''}`}
+                            style={{ backgroundColor: bgColor }}
                             onPress={e => e.stopPropagation()}
                         >
                             {onRestore && onPermanentDelete ? (
@@ -267,19 +236,7 @@ export function ContactRow({
                         </Pressable>
                         {onRestore ? null : (
                             <Pressable
-                                style={[
-                                    {
-                                        position: 'absolute',
-                                        right: 12,
-                                        top: 0,
-                                        bottom: 0,
-                                        justifyContent: 'center',
-                                        padding: 4,
-                                        width: 32,
-                                        alignItems: 'center',
-                                    },
-                                    isHovered && { opacity: 0, pointerEvents: 'none' as const },
-                                ]}
+                                className={`absolute right-3 top-0 bottom-0 justify-center p-1 w-8 items-center ${isHovered ? 'opacity-0 pointer-events-none' : ''}`}
                                 onPress={e => {
                                     e.stopPropagation()
                                     onToggleFavorite()
