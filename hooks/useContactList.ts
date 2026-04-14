@@ -1,8 +1,7 @@
-import { eq, not } from '@tanstack/db'
-import { useLiveQuery } from '@tanstack/react-db'
+import { and, eq, not } from '@tanstack/db'
 import { useMemo } from 'react'
 import { mutation, useMutation } from '~/lib/mutations'
-import { useStore } from '~/lib/pocketbase'
+import { useOrgLiveQuery, useStore } from '~/lib/pocketbase'
 import type { ContactSearchResult } from './useContactSearch'
 
 export function useContactList(params: {
@@ -17,19 +16,29 @@ export function useContactList(params: {
 
     const isDeleted = filter === 'deleted'
 
-    const { data: contacts, isLoading } = useLiveQuery(query =>
-        query
-            .from({ contacts: contactsCollection })
-            .where(({ contacts }) =>
-                isDeleted ? not(eq(contacts.deleted_at, '')) : eq(contacts.deleted_at, '')
-            )
-            .orderBy(({ contacts }) => contacts.first_name, 'asc')
+    const { data: contacts, isLoading } = useOrgLiveQuery(
+        (query, { userOrgId }) =>
+            query
+                .from({ contacts: contactsCollection })
+                .where(({ contacts }) =>
+                    and(
+                        eq(contacts.owner, userOrgId),
+                        isDeleted ? not(eq(contacts.deleted_at, '')) : eq(contacts.deleted_at, '')
+                    )
+                )
+                .orderBy(({ contacts }) => contacts.first_name, 'asc'),
+        [isDeleted]
     )
 
-    const { data: contactAssignments } = useLiveQuery(query =>
+    const { data: contactAssignments } = useOrgLiveQuery((query, { userOrgId }) =>
         query
             .from({ label_assignments: assignmentsCollection })
-            .where(({ label_assignments }) => eq(label_assignments.collection, 'contacts'))
+            .where(({ label_assignments }) =>
+                and(
+                    eq(label_assignments.collection, 'contacts'),
+                    eq(label_assignments.user_org, userOrgId)
+                )
+            )
     )
 
     const toggleFavorite = useMutation({

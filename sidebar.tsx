@@ -1,5 +1,4 @@
-import { eq } from '@tanstack/db'
-import { useLiveQuery } from '@tanstack/react-db'
+import { and, eq } from '@tanstack/db'
 import { useGlobalSearchParams, usePathname, useRouter } from 'expo-router'
 import { Building2, Settings, Star, Trash2, Users } from 'lucide-react-native'
 import { useMemo, useState } from 'react'
@@ -13,7 +12,7 @@ import {
     SidebarNav,
 } from '~/components/sidebar-primitives'
 import { useOrgHref } from '~/lib/org-routes'
-import { useStore } from '~/lib/pocketbase'
+import { useOrgLiveQuery, useStore } from '~/lib/pocketbase'
 import { useThemeColor } from '~/lib/use-app-theme'
 import { useLabels } from '~/ui/hooks/useLabels'
 
@@ -36,14 +35,21 @@ export default function ContactsSidebar(_props: ContactsSidebarProps) {
     const [assignmentsCollection] = useStore('label_assignments')
     const { labels: orgLabels } = useLabels()
 
-    const { data: allContactsRaw } = useLiveQuery(query =>
-        query.from({ contacts: contactsCollection })
+    const { data: allContactsRaw } = useOrgLiveQuery((query, { userOrgId }) =>
+        query
+            .from({ contacts: contactsCollection })
+            .where(({ contacts }) => eq(contacts.owner, userOrgId))
     )
 
-    const { data: contactAssignments } = useLiveQuery(query =>
+    const { data: contactAssignments } = useOrgLiveQuery((query, { userOrgId }) =>
         query
             .from({ label_assignments: assignmentsCollection })
-            .where(({ label_assignments }) => eq(label_assignments.collection, 'contacts'))
+            .where(({ label_assignments }) =>
+                and(
+                    eq(label_assignments.collection, 'contacts'),
+                    eq(label_assignments.user_org, userOrgId)
+                )
+            )
     )
 
     const { totalCount, favoriteCount, deletedCount } = useMemo(() => {
