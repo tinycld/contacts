@@ -8,9 +8,22 @@ import (
 	"github.com/google/uuid"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
+	"tinycld.org/audit"
 )
 
 func Register(app *pocketbase.PocketBase) {
+	// Audit logging for contacts
+	audit.RegisterCollection(app, "contacts", &audit.CollectionConfig{
+		ResolveOrg: func(a core.App, record *core.Record) string {
+			ownerID := record.GetString("owner")
+			if ownerID == "" {
+				return ""
+			}
+			return audit.ResolveViaRelation(a, "user_org", ownerID, "org")
+		},
+		ExtractLabel: audit.LabelFromField("name"),
+	})
+
 	// FTS sync hooks for contacts
 	app.OnRecordAfterCreateSuccess("contacts").BindFunc(func(e *core.RecordEvent) error {
 		syncContactToFTS(app, e.Record, "create")
