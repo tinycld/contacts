@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { login, navigateToAddon } from '../../../tests/e2e/helpers'
+import { login, navigateToPackage } from '../../../tests/e2e/helpers'
 
 test.describe('Contacts', () => {
     test.beforeEach(async ({ page }) => {
@@ -7,14 +7,14 @@ test.describe('Contacts', () => {
     })
 
     test('list screen renders with seed data', async ({ page }) => {
-        await navigateToAddon(page, 'contacts')
+        await navigateToPackage(page, 'contacts')
         await expect(page.getByText(/Contacts \(\d+\)/)).toBeVisible()
         await expect(page.getByText('Alice Johnson')).toBeVisible()
         await expect(page.getByText('Bob Smith')).toBeVisible()
     })
 
     test('create a new contact and verify it appears', async ({ page }) => {
-        await navigateToAddon(page, 'contacts')
+        await navigateToPackage(page, 'contacts')
         await page.getByText('+ Create contact').click()
         await page.waitForURL(/\/contacts\/new/)
 
@@ -31,7 +31,7 @@ test.describe('Contacts', () => {
     })
 
     test('click a contact, edit fields, save, verify changes persist', async ({ page }) => {
-        await navigateToAddon(page, 'contacts')
+        await navigateToPackage(page, 'contacts')
         await page.getByText('Alice Johnson').click()
         await page.waitForURL(/\/contacts\//)
 
@@ -46,7 +46,7 @@ test.describe('Contacts', () => {
     })
 
     test('toggle favorite from detail view', async ({ page }) => {
-        await navigateToAddon(page, 'contacts')
+        await navigateToPackage(page, 'contacts')
         await page.getByText('Bob Smith').click()
         await page.waitForURL(/\/contacts\//)
 
@@ -57,7 +57,7 @@ test.describe('Contacts', () => {
     })
 
     test('search filters contacts', async ({ page }) => {
-        await navigateToAddon(page, 'contacts')
+        await navigateToPackage(page, 'contacts')
 
         const searchInput = page.getByPlaceholder('Search contacts...')
         await searchInput.fill('carol')

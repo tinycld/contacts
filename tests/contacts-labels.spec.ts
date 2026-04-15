@@ -1,10 +1,10 @@
 import { expect, test } from '@playwright/test'
-import { login, navigateToAddon } from '../../../tests/e2e/helpers'
+import { login, navigateToPackage } from '../../../tests/e2e/helpers'
 
 test.describe('Contacts — Labels & Actions', () => {
     test.beforeEach(async ({ page }) => {
         await login(page)
-        await navigateToAddon(page, 'contacts')
+        await navigateToPackage(page, 'contacts')
     })
 
     test('sidebar shows labels section', async ({ page }) => {
