@@ -61,6 +61,7 @@ export default function ContactListScreen() {
     useContactsShortcuts({
         items: filteredContacts ?? [],
         isEnabled: true,
+        listKey: `${filter ?? ''}:${activeLabelId ?? ''}:${useServerSearch ? 'search' : 'all'}`,
     })
 
     const activeLabel = activeLabelId ? labelMap.get(activeLabelId) : null
