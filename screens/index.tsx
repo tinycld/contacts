@@ -11,6 +11,7 @@ import { useLabels } from '~/ui/hooks/useLabels'
 import { ContactRow } from '../components/ContactRow'
 import { useContactList } from '../hooks/useContactList'
 import { useContactSearch } from '../hooks/useContactSearch'
+import { useContactsShortcuts } from '../hooks/useContactsShortcuts'
 
 const CONTACT_COLUMNS = [
     { label: 'Name', flex: 2 },
@@ -56,6 +57,11 @@ export default function ContactListScreen() {
     })
 
     const count = filteredContacts?.length ?? 0
+
+    useContactsShortcuts({
+        items: filteredContacts ?? [],
+        isEnabled: true,
+    })
 
     const activeLabel = activeLabelId ? labelMap.get(activeLabelId) : null
     const title = activeLabel
