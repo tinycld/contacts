@@ -58,7 +58,7 @@ export default function ContactListScreen() {
 
     const count = filteredContacts?.length ?? 0
 
-    useContactsShortcuts({
+    const { focusedId } = useContactsShortcuts({
         items: filteredContacts ?? [],
         isEnabled: true,
         listKey: `${filter ?? ''}:${activeLabelId ?? ''}:${useServerSearch ? 'search' : 'all'}`,
@@ -104,6 +104,7 @@ export default function ContactListScreen() {
                         isDeleted ? () => permanentlyDeleteContact.mutate(contact.id) : undefined
                     }
                     index={index}
+                    isFocused={contact.id === focusedId}
                 />
             )
         },
@@ -115,6 +116,7 @@ export default function ContactListScreen() {
             restoreContact,
             permanentlyDeleteContact,
             isDeleted,
+            focusedId,
         ]
     )
 

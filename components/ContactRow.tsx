@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router'
 import { Edit3, RotateCcw, Star, Trash2 } from 'lucide-react-native'
 import { useState } from 'react'
 import { Platform, Pressable, Text, View } from 'react-native'
+import { rowFocusStyle } from '~/components/focusable-row'
 import { HoverAction } from '~/components/HoverAction'
 import { LabelDots } from '~/components/LabelBadge'
 import { StarIcon } from '~/components/StarIcon'
@@ -27,6 +28,7 @@ interface ContactRowProps {
     onRestore?: () => void
     onPermanentDelete?: () => void
     index?: number
+    isFocused?: boolean
 }
 
 export function ContactRow({
@@ -37,6 +39,7 @@ export function ContactRow({
     onRestore,
     onPermanentDelete,
     index,
+    isFocused,
 }: ContactRowProps) {
     const router = useRouter()
     const orgHref = useOrgHref()
@@ -45,6 +48,7 @@ export function ContactRow({
     const mutedColor = useThemeColor('muted-foreground')
     const borderColor = useThemeColor('border')
     const bgColor = useThemeColor('background')
+    const activeIndicator = useThemeColor('active-indicator')
     const warningColor = useThemeColor('warning')
     const dangerColor = useThemeColor('danger')
     const successColor = useThemeColor('success')
@@ -106,15 +110,20 @@ export function ContactRow({
               },
           ]
 
+    const effectStyle = rowFocusStyle({ isFocused, isHovered, borderColor, activeIndicator })
+
     const row = (
         <Pressable onPress={navigateToContact} {...hoverWebProps}>
             <View
                 className="flex-row items-center px-3 py-3 w-full relative"
-                style={{
-                    borderBottomWidth: 1,
-                    borderBottomColor: borderColor,
-                    backgroundColor: bgColor,
-                }}
+                style={[
+                    {
+                        borderBottomWidth: 1,
+                        borderBottomColor: borderColor,
+                        backgroundColor: bgColor,
+                    },
+                    effectStyle,
+                ]}
             >
                 {labels.length > 0 ? <LabelDots labels={labels} max={3} /> : null}
                 <ContactAvatar firstName={contact.first_name} lastName={contact.last_name} />
