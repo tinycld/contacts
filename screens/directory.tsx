@@ -3,8 +3,9 @@ import { useMemo, useState } from 'react'
 import { Text, TextInput, View } from 'react-native'
 import { NameAvatar } from '~/components/NameAvatar'
 import { hexToRgba } from '~/lib/color-utils'
-import { useOrgLiveQuery, useStore } from '~/lib/pocketbase'
+import { useStore } from '~/lib/pocketbase'
 import { useThemeColor } from '~/lib/use-app-theme'
+import { useOrgLiveQuery } from '~/lib/use-org-live-query'
 
 interface MemberCard {
     id: string
