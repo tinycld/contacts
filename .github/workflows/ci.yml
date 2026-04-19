@@ -115,6 +115,13 @@ jobs:
         working-directory: core
         run: bunx vitest run packages/@tinycld/contacts
 
+      - name: Diagnostic — verify Metro can bundle the web entry
+        working-directory: core
+        env:
+          EXPO_PUBLIC_ENV: test
+          NODE_OPTIONS: --preserve-symlinks
+        run: bunx expo export --platform web --output-dir /tmp/expo-export
+
       - name: Reset test DB
         working-directory: core
         run: bunx tsx scripts/reset-dev-db.ts --url http://127.0.0.1:7091 --data-dir server/pb_test_data
