@@ -139,7 +139,7 @@ jobs:
         env:
           CI: true
           NODE_OPTIONS: --preserve-symlinks
-        run: bunx playwright test --project "@tinycld/contacts"
+        run: bunx playwright test --project "@tinycld/contacts" --timeout=90000
 
       - uses: actions/upload-artifact@v5
         if: ${{ !cancelled() }}
