@@ -35,22 +35,13 @@ export function useContactList(params: {
         query
             .from({ label_assignments: assignmentsCollection })
             .where(({ label_assignments }) =>
-                and(
-                    eq(label_assignments.collection, 'contacts'),
-                    eq(label_assignments.user_org, userOrgId)
-                )
+                and(eq(label_assignments.collection, 'contacts'), eq(label_assignments.user_org, userOrgId))
             )
     )
 
     const toggleFavorite = useMutation({
-        mutationFn: mutation(function* ({
-            id,
-            currentFavorite,
-        }: {
-            id: string
-            currentFavorite: boolean
-        }) {
-            yield contactsCollection.update(id, draft => {
+        mutationFn: mutation(function* ({ id, currentFavorite }: { id: string; currentFavorite: boolean }) {
+            yield contactsCollection.update(id, (draft) => {
                 draft.favorite = !currentFavorite
             })
         }),
@@ -58,7 +49,7 @@ export function useContactList(params: {
 
     const deleteContact = useMutation({
         mutationFn: mutation(function* (id: string) {
-            yield contactsCollection.update(id, draft => {
+            yield contactsCollection.update(id, (draft) => {
                 draft.deleted_at = new Date().toISOString()
             })
         }),
@@ -66,7 +57,7 @@ export function useContactList(params: {
 
     const restoreContact = useMutation({
         mutationFn: mutation(function* (id: string) {
-            yield contactsCollection.update(id, draft => {
+            yield contactsCollection.update(id, (draft) => {
                 draft.deleted_at = ''
             })
         }),
@@ -107,21 +98,19 @@ export function useContactList(params: {
         let list = contacts ?? []
 
         if (filter === 'favorites') {
-            list = list.filter(c => c.favorite)
+            list = list.filter((c) => c.favorite)
         }
 
         if (contactIdsForLabel) {
-            list = list.filter(c => contactIdsForLabel.has(c.id))
+            list = list.filter((c) => contactIdsForLabel.has(c.id))
         }
 
         const q = searchQuery.toLowerCase()
         if (q) {
-            list = list.filter(c => {
+            list = list.filter((c) => {
                 const fullName = `${c.first_name} ${c.last_name}`.toLowerCase()
                 return (
-                    fullName.includes(q) ||
-                    c.email?.toLowerCase().includes(q) ||
-                    c.company?.toLowerCase().includes(q)
+                    fullName.includes(q) || c.email?.toLowerCase().includes(q) || c.company?.toLowerCase().includes(q)
                 )
             })
         }

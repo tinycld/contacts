@@ -28,9 +28,11 @@ jobs:
           ref: ${{ env.CORE_REF }}
           path: core
       - uses: oven-sh/setup-bun@v2
-      - name: Install contacts dev tooling
-        working-directory: contacts
+      - name: Install core deps (biome + typescript come from here)
+        working-directory: core
         run: bun install
+      - name: Expose core's node_modules to contacts
+        run: ln -s ../core/node_modules contacts/node_modules
       - name: Lint contacts
         working-directory: contacts
         run: bun run lint
@@ -51,12 +53,11 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version-file: core/.node-version
-      - name: Install core deps (provides types for ~/* imports)
+      - name: Install core deps
         working-directory: core
         run: bun install
-      - name: Install contacts dev tooling
-        working-directory: contacts
-        run: bun install
+      - name: Expose core's node_modules to contacts
+        run: ln -s ../core/node_modules contacts/node_modules
       - name: Typecheck contacts
         working-directory: contacts
         run: bun run typecheck
@@ -85,9 +86,6 @@ jobs:
       - name: Install core deps
         working-directory: core
         run: bun install
-
-      - name: Ensure contacts has no node_modules (siblings must not)
-        run: rm -rf contacts/node_modules contacts/bun.lock
 
       - name: Link contacts into core
         working-directory: core

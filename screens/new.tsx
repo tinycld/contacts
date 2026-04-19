@@ -63,7 +63,7 @@ export default function NewContactScreen() {
         onError: handleMutationErrorsWithForm({ setError, getValues }),
     })
 
-    const onSubmit = handleSubmit(data => createContact.mutate(data))
+    const onSubmit = handleSubmit((data) => createContact.mutate(data))
     const canSubmit = !createContact.isPending && !!userOrg
 
     return (
@@ -79,9 +79,7 @@ export default function NewContactScreen() {
                         </Text>
                     </View>
                     <Button onPress={onSubmit} isDisabled={!canSubmit} size="sm">
-                        <ButtonText>
-                            {createContact.isPending ? 'Creating...' : 'Create'}
-                        </ButtonText>
+                        <ButtonText>{createContact.isPending ? 'Creating...' : 'Create'}</ButtonText>
                     </Button>
                 </View>
 

@@ -30,29 +30,13 @@ export function ContactForm({ control, errors, isSubmitted }: ContactFormProps) 
                     />
                 </View>
                 <View className="flex-1">
-                    <TextInput
-                        name="last_name"
-                        control={control}
-                        label="Last name"
-                        placeholder="Last name"
-                    />
+                    <TextInput name="last_name" control={control} label="Last name" placeholder="Last name" />
                 </View>
             </View>
 
-            <TextInput
-                name="company"
-                control={control}
-                label="Company"
-                labelIcon={Building2}
-                placeholder="Company"
-            />
+            <TextInput name="company" control={control} label="Company" labelIcon={Building2} placeholder="Company" />
 
-            <TextInput
-                name="job_title"
-                control={control}
-                label="Job title"
-                placeholder="Job title"
-            />
+            <TextInput name="job_title" control={control} label="Job title" placeholder="Job title" />
 
             <TextInput
                 name="email"

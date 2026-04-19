@@ -24,7 +24,7 @@ test.describe('Contacts', () => {
         await page.getByTestId('phone').fill('555-000-1234')
         await page.getByRole('button', { name: 'Create' }).click()
 
-        await page.waitForURL(url => !url.pathname.includes('/new'), { timeout: 10_000 })
+        await page.waitForURL((url) => !url.pathname.includes('/new'), { timeout: 10_000 })
         await expect(page.getByText('Tester McTest')).toBeVisible({
             timeout: 10_000,
         })

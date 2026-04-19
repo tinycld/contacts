@@ -27,9 +27,5 @@
         "pbtsdb": ">=0.3",
         "@tanstack/react-db": ">=0.1",
         "@tanstack/db": ">=0.6"
-    },
-    "devDependencies": {
-        "@biomejs/biome": "^2.4.10",
-        "typescript": "^5.9.0"
     }
 }
