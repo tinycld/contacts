@@ -53,9 +53,25 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version-file: core/.node-version
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: core/server/go.mod
+          cache-dependency-path: core/server/go.sum
       - name: Install core deps
         working-directory: core
         run: bun install
+      - name: Link contacts into core (so ~/types/pbSchema sees contacts collections)
+        working-directory: core
+        run: bun run packages:link @tinycld/contacts ../contacts
+      - name: Generate PB schema types
+        working-directory: core
+        run: |
+          cd server && go build -o tinycld .
+          ./tinycld --dev serve &
+          sleep 3
+          kill %1 2>/dev/null || true
+      - name: Remove contacts symlink from packages (typecheck runs standalone)
+        run: rm -f core/packages/@tinycld/contacts
       - name: Expose core's node_modules to contacts
         run: ln -s ../core/node_modules contacts/node_modules
       - name: Typecheck contacts
@@ -122,6 +138,7 @@ jobs:
         working-directory: core
         env:
           CI: true
+          NODE_OPTIONS: --preserve-symlinks
         run: bunx playwright test --project "@tinycld/contacts"
 
       - uses: actions/upload-artifact@v5
