@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { login, ORG_SLUG } from '../../../tests/e2e/helpers'
+import { login, ORG_SLUG } from '../../../../tests/e2e/helpers'
 
 test.describe('Contacts — Directory', () => {
     test.beforeEach(async ({ page }) => {
