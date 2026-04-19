@@ -70,12 +70,12 @@ jobs:
           ./tinycld --dev serve &
           sleep 3
           kill %1 2>/dev/null || true
-      - name: Remove contacts symlink from packages (typecheck runs standalone)
-        run: rm -f core/packages/@tinycld/contacts
       - name: Expose core's node_modules to contacts
         run: ln -s ../core/node_modules contacts/node_modules
       - name: Typecheck contacts
         working-directory: contacts
+        env:
+          NODE_OPTIONS: --preserve-symlinks
         run: bun run typecheck
 
   test:
