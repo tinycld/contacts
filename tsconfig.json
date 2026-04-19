@@ -1,0 +1,25 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-native",
+        "lib": ["ESNext", "DOM"],
+        "strict": true,
+        "skipLibCheck": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "noEmit": true,
+        "preserveSymlinks": true,
+        "types": ["node"],
+        "baseUrl": ".",
+        "paths": {
+            "~/*": ["../core/*"],
+            "@tinycld/*": ["../core/packages/@tinycld/*"]
+        }
+    },
+    "include": ["**/*.ts", "**/*.tsx"],
+    "exclude": ["node_modules", "server", "pb-migrations"]
+}
