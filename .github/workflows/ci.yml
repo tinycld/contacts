@@ -126,6 +126,14 @@ jobs:
         working-directory: core
         run: bunx tsx scripts/reset-dev-db.ts --url http://127.0.0.1:7091 --data-dir server/pb_test_data
 
+      - name: Contacts CardDAV smoke test
+        working-directory: core
+        run: |
+          server/tinycld --dev --dir server/pb_test_data --migrationsDir server/pb_migrations --http 127.0.0.1:7091 serve &
+          sleep 3
+          bunx tsx ../contacts/scripts/test-server-api.ts --url http://127.0.0.1:7091 --email ${{ env.TEST_USER_LOGIN }} --password ${{ env.TEST_USER_PW }}
+          kill %1 2>/dev/null || true
+
       - name: Cache Playwright browsers
         id: playwright-cache
         uses: actions/cache@v4
