@@ -9,10 +9,10 @@ interface ContactsUIState {
     setFocusedIndex: (i: number | ((prev: number) => number)) => void
 }
 
-export const useContactsUIStore = create<ContactsUIState>(set => ({
+export const useContactsUIStore = create<ContactsUIState>((set) => ({
     focusedIndex: 0,
-    setFocusedIndex: next =>
-        set(state => ({
+    setFocusedIndex: (next) =>
+        set((state) => ({
             focusedIndex: typeof next === 'function' ? next(state.focusedIndex) : next,
         })),
 }))

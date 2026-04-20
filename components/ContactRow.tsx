@@ -66,9 +66,7 @@ export function ContactRow({
 
     const tooltipPosition = index === 0 ? ('below' as const) : ('above' as const)
 
-    const navigateToContact = onRestore
-        ? undefined
-        : () => router.push(orgHref('contacts/[id]', { id: contact.id }))
+    const navigateToContact = onRestore ? undefined : () => router.push(orgHref('contacts/[id]', { id: contact.id }))
 
     const isCompact = useBreakpoint() === 'mobile'
 
@@ -130,24 +128,16 @@ export function ContactRow({
                 {isCompact ? (
                     <View className="flex-1 flex-row items-center justify-between ml-3">
                         <View className="flex-1 gap-0.5">
-                            <Text
-                                className="text-base font-medium"
-                                style={{ color: fgColor }}
-                                numberOfLines={1}
-                            >
+                            <Text className="text-base font-medium" style={{ color: fgColor }} numberOfLines={1}>
                                 {displayName}
                             </Text>
-                            <Text
-                                className="text-xs"
-                                style={{ color: mutedColor }}
-                                numberOfLines={1}
-                            >
+                            <Text className="text-xs" style={{ color: mutedColor }} numberOfLines={1}>
                                 {[contact.email, contact.phone].filter(Boolean).join(' · ')}
                             </Text>
                         </View>
                         <Pressable
                             className="p-1"
-                            onPress={e => {
+                            onPress={(e) => {
                                 e.stopPropagation()
                                 onToggleFavorite()
                             }}
@@ -158,26 +148,14 @@ export function ContactRow({
                 ) : (
                     <>
                         <View className="flex-[2] flex-row items-center gap-3 ml-3">
-                            <Text
-                                className="text-base font-medium"
-                                style={{ color: fgColor }}
-                                numberOfLines={1}
-                            >
+                            <Text className="text-base font-medium" style={{ color: fgColor }} numberOfLines={1}>
                                 {displayName}
                             </Text>
                         </View>
-                        <Text
-                            className="text-sm flex-[2]"
-                            style={{ color: mutedColor }}
-                            numberOfLines={1}
-                        >
+                        <Text className="text-sm flex-[2]" style={{ color: mutedColor }} numberOfLines={1}>
                             {contact.email}
                         </Text>
-                        <Text
-                            className="text-sm flex-1"
-                            style={{ color: mutedColor }}
-                            numberOfLines={1}
-                        >
+                        <Text className="text-sm flex-1" style={{ color: mutedColor }} numberOfLines={1}>
                             {contact.phone}
                         </Text>
                     </>
@@ -187,7 +165,7 @@ export function ContactRow({
                         <Pressable
                             className={`absolute right-3 top-0 bottom-0 flex-row items-center ${!isHovered ? 'opacity-0 pointer-events-none' : ''}`}
                             style={{ backgroundColor: bgColor }}
-                            onPress={e => e.stopPropagation()}
+                            onPress={(e) => e.stopPropagation()}
                         >
                             {onRestore && onPermanentDelete ? (
                                 <>
@@ -197,11 +175,8 @@ export function ContactRow({
                                         onPress={onRestore}
                                         tooltipPosition={tooltipPosition}
                                     />
-                                    <ConfirmTrash
-                                        itemName={displayName}
-                                        onConfirmed={onPermanentDelete}
-                                    >
-                                        {onOpen => (
+                                    <ConfirmTrash itemName={displayName} onConfirmed={onPermanentDelete}>
+                                        {(onOpen) => (
                                             <HoverAction
                                                 icon={Trash2}
                                                 label="Delete permanently"
@@ -214,7 +189,7 @@ export function ContactRow({
                             ) : (
                                 <>
                                     <ConfirmTrash itemName={displayName} onConfirmed={onDelete}>
-                                        {onOpen => (
+                                        {(onOpen) => (
                                             <HoverAction
                                                 icon={Trash2}
                                                 label="Delete"
@@ -243,7 +218,7 @@ export function ContactRow({
                         {onRestore ? null : (
                             <Pressable
                                 className={`absolute right-3 top-0 bottom-0 justify-center p-1 w-8 items-center ${isHovered ? 'opacity-0 pointer-events-none' : ''}`}
-                                onPress={e => {
+                                onPress={(e) => {
                                     e.stopPropagation()
                                     onToggleFavorite()
                                 }}

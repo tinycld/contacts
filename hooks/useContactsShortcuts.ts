@@ -16,8 +16,8 @@ interface UseContactsShortcutsArgs {
 }
 
 export function useContactsShortcuts({ items, isEnabled, listKey }: UseContactsShortcutsArgs) {
-    const storedIndex = useContactsUIStore(s => s.focusedIndex)
-    const setFocusedIndex = useContactsUIStore(s => s.setFocusedIndex)
+    const storedIndex = useContactsUIStore((s) => s.focusedIndex)
+    const setFocusedIndex = useContactsUIStore((s) => s.setFocusedIndex)
     const router = useRouter()
     const orgHref = useOrgHref()
 
@@ -41,7 +41,7 @@ export function useContactsShortcuts({ items, isEnabled, listKey }: UseContactsS
                 scope: 'list',
                 group: 'Contacts',
                 description: 'Next contact',
-                run: () => setFocusedIndex(i => Math.min(i + 1, Math.max(items.length - 1, 0))),
+                run: () => setFocusedIndex((i) => Math.min(i + 1, Math.max(items.length - 1, 0))),
             },
             {
                 id: 'contacts.list.prev',
@@ -49,7 +49,7 @@ export function useContactsShortcuts({ items, isEnabled, listKey }: UseContactsS
                 scope: 'list',
                 group: 'Contacts',
                 description: 'Previous contact',
-                run: () => setFocusedIndex(i => Math.max(i - 1, 0)),
+                run: () => setFocusedIndex((i) => Math.max(i - 1, 0)),
             },
             {
                 id: 'contacts.list.open',

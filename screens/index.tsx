@@ -74,17 +74,11 @@ export default function ContactListScreen() {
             : 'Contacts'
 
     const renderContact = useCallback(
-        ({
-            item: contact,
-            index,
-        }: {
-            item: NonNullable<typeof filteredContacts>[number]
-            index: number
-        }) => {
+        ({ item: contact, index }: { item: NonNullable<typeof filteredContacts>[number]; index: number }) => {
             const labelIds = assignmentsByContact.get(contact.id)
             const contactLabels = labelIds
                 ? Array.from(labelIds)
-                      .map(id => labelMap.get(id))
+                      .map((id) => labelMap.get(id))
                       .filter((l): l is { id: string; name: string; color: string } => l != null)
                 : []
 
@@ -100,9 +94,7 @@ export default function ContactListScreen() {
                     }
                     onDelete={() => deleteContact.mutate(contact.id)}
                     onRestore={isDeleted ? () => restoreContact.mutate(contact.id) : undefined}
-                    onPermanentDelete={
-                        isDeleted ? () => permanentlyDeleteContact.mutate(contact.id) : undefined
-                    }
+                    onPermanentDelete={isDeleted ? () => permanentlyDeleteContact.mutate(contact.id) : undefined}
                     index={index}
                     isFocused={contact.id === focusedId}
                 />
@@ -133,12 +125,7 @@ export default function ContactListScreen() {
     const isEmpty = !contacts || contacts.length === 0
 
     if (isEmpty && !filter && !activeLabelId) {
-        return (
-            <EmptyState
-                message="No contacts yet."
-                action={{ label: '+ Add Contact', href: newContactHref }}
-            />
-        )
+        return <EmptyState message="No contacts yet." action={{ label: '+ Add Contact', href: newContactHref }} />
     }
 
     return (
@@ -185,7 +172,7 @@ export default function ContactListScreen() {
                 <SwipeableRowProvider>
                     <FlatList
                         data={filteredContacts ?? []}
-                        keyExtractor={item => item.id}
+                        keyExtractor={(item) => item.id}
                         renderItem={renderContact}
                         contentContainerStyle={{ paddingHorizontal: isCompact ? 12 : 24 }}
                         className="flex-1"

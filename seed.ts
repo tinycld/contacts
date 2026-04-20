@@ -6,6 +6,25 @@ function log(...args: unknown[]) {
 
 interface SeedContext {
     userOrg: { id: string }
+    org: { id: string }
+}
+
+const SAMPLE_LABELS = [
+    { name: 'Work', color: '#3949ab' },
+    { name: 'Personal', color: '#43a047' },
+    { name: 'Important', color: '#d81b60' },
+] as const
+
+// Map first_name → labels to assign. Keeps the seed deterministic so
+// e2e tests can assert on specific contacts having specific labels.
+const CONTACT_LABEL_ASSIGNMENTS: Record<string, readonly string[]> = {
+    Alice: ['Work', 'Important'],
+    Bob: ['Work'],
+    Carol: ['Work', 'Important'],
+    Eva: ['Work'],
+    Frank: ['Personal'],
+    Grace: ['Work'],
+    Isabelle: ['Work'],
 }
 
 const SAMPLE_CONTACTS = [
@@ -223,13 +242,42 @@ const SAMPLE_CONTACTS = [
     },
 ]
 
-export default async function seed(pb: PocketBase, { userOrg }: SeedContext) {
+export default async function seed(pb: PocketBase, { userOrg, org }: SeedContext) {
+    log(`Creating ${SAMPLE_LABELS.length} labels...`)
+    const labelIdByName: Record<string, string> = {}
+    for (const label of SAMPLE_LABELS) {
+        let record: { id: string }
+        try {
+            record = await pb.collection('labels').getFirstListItem(`org = "${org.id}" && name = "${label.name}"`)
+        } catch {
+            record = await pb.collection('labels').create({
+                org: org.id,
+                name: label.name,
+                color: label.color,
+            })
+        }
+        labelIdByName[label.name] = record.id
+    }
+
     log(`Creating ${SAMPLE_CONTACTS.length} contacts...`)
     for (const contact of SAMPLE_CONTACTS) {
-        await pb.collection('contacts').create({
+        const created = await pb.collection('contacts').create({
             ...contact,
             owner: userOrg.id,
         })
+
+        const labelNames = CONTACT_LABEL_ASSIGNMENTS[contact.first_name]
+        if (!labelNames) continue
+        for (const labelName of labelNames) {
+            const labelId = labelIdByName[labelName]
+            if (!labelId) continue
+            await pb.collection('label_assignments').create({
+                label: labelId,
+                record_id: created.id,
+                collection: 'contacts',
+                user_org: userOrg.id,
+            })
+        }
     }
     log(`Created ${SAMPLE_CONTACTS.length} contacts`)
 }

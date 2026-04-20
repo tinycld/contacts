@@ -30,16 +30,10 @@ export default function ContactDetailScreen() {
     const recordLabels = useLabelsForRecord(id, 'contacts')
     const { assignLabel, unassignLabel } = useLabelMutations()
 
-    const assignedLabelIds = useMemo(
-        () => new Set(recordLabels.labels.map(l => l.id)),
-        [recordLabels.labels]
-    )
+    const assignedLabelIds = useMemo(() => new Set(recordLabels.labels.map((l) => l.id)), [recordLabels.labels])
 
     const { data } = useOrgLiveQuery(
-        query =>
-            query
-                .from({ contacts: contactsCollection })
-                .where(({ contacts }) => eq(contacts.id, id)),
+        (query) => query.from({ contacts: contactsCollection }).where(({ contacts }) => eq(contacts.id, id)),
         [id]
     )
 
@@ -89,7 +83,7 @@ export default function ContactDetailScreen() {
             notes: string
             favorite: boolean
         }) {
-            yield contactsCollection.update(id, draft => {
+            yield contactsCollection.update(id, (draft) => {
                 draft.first_name = formData.first_name.trim()
                 draft.last_name = formData.last_name.trim()
                 draft.email = formData.email
@@ -106,13 +100,13 @@ export default function ContactDetailScreen() {
     const toggleFavorite = useMutation({
         mutationFn: mutation(function* () {
             if (!contact) return
-            yield contactsCollection.update(id, draft => {
+            yield contactsCollection.update(id, (draft) => {
                 draft.favorite = !contact.favorite
             })
         }),
     })
 
-    const onSubmit = handleSubmit(formData => updateContact.mutate(formData))
+    const onSubmit = handleSubmit((formData) => updateContact.mutate(formData))
 
     const handleToggleLabel = (labelId: string) => {
         if (assignedLabelIds.has(labelId)) {
@@ -146,19 +140,13 @@ export default function ContactDetailScreen() {
                             <StarIcon isStarred={contact.favorite} size={24} />
                         </Pressable>
                         <Button onPress={onSubmit} isDisabled={updateContact.isPending} size="sm">
-                            <ButtonText>
-                                {updateContact.isPending ? 'Saving...' : 'Save'}
-                            </ButtonText>
+                            <ButtonText>{updateContact.isPending ? 'Saving...' : 'Save'}</ButtonText>
                         </Button>
                     </View>
                 </View>
 
                 <View className="items-center mb-5 gap-2">
-                    <ContactAvatar
-                        firstName={contact.first_name}
-                        lastName={contact.last_name}
-                        size={80}
-                    />
+                    <ContactAvatar firstName={contact.first_name} lastName={contact.last_name} size={80} />
                     <Text className="text-2xl font-bold" style={{ color: fgColor }}>
                         {displayName}
                     </Text>
@@ -175,17 +163,11 @@ export default function ContactDetailScreen() {
                             Labels
                         </Text>
                         <View className="flex-row flex-wrap gap-2">
-                            {orgLabels.map(label => {
+                            {orgLabels.map((label) => {
                                 const assigned = assignedLabelIds.has(label.id)
                                 return (
-                                    <Pressable
-                                        key={label.id}
-                                        onPress={() => handleToggleLabel(label.id)}
-                                    >
-                                        <LabelBadge
-                                            name={label.name}
-                                            color={assigned ? label.color : mutedColor}
-                                        />
+                                    <Pressable key={label.id} onPress={() => handleToggleLabel(label.id)}>
+                                        <LabelBadge name={label.name} color={assigned ? label.color : mutedColor} />
                                     </Pressable>
                                 )
                             })}
