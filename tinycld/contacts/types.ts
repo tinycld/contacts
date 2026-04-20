@@ -1,4 +1,4 @@
-import type { UserOrg } from '~/types/pbSchema'
+import type { UserOrg } from '@tinycld/core/types/pbSchema'
 
 export interface Contacts {
     id: string

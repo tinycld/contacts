@@ -1,4 +1,4 @@
-import { create } from '~/lib/store'
+import { create } from '@tinycld/core/lib/store'
 
 interface ContactsUIState {
     /**

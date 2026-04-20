@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useApiSearch } from '~/lib/use-api-search'
+import { useApiSearch } from '@tinycld/core/lib/use-api-search'
 
 export interface ContactSearchResult {
     id: string

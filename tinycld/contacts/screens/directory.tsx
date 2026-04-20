@@ -1,11 +1,11 @@
 import { eq } from '@tanstack/db'
 import { useMemo, useState } from 'react'
 import { Text, TextInput, View } from 'react-native'
-import { NameAvatar } from '~/components/NameAvatar'
-import { hexToRgba } from '~/lib/color-utils'
-import { useStore } from '~/lib/pocketbase'
-import { useThemeColor } from '~/lib/use-app-theme'
-import { useOrgLiveQuery } from '~/lib/use-org-live-query'
+import { NameAvatar } from '@tinycld/core/components/NameAvatar'
+import { hexToRgba } from '@tinycld/core/lib/color-utils'
+import { useStore } from '@tinycld/core/lib/pocketbase'
+import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
+import { useOrgLiveQuery } from '@tinycld/core/lib/use-org-live-query'
 
 interface MemberCard {
     id: string

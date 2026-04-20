@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router'
 import { useMemo, useRef } from 'react'
-import { useOrgHref } from '~/lib/org-routes'
-import { type Shortcut, useRegisterShortcuts, useShortcutScope } from '~/lib/shortcuts'
+import { useOrgHref } from '@tinycld/core/lib/org-routes'
+import { type Shortcut, useRegisterShortcuts, useShortcutScope } from '@tinycld/core/lib/shortcuts'
 import { useContactsUIStore } from '../stores/contacts-ui-store'
 
 interface ContactItem {

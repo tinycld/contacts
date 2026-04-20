@@ -3,19 +3,19 @@ import { useGlobalSearchParams, usePathname, useRouter } from 'expo-router'
 import { Building2, Settings, Star, Trash2, Users } from 'lucide-react-native'
 import { useMemo, useState } from 'react'
 import { Pressable } from 'react-native'
-import { LabelManagerDialog } from '~/components/LabelManagerDialog'
+import { LabelManagerDialog } from '@tinycld/core/components/LabelManagerDialog'
 import {
     SidebarActionButton,
     SidebarDivider,
     SidebarHeading,
     SidebarItem,
     SidebarNav,
-} from '~/components/sidebar-primitives'
-import { useOrgHref } from '~/lib/org-routes'
-import { useStore } from '~/lib/pocketbase'
-import { useThemeColor } from '~/lib/use-app-theme'
-import { useOrgLiveQuery } from '~/lib/use-org-live-query'
-import { useLabels } from '~/ui/hooks/useLabels'
+} from '@tinycld/core/components/sidebar-primitives'
+import { useOrgHref } from '@tinycld/core/lib/org-routes'
+import { useStore } from '@tinycld/core/lib/pocketbase'
+import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
+import { useOrgLiveQuery } from '@tinycld/core/lib/use-org-live-query'
+import { useLabels } from '@tinycld/core/ui/hooks/useLabels'
 
 interface ContactsSidebarProps {
     isCollapsed: boolean

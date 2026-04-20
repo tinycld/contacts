@@ -2,7 +2,7 @@ import { Building2, FileText, Mail, Phone, User } from 'lucide-react-native'
 import type { Control, FieldErrors } from 'react-hook-form'
 import { View } from 'react-native'
 import type { z } from 'zod'
-import { FormErrorSummary, TextAreaInput, TextInput, Toggle } from '~/ui/form'
+import { FormErrorSummary, TextAreaInput, TextInput, Toggle } from '@tinycld/core/ui/form'
 import type { contactSchema } from './contactSchema'
 
 type ContactFormValues = z.infer<typeof contactSchema>

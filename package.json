@@ -6,13 +6,13 @@
     "exports": {
         "./package.json": "./package.json",
         "./manifest": "./manifest.ts",
-        "./types": "./types.ts",
-        "./collections": "./collections.ts",
-        "./screens/*": "./screens/*.tsx",
-        "./seed": "./seed.ts",
-        "./sidebar": "./sidebar.tsx",
-        "./hooks/*": "./hooks/*.ts",
-        "./components/*": "./components/*.tsx"
+        "./types": "./tinycld/contacts/types.ts",
+        "./collections": "./tinycld/contacts/collections.ts",
+        "./screens/*": "./tinycld/contacts/screens/*.tsx",
+        "./seed": "./tinycld/contacts/seed.ts",
+        "./sidebar": "./tinycld/contacts/sidebar.tsx",
+        "./hooks/*": "./tinycld/contacts/hooks/*.ts",
+        "./components/*": "./tinycld/contacts/components/*.tsx"
     },
     "scripts": {
         "lint": "biome check .",
