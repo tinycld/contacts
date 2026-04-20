@@ -305,7 +305,8 @@ func extractOrgSlug(path string) string {
 }
 
 // extractOrgSlugFromHost parses the subdomain from a Host header.
-// e.g. "acme.localhost:8100" → "acme", "acme.tinycld.com" → "acme"
+// e.g. "acme.localhost:8100" → "acme", "acme.tinycld.com" → "acme".
+// Returns "" for IP addresses, bare hostnames, and two-label domains.
 func extractOrgSlugFromHost(host string) string {
 	// Strip port
 	if idx := strings.LastIndex(host, ":"); idx != -1 {
@@ -315,12 +316,35 @@ func extractOrgSlugFromHost(host string) string {
 	if strings.HasSuffix(host, ".localhost") {
 		return strings.TrimSuffix(host, ".localhost")
 	}
+	// IPv4 addresses look like 3+ labels split on "." but are not subdomains.
+	if isIPv4(host) {
+		return ""
+	}
 	// acme.tinycld.com → acme
 	parts := strings.Split(host, ".")
 	if len(parts) >= 3 {
 		return parts[0]
 	}
 	return ""
+}
+
+// isIPv4 returns true when host is a dotted-quad like 127.0.0.1.
+func isIPv4(host string) bool {
+	parts := strings.Split(host, ".")
+	if len(parts) != 4 {
+		return false
+	}
+	for _, p := range parts {
+		if p == "" || len(p) > 3 {
+			return false
+		}
+		for _, c := range p {
+			if c < '0' || c > '9' {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 // extractVCardUID gets the vcard UID from /carddav/u/ab/{orgSlug}/{vcard_uid}.vcf
