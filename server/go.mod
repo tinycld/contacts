@@ -4,14 +4,14 @@ go 1.25.0
 
 require (
 	github.com/emersion/go-vcard v0.0.0-20230815062825-8fda7d206ec9
-	github.com/emersion/go-webdav v0.6.0
+	github.com/emersion/go-webdav v0.7.0
 	github.com/google/uuid v1.6.0
 	github.com/pocketbase/dbx v1.12.0
 	github.com/pocketbase/pocketbase v0.36.8
-	tinycld.org/audit v0.0.0
+	tinycld.org/core v0.0.0
 )
 
-replace tinycld.org/audit => ../../../server/audit
+replace tinycld.org/core => ../../core/server
 
 require (
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
