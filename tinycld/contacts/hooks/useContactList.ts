@@ -1,8 +1,8 @@
 import { and, eq, not } from '@tanstack/db'
-import { useMemo } from 'react'
 import { mutation, useMutation } from '@tinycld/core/lib/mutations'
 import { useStore } from '@tinycld/core/lib/pocketbase'
 import { useOrgLiveQuery } from '@tinycld/core/lib/use-org-live-query'
+import { useMemo } from 'react'
 import type { ContactSearchResult } from './useContactSearch'
 
 export function useContactList(params: {

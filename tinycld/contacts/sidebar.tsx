@@ -1,8 +1,4 @@
 import { and, eq } from '@tanstack/db'
-import { useGlobalSearchParams, usePathname, useRouter } from 'expo-router'
-import { Building2, Settings, Star, Trash2, Users } from 'lucide-react-native'
-import { useMemo, useState } from 'react'
-import { Pressable } from 'react-native'
 import { LabelManagerDialog } from '@tinycld/core/components/LabelManagerDialog'
 import {
     SidebarActionButton,
@@ -16,6 +12,10 @@ import { useStore } from '@tinycld/core/lib/pocketbase'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useOrgLiveQuery } from '@tinycld/core/lib/use-org-live-query'
 import { useLabels } from '@tinycld/core/ui/hooks/useLabels'
+import { useGlobalSearchParams, usePathname, useRouter } from 'expo-router'
+import { Building2, Settings, Star, Trash2, Users } from 'lucide-react-native'
+import { useMemo, useState } from 'react'
+import { Pressable } from 'react-native'
 
 interface ContactsSidebarProps {
     isCollapsed: boolean

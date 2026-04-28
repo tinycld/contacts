@@ -1,7 +1,3 @@
-import { useRouter } from 'expo-router'
-import { Edit3, RotateCcw, Star, Trash2 } from 'lucide-react-native'
-import { useState } from 'react'
-import { Platform, Pressable, Text, View } from 'react-native'
 import { rowFocusStyle } from '@tinycld/core/components/focusable-row'
 import { HoverAction } from '@tinycld/core/components/HoverAction'
 import { LabelDots } from '@tinycld/core/components/LabelBadge'
@@ -11,6 +7,10 @@ import { SwipeableRow } from '@tinycld/core/components/SwipeableRow'
 import { useBreakpoint } from '@tinycld/core/components/workspace/useBreakpoint'
 import { useOrgHref } from '@tinycld/core/lib/org-routes'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
+import { useRouter } from 'expo-router'
+import { Edit3, RotateCcw, Star, Trash2 } from 'lucide-react-native'
+import { useState } from 'react'
+import { Platform, Pressable, Text, View } from 'react-native'
 import { ContactAvatar } from './ContactAvatar'
 
 interface ContactRowProps {
