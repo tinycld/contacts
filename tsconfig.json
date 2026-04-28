@@ -5,7 +5,7 @@
         "rootDir": "..",
         "paths": {
             "~/tinycld/contacts/*": ["./tinycld/contacts/*"],
-            "@tinycld/core/*": ["../core/tinycld/core/*"],
+            "@tinycld/core/*": ["../core/*"],
             "@tinycld/*": ["../core/packages/@tinycld/*"],
             "~/*": ["../core/*"]
         },
