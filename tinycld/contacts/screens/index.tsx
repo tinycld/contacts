@@ -1,23 +1,69 @@
 import { DataTableHeader } from '@tinycld/core/components/DataTableHeader'
+import { MenuCheckboxItem } from '@tinycld/core/components/DropdownMenu'
 import { EmptyState } from '@tinycld/core/components/EmptyState'
 import { SwipeableRowProvider } from '@tinycld/core/components/SwipeableRow'
 import { useBreakpoint } from '@tinycld/core/components/workspace/useBreakpoint'
 import { useOrgHref } from '@tinycld/core/lib/org-routes'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
+import { Menu } from '@tinycld/core/ui/menu'
 import { useLabels } from '@tinycld/core/ui/hooks/useLabels'
 import { useLocalSearchParams } from 'expo-router'
+import { ArrowUpDown } from 'lucide-react-native'
 import { useCallback, useState } from 'react'
-import { FlatList, Text, TextInput, View } from 'react-native'
+import { FlatList, Pressable, Text, TextInput, View } from 'react-native'
 import { ContactRow } from '../components/ContactRow'
 import { useContactList } from '../hooks/useContactList'
 import { useContactSearch } from '../hooks/useContactSearch'
 import { useContactsShortcuts } from '../hooks/useContactsShortcuts'
+import { type SortField, useContactsUIStore } from '../stores/contacts-ui-store'
 
-const CONTACT_COLUMNS = [
-    { label: 'Name', flex: 2 },
-    { label: 'Email', flex: 2 },
-    { label: 'Phone', flex: 1 },
+const CONTACT_COLUMNS: { label: string; flex: number; sortField: SortField }[] = [
+    { label: 'Name', flex: 2, sortField: 'first_name' },
+    { label: 'Email', flex: 2, sortField: 'email' },
+    { label: 'Phone', flex: 1, sortField: 'phone' },
 ]
+
+const SORT_OPTIONS: { field: SortField; label: string }[] = [
+    { field: 'first_name', label: 'First name' },
+    { field: 'last_name', label: 'Last name' },
+    { field: 'email', label: 'Email' },
+    { field: 'phone', label: 'Phone' },
+    { field: 'company', label: 'Company' },
+]
+
+function MobileSortMenu({ iconColor }: { iconColor: string }) {
+    const sortField = useContactsUIStore((s) => s.sortField)
+    const sortDirection = useContactsUIStore((s) => s.sortDirection)
+    const toggleSort = useContactsUIStore((s) => s.toggleSort)
+
+    return (
+        <Menu>
+            <Menu.Trigger>
+                <Pressable className="p-2" accessibilityLabel="Sort contacts">
+                    <ArrowUpDown size={18} color={iconColor} />
+                </Pressable>
+            </Menu.Trigger>
+            <Menu.Portal>
+                <Menu.Overlay />
+                <Menu.Content presentation="popover" placement="bottom" align="end">
+                    <Menu.Label>Sort by</Menu.Label>
+                    {SORT_OPTIONS.map((opt) => {
+                        const isActive = sortField === opt.field
+                        const arrow = isActive ? (sortDirection === 'asc' ? ' ↑' : ' ↓') : ''
+                        return (
+                            <MenuCheckboxItem
+                                key={opt.field}
+                                label={`${opt.label}${arrow}`}
+                                checked={isActive}
+                                onToggle={() => toggleSort(opt.field)}
+                            />
+                        )
+                    })}
+                </Menu.Content>
+            </Menu.Portal>
+        </Menu>
+    )
+}
 
 export default function ContactListScreen() {
     const [searchQuery, setSearchQuery] = useState('')
@@ -35,6 +81,10 @@ export default function ContactListScreen() {
     const bgColor = useThemeColor('background')
     const borderColor = useThemeColor('border')
     const placeholderColor = useThemeColor('field-placeholder')
+
+    const sortField = useContactsUIStore((s) => s.sortField)
+    const sortDirection = useContactsUIStore((s) => s.sortDirection)
+    const toggleSort = useContactsUIStore((s) => s.toggleSort)
 
     const useServerSearch = searchQuery.length >= 2
     const { results: serverResults } = useContactSearch(useServerSearch ? searchQuery : '')
@@ -128,9 +178,17 @@ export default function ContactListScreen() {
         return <EmptyState message="No contacts yet." action={{ label: '+ Add Contact', href: newContactHref }} />
     }
 
+    const horizontalPadding = isCompact ? 12 : 24
+
     return (
         <View className="flex-1" style={{ backgroundColor: bgColor }}>
-            <View className={`pb-0 ${isCompact ? 'p-3' : 'p-5'}`}>
+            <View
+                style={{
+                    paddingHorizontal: horizontalPadding,
+                    paddingTop: isCompact ? 12 : 20,
+                    paddingBottom: 0,
+                }}
+            >
                 <View
                     className={`flex-row justify-between items-center ${isCompact ? 'mb-2 flex-wrap gap-2' : 'mb-4 flex-nowrap'}`}
                 >
@@ -143,23 +201,36 @@ export default function ContactListScreen() {
                     >
                         {title} ({count})
                     </Text>
-                    <TextInput
-                        placeholder="Search contacts..."
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                        className="border rounded-lg px-3 py-2 text-sm"
-                        style={{
-                            width: isCompact ? '100%' : 250,
-                            backgroundColor: bgColor,
-                            borderColor: borderColor,
-                            color: fgColor,
-                        }}
-                        placeholderTextColor={placeholderColor}
+                    <View className="flex-row items-center gap-1">
+                        <TextInput
+                            placeholder="Search contacts..."
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
+                            className="border rounded-lg px-3 py-2 text-sm"
+                            style={{
+                                width: isCompact ? 200 : 250,
+                                backgroundColor: bgColor,
+                                borderColor: borderColor,
+                                color: fgColor,
+                            }}
+                            placeholderTextColor={placeholderColor}
+                        />
+                        {isCompact ? <MobileSortMenu iconColor={mutedColor} /> : null}
+                    </View>
+                </View>
+            </View>
+
+            {isCompact ? null : (
+                <View style={{ paddingHorizontal: horizontalPadding }}>
+                    <DataTableHeader
+                        columns={CONTACT_COLUMNS}
+                        leadingWidth={52}
+                        sortField={sortField}
+                        sortDirection={sortDirection}
+                        onSort={toggleSort}
                     />
                 </View>
-
-                {isCompact ? null : <DataTableHeader columns={CONTACT_COLUMNS} />}
-            </View>
+            )}
 
             {count === 0 && (filter || activeLabelId) ? (
                 <View className="flex-1 items-center justify-center p-10">

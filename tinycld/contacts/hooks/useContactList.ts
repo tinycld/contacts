@@ -3,7 +3,23 @@ import { mutation, useMutation } from '@tinycld/core/lib/mutations'
 import { useStore } from '@tinycld/core/lib/pocketbase'
 import { useOrgLiveQuery } from '@tinycld/core/lib/use-org-live-query'
 import { useMemo } from 'react'
+import { type SortField, useContactsUIStore } from '../stores/contacts-ui-store'
 import type { ContactSearchResult } from './useContactSearch'
+
+function sortAccessor(contacts: Record<SortField, unknown>, field: SortField) {
+    switch (field) {
+        case 'first_name':
+            return contacts.first_name
+        case 'last_name':
+            return contacts.last_name
+        case 'email':
+            return contacts.email
+        case 'phone':
+            return contacts.phone
+        case 'company':
+            return contacts.company
+    }
+}
 
 export function useContactList(params: {
     filter?: string
@@ -17,6 +33,11 @@ export function useContactList(params: {
 
     const isDeleted = filter === 'deleted'
 
+    // Sort applies to the client list query. The server-search path returns
+    // results in its own ranked order; we don't reorder those.
+    const sortField = useContactsUIStore((s) => s.sortField)
+    const sortDirection = useContactsUIStore((s) => s.sortDirection)
+
     const { data: contacts, isLoading } = useOrgLiveQuery(
         (query, { userOrgId }) =>
             query
@@ -27,8 +48,8 @@ export function useContactList(params: {
                         isDeleted ? not(eq(contacts.deleted_at, '')) : eq(contacts.deleted_at, '')
                     )
                 )
-                .orderBy(({ contacts }) => contacts.first_name, 'asc'),
-        [isDeleted]
+                .orderBy(({ contacts }) => sortAccessor(contacts, sortField), sortDirection),
+        [isDeleted, sortField, sortDirection]
     )
 
     const { data: contactAssignments } = useOrgLiveQuery((query, { userOrgId }) =>
