@@ -1,6 +1,7 @@
 import { rowFocusStyle } from '@tinycld/core/components/focusable-row'
 import { HoverAction } from '@tinycld/core/components/HoverAction'
 import { LabelDots } from '@tinycld/core/components/LabelBadge'
+import { RowHoverActions } from '@tinycld/core/components/RowHoverActions'
 import { StarIcon } from '@tinycld/core/components/StarIcon'
 import { ConfirmTrash } from '@tinycld/core/components/SuretyGuard'
 import { SwipeableRow } from '@tinycld/core/components/SwipeableRow'
@@ -110,14 +111,13 @@ export function ContactRow({
 
     const effectStyle = rowFocusStyle({ isFocused, isHovered, borderColor, activeIndicator })
 
-    const showHoverActions = !isCompact && isHovered
-
     const row = (
-        <Pressable onPress={navigateToContact} {...hoverWebProps}>
+        <Pressable onPress={navigateToContact} {...hoverWebProps} style={{ width: '100%' }}>
             <View
-                className="flex-row items-center pr-1 py-3 w-full gap-2"
+                className="flex-row items-center pr-1 py-3 gap-2"
                 style={[
                     {
+                        width: '100%',
                         paddingLeft: isCompact ? 4 : 12,
                         borderBottomWidth: 1,
                         borderBottomColor: borderColor,
@@ -126,107 +126,143 @@ export function ContactRow({
                     effectStyle,
                 ]}
             >
-                <ContactAvatar firstName={contact.first_name} lastName={contact.last_name} />
-                <View className="flex-1 flex-row items-center gap-2 ml-3 min-w-0">
-                    {isCompact ? (
+                {/* Avatar lives in a fixed-width leading column on both
+                    breakpoints so the flex-tracked columns (which the header
+                    also uses) start at the same offset for header and row. */}
+                <View style={{ width: 52, alignItems: 'flex-start' }}>
+                    <ContactAvatar firstName={contact.first_name} lastName={contact.last_name} />
+                </View>
+                {isCompact ? (
+                    <View className="flex-1 flex-row items-center gap-2 min-w-0">
                         <View className="flex-1 gap-0.5 min-w-0">
-                            <Text className="text-base font-medium" style={{ color: fgColor }} numberOfLines={1}>
-                                {displayName}
-                            </Text>
-                            <Text className="text-xs" style={{ color: mutedColor }} numberOfLines={1}>
-                                {[contact.email, contact.phone].filter(Boolean).join(' · ')}
-                            </Text>
-                        </View>
-                    ) : (
-                        <>
                             <Text
-                                className="text-base font-medium flex-[2] min-w-0"
+                                className="text-base font-medium"
                                 style={{ color: fgColor }}
                                 numberOfLines={1}
                             >
                                 {displayName}
                             </Text>
                             <Text
-                                className="text-sm flex-[2] min-w-0"
+                                className="text-xs"
                                 style={{ color: mutedColor }}
                                 numberOfLines={1}
                             >
-                                {contact.email}
+                                {[contact.email, contact.phone].filter(Boolean).join(' · ')}
                             </Text>
+                        </View>
+                        {labels.length > 0 ? <LabelDots labels={labels} max={3} /> : null}
+                    </View>
+                ) : (
+                    <>
+                        <Text
+                            className="text-base font-medium"
+                            style={{ flex: 2, flexBasis: 0, minWidth: 0, color: fgColor }}
+                            numberOfLines={1}
+                        >
+                            {displayName}
+                        </Text>
+                        <Text
+                            className="text-sm"
+                            style={{ flex: 2, flexBasis: 0, minWidth: 0, color: mutedColor }}
+                            numberOfLines={1}
+                        >
+                            {contact.email}
+                        </Text>
+                        <View
+                            className="flex-row items-center gap-2"
+                            style={{ flex: 1, flexBasis: 0, minWidth: 0 }}
+                        >
                             <Text
-                                className="text-sm flex-1 min-w-0"
-                                style={{ color: mutedColor }}
+                                className="text-sm"
+                                style={{ flex: 1, minWidth: 0, color: mutedColor }}
                                 numberOfLines={1}
                             >
                                 {contact.phone}
                             </Text>
-                        </>
-                    )}
-                    {labels.length > 0 ? <LabelDots labels={labels} max={3} /> : null}
-                </View>
-                {showHoverActions ? (
-                    <Pressable
-                        className="flex-row items-center"
-                        onPress={(e) => e.stopPropagation()}
-                    >
-                        {onRestore && onPermanentDelete ? (
-                            <>
-                                <HoverAction
-                                    icon={RotateCcw}
-                                    label="Restore"
-                                    onPress={onRestore}
-                                    tooltipPosition={tooltipPosition}
-                                />
-                                <ConfirmTrash itemName={displayName} onConfirmed={onPermanentDelete}>
-                                    {(onOpen) => (
-                                        <HoverAction
-                                            icon={Trash2}
-                                            label="Delete permanently"
-                                            onPress={onOpen}
-                                            tooltipPosition={tooltipPosition}
-                                        />
-                                    )}
-                                </ConfirmTrash>
-                            </>
-                        ) : (
-                            <>
-                                <ConfirmTrash itemName={displayName} onConfirmed={onDelete}>
-                                    {(onOpen) => (
-                                        <HoverAction
-                                            icon={Trash2}
-                                            label="Delete"
-                                            onPress={onOpen}
-                                            tooltipPosition={tooltipPosition}
-                                        />
-                                    )}
-                                </ConfirmTrash>
-                                <HoverAction
-                                    icon={Edit3}
-                                    label="Edit"
-                                    onPress={() => navigateToContact?.()}
-                                    tooltipPosition={tooltipPosition}
-                                />
-                                <HoverAction
-                                    icon={Star}
-                                    label={contact.favorite ? 'Unstar' : 'Star'}
-                                    onPress={onToggleFavorite}
-                                    iconColor="#facc15"
-                                    iconFill={contact.favorite ? '#facc15' : 'transparent'}
-                                    tooltipPosition={tooltipPosition}
-                                />
-                            </>
-                        )}
-                    </Pressable>
-                ) : onRestore ? null : (
-                    <Pressable
-                        className="p-1"
-                        onPress={(e) => {
-                            e.stopPropagation()
-                            onToggleFavorite()
-                        }}
-                    >
-                        <StarIcon isStarred={contact.favorite} size={18} />
-                    </Pressable>
+                            {labels.length > 0 ? <LabelDots labels={labels} max={3} /> : null}
+                        </View>
+                    </>
+                )}
+                {isCompact ? (
+                    // Mobile keeps just the static star; swipe gestures handle
+                    // the destructive actions via SwipeableRow above.
+                    onRestore ? null : (
+                        <Pressable
+                            className="p-1"
+                            onPress={(e) => {
+                                e.stopPropagation()
+                                onToggleFavorite()
+                            }}
+                        >
+                            <StarIcon isStarred={contact.favorite} size={18} />
+                        </Pressable>
+                    )
+                ) : (
+                    <RowHoverActions
+                        isHovered={isHovered}
+                        rest={
+                            onRestore ? null : (
+                                <Pressable
+                                    className="p-1"
+                                    onPress={(e) => {
+                                        e.stopPropagation()
+                                        onToggleFavorite()
+                                    }}
+                                >
+                                    <StarIcon isStarred={contact.favorite} size={18} />
+                                </Pressable>
+                            )
+                        }
+                        hover={
+                            onRestore && onPermanentDelete ? (
+                                <>
+                                    <HoverAction
+                                        icon={RotateCcw}
+                                        label="Restore"
+                                        onPress={onRestore}
+                                        tooltipPosition={tooltipPosition}
+                                    />
+                                    <ConfirmTrash itemName={displayName} onConfirmed={onPermanentDelete}>
+                                        {(onOpen) => (
+                                            <HoverAction
+                                                icon={Trash2}
+                                                label="Delete permanently"
+                                                onPress={onOpen}
+                                                tooltipPosition={tooltipPosition}
+                                            />
+                                        )}
+                                    </ConfirmTrash>
+                                </>
+                            ) : (
+                                <>
+                                    <ConfirmTrash itemName={displayName} onConfirmed={onDelete}>
+                                        {(onOpen) => (
+                                            <HoverAction
+                                                icon={Trash2}
+                                                label="Delete"
+                                                onPress={onOpen}
+                                                tooltipPosition={tooltipPosition}
+                                            />
+                                        )}
+                                    </ConfirmTrash>
+                                    <HoverAction
+                                        icon={Edit3}
+                                        label="Edit"
+                                        onPress={() => navigateToContact?.()}
+                                        tooltipPosition={tooltipPosition}
+                                    />
+                                    <HoverAction
+                                        icon={Star}
+                                        label={contact.favorite ? 'Unstar' : 'Star'}
+                                        onPress={onToggleFavorite}
+                                        iconColor="#facc15"
+                                        iconFill={contact.favorite ? '#facc15' : 'transparent'}
+                                        tooltipPosition={tooltipPosition}
+                                    />
+                                </>
+                            )
+                        }
+                    />
                 )}
             </View>
         </Pressable>
