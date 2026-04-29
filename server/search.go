@@ -24,13 +24,18 @@ func sanitizeFTSQuery(input string) string {
 		return ""
 	}
 
-	quoted := make([]string, len(terms))
+	// Use prefix matches (term*) so search-as-you-type finds partial words
+	// like "joh" -> "john", "johnson". FTS5's bare phrase syntax ("joh")
+	// is an exact token match and would only fire when the user types a
+	// whole indexed word. Each term is also quoted to keep any residual
+	// punctuation from being interpreted as FTS5 operators.
+	prefixed := make([]string, len(terms))
 	for i, term := range terms {
 		term = strings.ReplaceAll(term, `"`, `""`)
-		quoted[i] = `"` + term + `"`
+		prefixed[i] = `"` + term + `"*`
 	}
 
-	return strings.Join(quoted, " ")
+	return strings.Join(prefixed, " ")
 }
 
 // syncContactToFTS upserts a contacts record into the FTS index.
