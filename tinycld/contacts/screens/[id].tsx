@@ -13,7 +13,7 @@ import { useLabels, useLabelsForRecord } from '@tinycld/core/ui/hooks/useLabels'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ArrowLeft } from 'lucide-react-native'
 import { useMemo } from 'react'
-import { Pressable, ScrollView, Text, View } from 'react-native'
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native'
 import { ContactAvatar } from '../components/ContactAvatar'
 import { ContactForm } from '../components/ContactForm'
 import { contactSchema } from '../components/contactSchema'
@@ -129,8 +129,15 @@ export default function ContactDetailScreen() {
     const displayName = [contact.first_name, contact.last_name].filter(Boolean).join(' ')
 
     return (
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} style={{ backgroundColor: bgColor }}>
-            <View className="flex-1 p-5">
+        <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            style={{ flex: 1, backgroundColor: bgColor }}
+        >
+            <ScrollView
+                contentContainerStyle={{ flexGrow: 1 }}
+                keyboardShouldPersistTaps="handled"
+            >
+                <View className="flex-1 p-5">
                 <View className="flex-row justify-between items-center mb-5">
                     <Pressable onPress={() => router.back()}>
                         <ArrowLeft size={24} color={fgColor} />
@@ -177,6 +184,7 @@ export default function ContactDetailScreen() {
 
                 <ContactForm control={control} errors={errors} isSubmitted={isSubmitted} />
             </View>
-        </ScrollView>
+            </ScrollView>
+        </KeyboardAvoidingView>
     )
 }

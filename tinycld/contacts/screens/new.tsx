@@ -9,7 +9,7 @@ import { useForm, type z, zodResolver } from '@tinycld/core/ui/form'
 import { useRouter } from 'expo-router'
 import { ArrowLeft } from 'lucide-react-native'
 import { newRecordId } from 'pbtsdb/core'
-import { Pressable, ScrollView, Text, View } from 'react-native'
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native'
 import { ContactForm } from '../components/ContactForm'
 import { contactSchema } from '../components/contactSchema'
 
@@ -67,24 +67,32 @@ export default function NewContactScreen() {
     const canSubmit = !createContact.isPending && !!userOrg
 
     return (
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} style={{ backgroundColor: bgColor }}>
-            <View className="flex-1 p-5">
-                <View className="flex-row justify-between items-center mb-5">
-                    <View className="flex-row gap-3 items-center">
-                        <Pressable onPress={() => router.back()}>
-                            <ArrowLeft size={24} color={fgColor} />
-                        </Pressable>
-                        <Text className="text-2xl font-bold" style={{ color: fgColor }}>
-                            Create Contact
-                        </Text>
+        <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            style={{ flex: 1, backgroundColor: bgColor }}
+        >
+            <ScrollView
+                contentContainerStyle={{ flexGrow: 1 }}
+                keyboardShouldPersistTaps="handled"
+            >
+                <View className="flex-1 p-5">
+                    <View className="flex-row justify-between items-center mb-5">
+                        <View className="flex-row gap-3 items-center">
+                            <Pressable onPress={() => router.back()}>
+                                <ArrowLeft size={24} color={fgColor} />
+                            </Pressable>
+                            <Text className="text-2xl font-bold" style={{ color: fgColor }}>
+                                Create Contact
+                            </Text>
+                        </View>
+                        <Button onPress={onSubmit} isDisabled={!canSubmit} size="sm">
+                            <ButtonText>{createContact.isPending ? 'Creating...' : 'Create'}</ButtonText>
+                        </Button>
                     </View>
-                    <Button onPress={onSubmit} isDisabled={!canSubmit} size="sm">
-                        <ButtonText>{createContact.isPending ? 'Creating...' : 'Create'}</ButtonText>
-                    </Button>
-                </View>
 
-                <ContactForm control={control} errors={errors} isSubmitted={isSubmitted} />
-            </View>
-        </ScrollView>
+                    <ContactForm control={control} errors={errors} isSubmitted={isSubmitted} />
+                </View>
+            </ScrollView>
+        </KeyboardAvoidingView>
     )
 }
