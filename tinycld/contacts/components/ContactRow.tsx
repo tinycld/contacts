@@ -113,7 +113,7 @@ export function ContactRow({
     const row = (
         <Pressable onPress={navigateToContact} {...hoverWebProps}>
             <View
-                className="flex-row items-center px-3 py-3 w-full relative"
+                className="flex-row items-center pl-1 pr-1 py-3 w-full relative gap-2"
                 style={[
                     {
                         borderBottomWidth: 1,
@@ -123,10 +123,9 @@ export function ContactRow({
                     effectStyle,
                 ]}
             >
-                {labels.length > 0 ? <LabelDots labels={labels} max={3} /> : null}
                 <ContactAvatar firstName={contact.first_name} lastName={contact.last_name} />
                 {isCompact ? (
-                    <View className="flex-1 flex-row items-center justify-between ml-3">
+                    <View className="flex-1 flex-row items-center justify-between ml-3 gap-2">
                         <View className="flex-1 gap-0.5">
                             <Text className="text-base font-medium" style={{ color: fgColor }} numberOfLines={1}>
                                 {displayName}
@@ -135,6 +134,7 @@ export function ContactRow({
                                 {[contact.email, contact.phone].filter(Boolean).join(' · ')}
                             </Text>
                         </View>
+                        {labels.length > 0 ? <LabelDots labels={labels} max={3} /> : null}
                         <Pressable
                             className="p-1"
                             onPress={(e) => {
@@ -158,6 +158,11 @@ export function ContactRow({
                         <Text className="text-sm flex-1" style={{ color: mutedColor }} numberOfLines={1}>
                             {contact.phone}
                         </Text>
+                        {labels.length > 0 ? (
+                            <View className={`mr-9 ${isHovered ? 'opacity-0' : ''}`}>
+                                <LabelDots labels={labels} max={3} />
+                            </View>
+                        ) : null}
                     </>
                 )}
                 {isCompact ? null : (
