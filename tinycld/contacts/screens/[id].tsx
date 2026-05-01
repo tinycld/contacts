@@ -24,7 +24,6 @@ export default function ContactDetailScreen() {
     const [contactsCollection] = useStore('contacts')
     const fgColor = useThemeColor('foreground')
     const mutedColor = useThemeColor('muted-foreground')
-    const bgColor = useThemeColor('background')
 
     const { labels: orgLabels } = useLabels()
     const recordLabels = useLabelsForRecord(id, 'contacts')
@@ -118,8 +117,8 @@ export default function ContactDetailScreen() {
 
     if (!contact) {
         return (
-            <View className="flex-1 p-5" style={{ backgroundColor: bgColor }}>
-                <Text className="text-base" style={{ color: mutedColor }}>
+            <View className="flex-1 p-5 bg-background">
+                <Text className="text-base text-muted-foreground">
                     Contact not found
                 </Text>
             </View>
@@ -131,7 +130,7 @@ export default function ContactDetailScreen() {
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            style={{ flex: 1, backgroundColor: bgColor }}
+            className="flex-1 bg-background"
         >
             <ScrollView
                 contentContainerStyle={{ flexGrow: 1 }}
@@ -154,11 +153,11 @@ export default function ContactDetailScreen() {
 
                 <View className="items-center mb-5 gap-2">
                     <ContactAvatar firstName={contact.first_name} lastName={contact.last_name} size={80} />
-                    <Text className="text-2xl font-bold" style={{ color: fgColor }}>
+                    <Text className="text-2xl font-bold text-foreground">
                         {displayName}
                     </Text>
                     {contact.email ? (
-                        <Text className="text-sm" style={{ color: mutedColor }}>
+                        <Text className="text-sm text-muted-foreground">
                             {contact.email}
                         </Text>
                     ) : null}
@@ -166,7 +165,7 @@ export default function ContactDetailScreen() {
 
                 {orgLabels.length > 0 ? (
                     <View className="mb-5 gap-2">
-                        <Text className="text-sm font-semibold" style={{ color: mutedColor }}>
+                        <Text className="text-sm font-semibold text-muted-foreground">
                             Labels
                         </Text>
                         <View className="flex-row flex-wrap gap-2">

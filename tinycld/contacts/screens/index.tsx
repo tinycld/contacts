@@ -1,16 +1,18 @@
 import { DataTableHeader } from '@tinycld/core/components/DataTableHeader'
 import { MenuCheckboxItem } from '@tinycld/core/components/DropdownMenu'
 import { EmptyState } from '@tinycld/core/components/EmptyState'
+import { LoadingState } from '@tinycld/core/components/LoadingState'
 import { SwipeableRowProvider } from '@tinycld/core/components/SwipeableRow'
 import { useBreakpoint } from '@tinycld/core/components/workspace/useBreakpoint'
 import { useOrgHref } from '@tinycld/core/lib/org-routes'
+import { queryClient } from '@tinycld/core/lib/pocketbase'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { Menu } from '@tinycld/core/ui/menu'
 import { useLabels } from '@tinycld/core/ui/hooks/useLabels'
 import { useLocalSearchParams } from 'expo-router'
 import { ArrowUpDown } from 'lucide-react-native'
 import { useCallback, useState } from 'react'
-import { FlatList, Pressable, Text, TextInput, View } from 'react-native'
+import { FlatList, Pressable, RefreshControl, Text, TextInput, View } from 'react-native'
 import { ContactRow } from '../components/ContactRow'
 import { useContactList } from '../hooks/useContactList'
 import { useContactSearch } from '../hooks/useContactSearch'
@@ -67,6 +69,15 @@ function MobileSortMenu({ iconColor }: { iconColor: string }) {
 
 export default function ContactListScreen() {
     const [searchQuery, setSearchQuery] = useState('')
+    const [isRefreshing, setIsRefreshing] = useState(false)
+    const handleRefresh = useCallback(async () => {
+        setIsRefreshing(true)
+        try {
+            await queryClient.invalidateQueries()
+        } finally {
+            setIsRefreshing(false)
+        }
+    }, [])
     const orgHref = useOrgHref()
     const newContactHref = orgHref('contacts/new')
     const { filter, label: activeLabelId } = useLocalSearchParams<{
@@ -76,10 +87,7 @@ export default function ContactListScreen() {
 
     const { labelMap } = useLabels()
     const isCompact = useBreakpoint() === 'mobile'
-    const fgColor = useThemeColor('foreground')
     const mutedColor = useThemeColor('muted-foreground')
-    const bgColor = useThemeColor('background')
-    const borderColor = useThemeColor('border')
     const placeholderColor = useThemeColor('field-placeholder')
 
     const sortField = useContactsUIStore((s) => s.sortField)
@@ -163,13 +171,7 @@ export default function ContactListScreen() {
     )
 
     if (isLoading) {
-        return (
-            <View className="flex-1 p-5" style={{ backgroundColor: bgColor }}>
-                <Text className="text-base" style={{ color: mutedColor }}>
-                    Loading contacts...
-                </Text>
-            </View>
-        )
+        return <LoadingState />
     }
 
     const isEmpty = !contacts || contacts.length === 0
@@ -181,7 +183,7 @@ export default function ContactListScreen() {
     const horizontalPadding = isCompact ? 12 : 24
 
     return (
-        <View className="flex-1" style={{ backgroundColor: bgColor }}>
+        <View className="flex-1 bg-background">
             <View
                 style={{
                     paddingHorizontal: horizontalPadding,
@@ -193,10 +195,9 @@ export default function ContactListScreen() {
                     className={`flex-row justify-between items-center ${isCompact ? 'mb-2 flex-wrap gap-2' : 'mb-4 flex-nowrap'}`}
                 >
                     <Text
-                        className="font-bold"
+                        className="font-bold text-foreground"
                         style={{
                             fontSize: isCompact ? 20 : 24,
-                            color: fgColor,
                         }}
                     >
                         {title} ({count})
@@ -206,12 +207,9 @@ export default function ContactListScreen() {
                             placeholder="Search contacts..."
                             value={searchQuery}
                             onChangeText={setSearchQuery}
-                            className="border rounded-lg px-3 py-2 text-sm"
+                            className="border border-border rounded-lg px-3 py-2 text-sm bg-background text-foreground"
                             style={{
                                 width: isCompact ? 200 : 250,
-                                backgroundColor: bgColor,
-                                borderColor: borderColor,
-                                color: fgColor,
                             }}
                             placeholderTextColor={placeholderColor}
                         />
@@ -234,7 +232,7 @@ export default function ContactListScreen() {
 
             {count === 0 && (filter || activeLabelId) ? (
                 <View className="flex-1 items-center justify-center p-10">
-                    <Text className="text-base" style={{ color: mutedColor }}>
+                    <Text className="text-base text-muted-foreground">
                         No {filter === 'favorites' ? 'favorite ' : ''}contacts
                         {activeLabel ? ` with label "${activeLabel.name}"` : ''}.
                     </Text>
@@ -247,6 +245,11 @@ export default function ContactListScreen() {
                         renderItem={renderContact}
                         contentContainerStyle={{ paddingHorizontal: isCompact ? 12 : 24 }}
                         className="flex-1"
+                        refreshControl={
+                            isCompact ? (
+                                <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
+                            ) : undefined
+                        }
                     />
                 </SwipeableRowProvider>
             )}

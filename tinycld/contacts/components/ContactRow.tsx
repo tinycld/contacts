@@ -45,10 +45,7 @@ export function ContactRow({
     const router = useRouter()
     const orgHref = useOrgHref()
     const [isHovered, setIsHovered] = useState(false)
-    const fgColor = useThemeColor('foreground')
-    const mutedColor = useThemeColor('muted-foreground')
     const borderColor = useThemeColor('border')
-    const bgColor = useThemeColor('background')
     const activeIndicator = useThemeColor('active-indicator')
     const warningColor = useThemeColor('warning')
     const dangerColor = useThemeColor('danger')
@@ -114,14 +111,11 @@ export function ContactRow({
     const row = (
         <Pressable onPress={navigateToContact} {...hoverWebProps} style={{ width: '100%' }}>
             <View
-                className="flex-row items-center pr-1 py-3 gap-2"
+                className="flex-row items-center pr-1 py-3 gap-2 border-b border-border bg-background"
                 style={[
                     {
                         width: '100%',
                         paddingLeft: isCompact ? 4 : 12,
-                        borderBottomWidth: 1,
-                        borderBottomColor: borderColor,
-                        backgroundColor: bgColor,
                     },
                     effectStyle,
                 ]}
@@ -136,15 +130,13 @@ export function ContactRow({
                     <View className="flex-1 flex-row items-center gap-2 min-w-0">
                         <View className="flex-1 gap-0.5 min-w-0">
                             <Text
-                                className="text-base font-medium"
-                                style={{ color: fgColor }}
+                                className="text-base font-medium text-foreground"
                                 numberOfLines={1}
                             >
                                 {displayName}
                             </Text>
                             <Text
-                                className="text-xs"
-                                style={{ color: mutedColor }}
+                                className="text-xs text-muted-foreground"
                                 numberOfLines={1}
                             >
                                 {[contact.email, contact.phone].filter(Boolean).join(' · ')}
@@ -155,15 +147,15 @@ export function ContactRow({
                 ) : (
                     <>
                         <Text
-                            className="text-base font-medium"
-                            style={{ flex: 2, flexBasis: 0, minWidth: 0, color: fgColor }}
+                            className="text-base font-medium text-foreground"
+                            style={{ flex: 2, flexBasis: 0, minWidth: 0 }}
                             numberOfLines={1}
                         >
                             {displayName}
                         </Text>
                         <Text
-                            className="text-sm"
-                            style={{ flex: 2, flexBasis: 0, minWidth: 0, color: mutedColor }}
+                            className="text-sm text-muted-foreground"
+                            style={{ flex: 2, flexBasis: 0, minWidth: 0 }}
                             numberOfLines={1}
                         >
                             {contact.email}
@@ -173,8 +165,8 @@ export function ContactRow({
                             style={{ flex: 1, flexBasis: 0, minWidth: 0 }}
                         >
                             <Text
-                                className="text-sm"
-                                style={{ flex: 1, minWidth: 0, color: mutedColor }}
+                                className="text-sm text-muted-foreground"
+                                style={{ flex: 1, minWidth: 0 }}
                                 numberOfLines={1}
                             >
                                 {contact.phone}

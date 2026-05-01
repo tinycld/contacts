@@ -19,7 +19,6 @@ export default function NewContactScreen() {
     const userOrg = useCurrentUserOrg(orgSlug)
     const [contactsCollection] = useStore('contacts')
     const fgColor = useThemeColor('foreground')
-    const bgColor = useThemeColor('background')
 
     const {
         control,
@@ -69,7 +68,7 @@ export default function NewContactScreen() {
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            style={{ flex: 1, backgroundColor: bgColor }}
+            className="flex-1 bg-background"
         >
             <ScrollView
                 contentContainerStyle={{ flexGrow: 1 }}
@@ -81,7 +80,7 @@ export default function NewContactScreen() {
                             <Pressable onPress={() => router.back()}>
                                 <ArrowLeft size={24} color={fgColor} />
                             </Pressable>
-                            <Text className="text-2xl font-bold" style={{ color: fgColor }}>
+                            <Text className="text-2xl font-bold text-foreground">
                                 Create Contact
                             </Text>
                         </View>

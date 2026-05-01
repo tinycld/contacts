@@ -18,10 +18,7 @@ interface MemberCard {
 export default function DirectoryScreen() {
     const [searchQuery, setSearchQuery] = useState('')
     const [userOrgCollection] = useStore('user_org')
-    const fgColor = useThemeColor('foreground')
     const mutedColor = useThemeColor('muted-foreground')
-    const bgColor = useThemeColor('background')
-    const borderColor = useThemeColor('border')
     const placeholderColor = useThemeColor('field-placeholder')
     const primaryColor = useThemeColor('primary')
     const infoColor = useThemeColor('info')
@@ -84,9 +81,9 @@ export default function DirectoryScreen() {
     }, [members, searchQuery])
 
     return (
-        <View className="flex-1 p-5" style={{ backgroundColor: bgColor }}>
+        <View className="flex-1 p-5 bg-background">
             <View className="flex-row justify-between items-center mb-4">
-                <Text className="text-2xl font-bold" style={{ color: fgColor }}>
+                <Text className="text-2xl font-bold text-foreground">
                     Directory ({filtered.length})
                 </Text>
                 {members.length > 5 ? (
@@ -94,12 +91,7 @@ export default function DirectoryScreen() {
                         placeholder="Search members..."
                         value={searchQuery}
                         onChangeText={setSearchQuery}
-                        className="w-[250px] border rounded-lg px-3 py-2 text-sm"
-                        style={{
-                            backgroundColor: bgColor,
-                            borderColor: borderColor,
-                            color: fgColor,
-                        }}
+                        className="w-[250px] border border-border rounded-lg px-3 py-2 text-sm bg-background text-foreground"
                         placeholderTextColor={placeholderColor}
                     />
                 ) : null}
@@ -111,23 +103,18 @@ export default function DirectoryScreen() {
                     return (
                         <View
                             key={member.id}
-                            className="w-[220px] border rounded-lg p-3"
-                            style={{
-                                backgroundColor: bgColor,
-                                borderColor: borderColor,
-                            }}
+                            className="w-[220px] border border-border rounded-lg p-3 bg-background"
                         >
                             <View className="items-center gap-3">
                                 <NameAvatar firstName={member.firstName} lastName={member.lastName} size={56} />
                                 <View className="items-center gap-1">
                                     <Text
-                                        className="text-base font-semibold"
-                                        style={{ color: fgColor }}
+                                        className="text-base font-semibold text-foreground"
                                         numberOfLines={1}
                                     >
                                         {member.firstName} {member.lastName}
                                     </Text>
-                                    <Text className="text-xs" style={{ color: mutedColor }} numberOfLines={1}>
+                                    <Text className="text-xs text-muted-foreground" numberOfLines={1}>
                                         {member.email}
                                     </Text>
                                     <View
@@ -150,7 +137,7 @@ export default function DirectoryScreen() {
 
             {filtered.length === 0 ? (
                 <View className="flex-1 items-center justify-center p-10">
-                    <Text className="text-base" style={{ color: mutedColor }}>
+                    <Text className="text-base text-muted-foreground">
                         No members found.
                     </Text>
                 </View>
