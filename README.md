@@ -20,9 +20,9 @@ Part of [TinyCld](https://tinycld.org/) — the open-source, self-hosted Google 
 |----------|-----------|------|------------------------------------|
 | CardDAV  | RFC 6352  | 443  | Read/write contacts from any client |
 
-## Relationship to core
+## Relationship to the app shell
 
-`@tinycld/contacts` is a feature package for `@tinycld/core` — the [TinyCld](https://tinycld.org/) app shell that provides auth, routing, storage, and UI primitives. Core ships with **no** feature packages; install this one to add a Contacts app.
+`@tinycld/contacts` is a feature package for the [TinyCld app shell](https://github.com/tinycld/tinycld), which bundles `@tinycld/core` (auth, routing, storage, UI primitives). The app shell ships with **no** feature packages; install this one to add a Contacts app.
 
 This package contributes:
 
@@ -30,19 +30,19 @@ This package contributes:
 - **Nav entry** — sidebar icon with keyboard shortcut `t c` / `o`.
 - **Collections** — `contacts` table, registered with pbtsdb for live queries.
 - **Migrations** — schema and indexes under `pb-migrations/`.
-- **Go server module** — CardDAV endpoint, vCard parser, and search endpoints wired into core's PocketBase binary.
+- **Go server module** — CardDAV endpoint, vCard parser, and search endpoints wired into the app shell's PocketBase binary.
 
-The package depends on core at runtime (React, pbtsdb, `~/lib/*`). Core has no knowledge of this package at compile time — everything is discovered at generator time from `tinycld.packages.ts`.
+The package depends on `@tinycld/core` at runtime (React, pbtsdb, `~/lib/*`). The app shell has no knowledge of this package at compile time — everything is discovered at generator time by scanning `tinycld/packages/`.
 
 ## Installation
 
-From inside your `core/` checkout:
+From inside your app shell checkout (`tinycld/tinycld`):
 
 ```sh
 bun run packages:install <this-repo-git-url>
 ```
 
-That clones the repo next to core, symlinks it into `core/packages/@tinycld/contacts`, appends the package name to `tinycld.packages.ts`, and runs the generator to wire up routes, collections, migrations, and Go server extensions.
+That clones the repo next to the app shell, symlinks it into `tinycld/packages/@tinycld/contacts`, and runs the generator to wire up routes, collections, migrations, and Go server extensions.
 
 To remove:
 
@@ -52,16 +52,16 @@ bun run packages:unlink @tinycld/contacts
 
 ## Development
 
-This package is not run standalone — it only makes sense inside a `core/` checkout.
+This package is not run standalone — it only makes sense inside an app shell checkout.
 
 ```sh
-cd ../core
+cd ../tinycld
 bun run dev              # expo + pocketbase with contacts linked
 bun run test:unit        # includes this package's tests
-bun run checks           # biome + tsc across core + linked packages
+bun run checks           # biome + tsc across the app shell + linked packages
 ```
 
-**Do not** run `bun install` inside this directory. Peer dependencies resolve through core's `node_modules/`; installing here creates duplicate copies of `react`, `react-native`, etc. and breaks TypeScript.
+**Do not** run `bun install` inside this directory. Peer dependencies resolve through the app shell's `node_modules/`; installing here creates duplicate copies of `react`, `react-native`, etc. and breaks TypeScript.
 
 ## License
 
