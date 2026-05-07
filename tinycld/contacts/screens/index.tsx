@@ -12,7 +12,8 @@ import { useLabels } from '@tinycld/core/ui/hooks/useLabels'
 import { useLocalSearchParams } from 'expo-router'
 import { ArrowUpDown } from 'lucide-react-native'
 import { useCallback, useState } from 'react'
-import { FlatList, Pressable, RefreshControl, Text, TextInput, View } from 'react-native'
+import { FlashList } from '@shopify/flash-list'
+import { Pressable, RefreshControl, Text, TextInput, View } from 'react-native'
 import { ContactRow } from '../components/ContactRow'
 import { useContactList } from '../hooks/useContactList'
 import { useContactSearch } from '../hooks/useContactSearch'
@@ -131,6 +132,8 @@ export default function ContactListScreen() {
             ? 'Favorites'
             : 'Contacts'
 
+    const getItemType = useCallback(() => (isCompact ? 'mobile' : 'desktop'), [isCompact])
+
     const renderContact = useCallback(
         ({ item: contact, index }: { item: NonNullable<typeof filteredContacts>[number]; index: number }) => {
             const labelIds = assignmentsByContact.get(contact.id)
@@ -239,12 +242,12 @@ export default function ContactListScreen() {
                 </View>
             ) : (
                 <SwipeableRowProvider>
-                    <FlatList
+                    <FlashList
                         data={filteredContacts ?? []}
                         keyExtractor={(item) => item.id}
+                        getItemType={getItemType}
                         renderItem={renderContact}
                         contentContainerStyle={{ paddingHorizontal: isCompact ? 12 : 24 }}
-                        className="flex-1"
                         refreshControl={
                             isCompact ? (
                                 <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
