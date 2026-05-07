@@ -10,7 +10,7 @@ import { useOrgHref } from '@tinycld/core/lib/org-routes'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useRouter } from 'expo-router'
 import { Edit3, RotateCcw, Star, Trash2 } from 'lucide-react-native'
-import { useState } from 'react'
+import { useRecyclingState } from '@shopify/flash-list'
 import { Platform, Pressable, Text, View } from 'react-native'
 import { ContactAvatar } from './ContactAvatar'
 
@@ -44,7 +44,7 @@ export function ContactRow({
 }: ContactRowProps) {
     const router = useRouter()
     const orgHref = useOrgHref()
-    const [isHovered, setIsHovered] = useState(false)
+    const [isHovered, setIsHovered] = useRecyclingState(false, [contact.id])
     const borderColor = useThemeColor('border')
     const activeIndicator = useThemeColor('active-indicator')
     const warningColor = useThemeColor('warning')
