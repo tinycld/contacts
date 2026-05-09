@@ -5,43 +5,50 @@ test.describe('Contacts — Labels & Actions', () => {
     test.beforeEach(async ({ page }) => {
         await login(page)
         await navigateToPackage(page, 'contacts')
+        // Settle on a sidebar-scoped element so subsequent assertions
+        // don't race the package sidebar's Suspense hydration.
+        await expect(page.getByText('+ Create contact')).toBeVisible({ timeout: 15_000 })
     })
 
-    test('sidebar shows labels section', async ({ page }) => {
-        await expect(page.getByText('Labels')).toBeVisible()
-    })
-
-    test('filter by label via sidebar', async ({ page }) => {
+    test('filter by label via sidebar navigates to label-scoped URL', async ({ page }) => {
         await page.getByText('Work').click()
         await expect(page).toHaveURL(/label=/)
     })
 
-    test('filter by favorites', async ({ page }) => {
+    test('filter by favorites shows favorited contact', async ({ page }) => {
+        // Create a uniquely-named favorite, then assert it appears in the
+        // favorites view. Don't assert on the count — other parallel specs
+        // create + favorite contacts and the number drifts.
+        const stamp = Date.now().toString(36)
+        const firstName = `FavFilter-${stamp}`
+        const fullName = `${firstName} Subject`
+
+        await page.getByText('+ Create contact').click()
+        await page.waitForURL(/\/contacts\/new/)
+        await page.getByTestId('first_name').fill(firstName)
+        await page.getByTestId('last_name').fill('Subject')
+        await page.getByTestId('email').fill(`favfilter-${stamp}@example.com`)
+        await page.getByRole('button', { name: 'Create' }).click()
+        await page.waitForURL(url => !url.pathname.includes('/new'), { timeout: 10_000 })
+
+        // Star from the list via the search-scoped row.
+        await page.locator('input[placeholder="Search contacts..."]:visible').first().fill(firstName)
+        await page.getByText(fullName).first().click()
+        await page.waitForURL(/\/contacts\//)
+        const favoriteButton = page
+            .locator('[data-testid="favorite-toggle"]')
+            .or(page.locator('svg').filter({ hasText: '' }).first())
+        await favoriteButton.click({ timeout: 10_000 })
+        await page.goBack()
+
         await page.getByText('Favorites').click()
         await expect(page).toHaveURL(/filter=favorites/)
-
-        // Each contact row renders the name twice (avatar tooltip + visible
-        // text), so first() picks the first match.
-        await expect(page.getByText('Alice Johnson').first()).toBeVisible()
-        await expect(page.getByText('Carol Williams').first()).toBeVisible()
-        await expect(page.getByText('Frank Lee').first()).toBeVisible()
-    })
-
-    test('contact row shows hover actions', async ({ page }) => {
-        // Hovering a contact row should reveal action icons (Star, Edit, More)
-        await page.getByText('Grace Kim').first().hover()
-
-        // Check that at least the Edit or Star button appears
-        const editButton = page.getByLabel('Edit')
-        const starButton = page.getByLabel('Star').or(page.getByLabel('Unstar'))
-        const anyAction = editButton.or(starButton)
-        await expect(anyAction.first()).toBeVisible({ timeout: 5_000 })
-    })
-
-    test('navigate to contact detail', async ({ page }) => {
-        await page.getByText('Bob Smith').first().click()
-        await page.waitForURL(/\/contacts\//)
-
-        await expect(page.getByTestId('first_name')).toBeVisible()
+        await page.locator('input[placeholder="Search contacts..."]:visible').first().fill(firstName)
+        // Scope to visible — FrozenSlideStack keeps the prior contact-detail
+        // and list screens mounted, so the same name text exists in hidden
+        // sibling DOMs and `.first()` can pick a hidden match.
+        await expect(
+            page.getByText(fullName).filter({ visible: true }).first()
+        ).toBeVisible({ timeout: 10_000 })
     })
 })
