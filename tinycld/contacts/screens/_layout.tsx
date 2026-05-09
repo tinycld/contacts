@@ -1,5 +1,5 @@
-import { Slot } from 'expo-router'
+import { FrozenSlideStack } from '@tinycld/core/components/workspace/FrozenStack'
 
 export default function ContactsLayout() {
-    return <Slot />
+    return <FrozenSlideStack />
 }
