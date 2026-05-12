@@ -10,7 +10,8 @@
             "@tinycld/*": ["../tinycld/packages/@tinycld/*"],
             "~/*": ["../tinycld/packages/@tinycld/core/*"]
         },
-        "noEmit": true
+        "noEmit": true,
+        "preserveSymlinks": false
     },
     "include": [
         "**/*.ts",
