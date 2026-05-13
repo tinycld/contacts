@@ -27,16 +27,18 @@ jobs:
           repository: ${{ env.APP_REPO }}
           ref: ${{ env.APP_REF }}
           path: tinycld
-      - uses: oven-sh/setup-bun@v2
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.1.1
       - name: Install tinycld deps (biome lives here)
         working-directory: tinycld
-        run: bun install
+        run: pnpm install --frozen-lockfile
       - name: Link contacts into tinycld so biome scans it
         working-directory: tinycld
-        run: bun run packages:link ../contacts
+        run: pnpm run packages:link ../contacts
       - name: Lint (biome runs from tinycld; scans linked contacts via app rules)
         working-directory: tinycld
-        run: bun run lint
+        run: pnpm run lint
 
   typecheck:
     name: Typecheck
@@ -50,7 +52,9 @@ jobs:
           repository: ${{ env.APP_REPO }}
           ref: ${{ env.APP_REF }}
           path: tinycld
-      - uses: oven-sh/setup-bun@v2
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.1.1
       - uses: actions/setup-node@v5
         with:
           node-version-file: tinycld/.node-version
@@ -60,10 +64,10 @@ jobs:
           cache-dependency-path: tinycld/server/go.sum
       - name: Install tinycld deps
         working-directory: tinycld
-        run: bun install
+        run: pnpm install --frozen-lockfile
       - name: Link contacts into tinycld (so ~/types/pbSchema sees contacts collections)
         working-directory: tinycld
-        run: bun run packages:link ../contacts
+        run: pnpm run packages:link ../contacts
       - name: Generate PB schema types
         working-directory: tinycld
         run: |
@@ -77,7 +81,7 @@ jobs:
         working-directory: contacts
         env:
           NODE_OPTIONS: --preserve-symlinks
-        run: bun run typecheck
+        run: pnpm run typecheck
 
   test:
     name: Unit & E2E tests
@@ -91,7 +95,9 @@ jobs:
           repository: ${{ env.APP_REPO }}
           ref: ${{ env.APP_REF }}
           path: tinycld
-      - uses: oven-sh/setup-bun@v2
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.1.1
       - uses: actions/setup-node@v5
         with:
           node-version-file: tinycld/.node-version
@@ -102,11 +108,11 @@ jobs:
 
       - name: Install tinycld deps
         working-directory: tinycld
-        run: bun install
+        run: pnpm install --frozen-lockfile
 
       - name: Link contacts into tinycld
         working-directory: tinycld
-        run: bun run packages:link ../contacts
+        run: pnpm run packages:link ../contacts
 
       - name: Build PocketBase binary
         working-directory: tinycld/server
@@ -114,25 +120,25 @@ jobs:
 
       - name: Run unit tests (vitest picks up contacts via packages glob)
         working-directory: tinycld
-        run: bunx vitest run packages/@tinycld/contacts
+        run: pnpm exec vitest run packages/@tinycld/contacts
 
       - name: Diagnostic — verify Metro can bundle the web entry
         working-directory: tinycld
         env:
           EXPO_PUBLIC_ENV: test
           NODE_OPTIONS: --preserve-symlinks
-        run: bunx expo export --platform web --output-dir /tmp/expo-export
+        run: pnpm exec expo export --platform web --output-dir /tmp/expo-export
 
       - name: Reset test DB
         working-directory: tinycld
-        run: bunx tsx scripts/reset-dev-db.ts --url http://127.0.0.1:7091 --data-dir server/pb_test_data
+        run: pnpm exec tsx scripts/reset-dev-db.ts --url http://127.0.0.1:7091 --data-dir server/pb_test_data
 
       - name: Contacts CardDAV smoke test
         working-directory: tinycld
         run: |
           server/tinycld --dev --dir server/pb_test_data --migrationsDir server/pb_migrations --http 127.0.0.1:7091 serve &
           sleep 3
-          bunx tsx ../contacts/scripts/test-server-api.ts --url http://127.0.0.1:7091 --email ${{ env.TEST_USER_LOGIN }} --password ${{ env.TEST_USER_PW }}
+          pnpm exec tsx ../contacts/scripts/test-server-api.ts --url http://127.0.0.1:7091 --email ${{ env.TEST_USER_LOGIN }} --password ${{ env.TEST_USER_PW }}
           kill %1 2>/dev/null || true
 
       - name: Cache Playwright browsers
@@ -140,14 +146,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ hashFiles('tinycld/bun.lock') }}
+          key: playwright-${{ hashFiles('tinycld/pnpm-lock.yaml') }}
       - name: Install Playwright browsers
         working-directory: tinycld
-        run: bunx playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium
         if: steps.playwright-cache.outputs.cache-hit != 'true'
       - name: Install Playwright system deps
         working-directory: tinycld
-        run: bunx playwright install-deps chromium
+        run: pnpm exec playwright install-deps chromium
         if: steps.playwright-cache.outputs.cache-hit == 'true'
 
       - name: Run Playwright tests (contacts project only)
@@ -155,7 +161,7 @@ jobs:
         env:
           CI: true
           NODE_OPTIONS: --preserve-symlinks
-        run: bunx playwright test --project "@tinycld/contacts" --timeout=90000
+        run: pnpm exec playwright test --project "@tinycld/contacts" --timeout=90000
 
       - uses: actions/upload-artifact@v5
         if: ${{ !cancelled() }}
