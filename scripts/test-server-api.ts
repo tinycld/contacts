@@ -1,4 +1,4 @@
-#!/usr/bin/env -S pnpm exec tsx
+#!/usr/bin/env -S npx tsx
 /**
  * Contacts server API smoke test
  *
@@ -8,7 +8,7 @@
  * contacts package is linked).
  *
  * Usage:
- *   pnpm exec tsx ../contacts/scripts/test-server-api.ts \
+ *   npx tsx ../contacts/scripts/test-server-api.ts \
  *     --url http://127.0.0.1:7091 \
  *     --email user@tinycld.org \
  *     --password TestUser1234!
@@ -47,7 +47,7 @@ function parseArgs(): Config {
                 break
             case '--help':
                 console.log(
-                    'Usage: pnpm exec tsx scripts/test-server-api.ts [--email <email>] [--password <pw>] [--url <url>]'
+                    'Usage: npx tsx scripts/test-server-api.ts [--email <email>] [--password <pw>] [--url <url>]'
                 )
                 console.log('  Or set SMOKE_TEST_USER and SMOKE_TEST_PW in .env')
                 process.exit(0)
