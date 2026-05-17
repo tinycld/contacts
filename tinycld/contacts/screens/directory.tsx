@@ -1,4 +1,5 @@
 import { eq } from '@tanstack/db'
+import { HelpIcon } from '@tinycld/core/components/help/HelpIcon'
 import { NameAvatar } from '@tinycld/core/components/NameAvatar'
 import { hexToRgba } from '@tinycld/core/lib/color-utils'
 import { useStore } from '@tinycld/core/lib/pocketbase'
@@ -83,9 +84,12 @@ export default function DirectoryScreen() {
     return (
         <View className="flex-1 p-5 bg-background">
             <View className="flex-row justify-between items-center mb-4">
-                <Text className="text-2xl font-bold text-foreground">
-                    Directory ({filtered.length})
-                </Text>
+                <View className="flex-row items-center gap-2">
+                    <Text className="text-2xl font-bold text-foreground">
+                        Directory ({filtered.length})
+                    </Text>
+                    <HelpIcon topic="contacts:directory" size={18} />
+                </View>
                 {members.length > 5 ? (
                     <TextInput
                         placeholder="Search members..."

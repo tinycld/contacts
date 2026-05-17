@@ -3,6 +3,7 @@ package contacts
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/emersion/go-webdav/carddav"
 	"github.com/google/uuid"
@@ -21,7 +22,11 @@ func Register(app *pocketbase.PocketBase) {
 			}
 			return audit.ResolveViaRelation(a, "user_org", ownerID, "org")
 		},
-		ExtractLabel: audit.LabelFromField("name"),
+		ExtractLabel: func(record *core.Record) string {
+			first := record.GetString("first_name")
+			last := record.GetString("last_name")
+			return strings.TrimSpace(first + " " + last)
+		},
 	})
 
 	// FTS sync hooks for contacts

@@ -7,13 +7,14 @@ import {
     SidebarItem,
     SidebarNav,
 } from '@tinycld/core/components/sidebar-primitives'
+import { openHelpPackage } from '@tinycld/core/lib/help/open-help'
 import { useOrgHref } from '@tinycld/core/lib/org-routes'
 import { useStore } from '@tinycld/core/lib/pocketbase'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useOrgLiveQuery } from '@tinycld/core/lib/use-org-live-query'
 import { useLabels } from '@tinycld/core/ui/hooks/useLabels'
 import { useGlobalSearchParams, usePathname, useRouter } from 'expo-router'
-import { Building2, Settings, Star, Trash2, Users } from 'lucide-react-native'
+import { Building2, HelpCircle, Settings, Star, Trash2, Users } from 'lucide-react-native'
 import { useMemo, useState } from 'react'
 import { Pressable } from 'react-native'
 
@@ -137,6 +138,15 @@ export default function ContactsSidebar(_props: ContactsSidebarProps) {
             </SidebarHeading>
 
             {labelItems}
+
+            <SidebarDivider />
+
+            <SidebarItem
+                label="Help"
+                icon={HelpCircle}
+                closesDrawer
+                onPress={() => openHelpPackage('contacts')}
+            />
 
             <LabelManagerDialog isVisible={labelManagerOpen} onClose={() => setLabelManagerOpen(false)} />
         </SidebarNav>

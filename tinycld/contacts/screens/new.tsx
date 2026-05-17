@@ -1,3 +1,4 @@
+import { HelpIcon } from '@tinycld/core/components/help/HelpIcon'
 import { handleMutationErrorsWithForm } from '@tinycld/core/lib/errors'
 import { mutation, useMutation } from '@tinycld/core/lib/mutations'
 import { useOrgHref } from '@tinycld/core/lib/org-routes'
@@ -82,6 +83,7 @@ export default function NewContactScreen() {
                             <Text className="text-2xl font-bold text-foreground">
                                 Create Contact
                             </Text>
+                            <HelpIcon topic="contacts:adding-contacts" size={18} />
                         </View>
                         <Button onPress={onSubmit} isDisabled={!canSubmit} size="sm">
                             <ButtonText>

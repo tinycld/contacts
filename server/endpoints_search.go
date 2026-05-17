@@ -82,6 +82,7 @@ func handleContactSearch(app *pocketbase.PocketBase, re *core.RequestEvent) erro
 		JOIN contacts c ON c.id = fts_contacts.record_id
 		WHERE fts_contacts MATCH {:ftsQuery}
 		AND c.owner IN ` + inClause + `
+		AND c.deleted_at = ''
 		ORDER BY fts_contacts.rank
 		LIMIT {:limit} OFFSET {:offset}
 	`
@@ -132,7 +133,8 @@ func handleContactSearch(app *pocketbase.PocketBase, re *core.RequestEvent) erro
 		FROM fts_contacts
 		JOIN contacts c ON c.id = fts_contacts.record_id
 		WHERE fts_contacts MATCH {:ftsQuery}
-		AND c.owner IN ` + inClause
+		AND c.owner IN ` + inClause + `
+		AND c.deleted_at = ''`
 
 	var countResult struct {
 		Total int `db:"total"`

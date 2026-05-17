@@ -1,6 +1,7 @@
 import { DataTableHeader } from '@tinycld/core/components/DataTableHeader'
 import { MenuCheckboxItem } from '@tinycld/core/components/DropdownMenu'
 import { EmptyState } from '@tinycld/core/components/EmptyState'
+import { HelpIcon } from '@tinycld/core/components/help/HelpIcon'
 import { LoadingState } from '@tinycld/core/components/LoadingState'
 import { SwipeableRowProvider } from '@tinycld/core/components/SwipeableRow'
 import { useBreakpoint } from '@tinycld/core/components/workspace/useBreakpoint'
@@ -197,14 +198,17 @@ export default function ContactListScreen() {
                 <View
                     className={`flex-row justify-between items-center ${isCompact ? 'mb-2 flex-wrap gap-2' : 'mb-4 flex-nowrap'}`}
                 >
-                    <Text
-                        className="font-bold text-foreground"
-                        style={{
-                            fontSize: isCompact ? 20 : 24,
-                        }}
-                    >
-                        {title} ({count})
-                    </Text>
+                    <View className="flex-row items-center gap-2">
+                        <Text
+                            className="font-bold text-foreground"
+                            style={{
+                                fontSize: isCompact ? 20 : 24,
+                            }}
+                        >
+                            {title} ({count})
+                        </Text>
+                        <HelpIcon topic="contacts:getting-started" size={18} />
+                    </View>
                     <View className="flex-row items-center gap-1">
                         <TextInput
                             placeholder="Search contacts..."
