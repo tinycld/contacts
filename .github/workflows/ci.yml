@@ -30,12 +30,12 @@ jobs:
           path: ws/${{ env.PACKAGE }}
       - uses: actions/setup-node@v5
         with:
-          node-version-file: ws/app/.node-version
+          node-version-file: ws/.node-version
           cache: npm
           cache-dependency-path: ws/package-lock.json
       - uses: actions/setup-go@v6
         with:
-          go-version-file: ws/app/server/go.mod
+          go-version-file: ws/.go-version
       # 3. Clone app + core (the PR's PACKAGE is already checked out into its
       #    slot; bootstrap --tooling skips dirs that already exist). A sibling
       #    only needs app + core + itself to typecheck + unit-test.
@@ -63,12 +63,12 @@ jobs:
           path: ws/${{ env.PACKAGE }}
       - uses: actions/setup-node@v5
         with:
-          node-version-file: ws/app/.node-version
+          node-version-file: ws/.node-version
           cache: npm
           cache-dependency-path: ws/package-lock.json
       - uses: actions/setup-go@v6
         with:
-          go-version-file: ws/app/server/go.mod
+          go-version-file: ws/.go-version
       - name: Assemble workspace (app + core)
         working-directory: ws
         run: TINYCLD_REPO_BASE=https://github.com/tinycld npx @tinycld/bootstrap@latest --tooling
