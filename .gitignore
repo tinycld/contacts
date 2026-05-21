@@ -4,3 +4,6 @@ node_modules/
 pnpm-lock.yaml
 # Per-developer Claude Code workspace (session worktrees, scratch files).
 .claude/
+
+# Playwright output
+test-results/
