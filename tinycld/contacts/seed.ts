@@ -248,7 +248,9 @@ export default async function seed(pb: PocketBase, { userOrg, org }: SeedContext
     for (const label of SAMPLE_LABELS) {
         let record: { id: string }
         try {
-            record = await pb.collection('labels').getFirstListItem(`org = "${org.id}" && name = "${label.name}"`)
+            record = await pb
+                .collection('labels')
+                .getFirstListItem(`org = "${org.id}" && name = "${label.name}"`)
         } catch {
             record = await pb.collection('labels').create({
                 org: org.id,

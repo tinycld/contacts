@@ -1,3 +1,4 @@
+import { FlashList } from '@shopify/flash-list'
 import { DataTableHeader } from '@tinycld/core/components/DataTableHeader'
 import { MenuCheckboxItem } from '@tinycld/core/components/DropdownMenu'
 import { EmptyState } from '@tinycld/core/components/EmptyState'
@@ -8,12 +9,11 @@ import { useBreakpoint } from '@tinycld/core/components/workspace/useBreakpoint'
 import { useOrgHref } from '@tinycld/core/lib/org-routes'
 import { queryClient } from '@tinycld/core/lib/pocketbase'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
-import { Menu } from '@tinycld/core/ui/menu'
 import { useLabels } from '@tinycld/core/ui/hooks/useLabels'
+import { Menu } from '@tinycld/core/ui/menu'
 import { useLocalSearchParams } from 'expo-router'
 import { ArrowUpDown } from 'lucide-react-native'
 import { useCallback, useState } from 'react'
-import { FlashList } from '@shopify/flash-list'
 import { Pressable, RefreshControl, Text, TextInput, View } from 'react-native'
 import { ContactRow } from '../components/ContactRow'
 import { useContactList } from '../hooks/useContactList'
@@ -36,9 +36,9 @@ const SORT_OPTIONS: { field: SortField; label: string }[] = [
 ]
 
 function MobileSortMenu({ iconColor }: { iconColor: string }) {
-    const sortField = useContactsUIStore((s) => s.sortField)
-    const sortDirection = useContactsUIStore((s) => s.sortDirection)
-    const toggleSort = useContactsUIStore((s) => s.toggleSort)
+    const sortField = useContactsUIStore(s => s.sortField)
+    const sortDirection = useContactsUIStore(s => s.sortDirection)
+    const toggleSort = useContactsUIStore(s => s.toggleSort)
 
     return (
         <Menu>
@@ -51,7 +51,7 @@ function MobileSortMenu({ iconColor }: { iconColor: string }) {
                 <Menu.Overlay />
                 <Menu.Content presentation="popover" placement="bottom" align="end">
                     <Menu.Label>Sort by</Menu.Label>
-                    {SORT_OPTIONS.map((opt) => {
+                    {SORT_OPTIONS.map(opt => {
                         const isActive = sortField === opt.field
                         const arrow = isActive ? (sortDirection === 'asc' ? ' ↑' : ' ↓') : ''
                         return (
@@ -92,9 +92,9 @@ export default function ContactListScreen() {
     const mutedColor = useThemeColor('muted-foreground')
     const placeholderColor = useThemeColor('field-placeholder')
 
-    const sortField = useContactsUIStore((s) => s.sortField)
-    const sortDirection = useContactsUIStore((s) => s.sortDirection)
-    const toggleSort = useContactsUIStore((s) => s.toggleSort)
+    const sortField = useContactsUIStore(s => s.sortField)
+    const sortDirection = useContactsUIStore(s => s.sortDirection)
+    const toggleSort = useContactsUIStore(s => s.toggleSort)
 
     const useServerSearch = searchQuery.length >= 2
     const { results: serverResults } = useContactSearch(useServerSearch ? searchQuery : '')
@@ -136,11 +136,17 @@ export default function ContactListScreen() {
     const getItemType = useCallback(() => (isCompact ? 'mobile' : 'desktop'), [isCompact])
 
     const renderContact = useCallback(
-        ({ item: contact, index }: { item: NonNullable<typeof filteredContacts>[number]; index: number }) => {
+        ({
+            item: contact,
+            index,
+        }: {
+            item: NonNullable<typeof filteredContacts>[number]
+            index: number
+        }) => {
             const labelIds = assignmentsByContact.get(contact.id)
             const contactLabels = labelIds
                 ? Array.from(labelIds)
-                      .map((id) => labelMap.get(id))
+                      .map(id => labelMap.get(id))
                       .filter((l): l is { id: string; name: string; color: string } => l != null)
                 : []
 
@@ -156,7 +162,9 @@ export default function ContactListScreen() {
                     }
                     onDelete={() => deleteContact.mutate(contact.id)}
                     onRestore={isDeleted ? () => restoreContact.mutate(contact.id) : undefined}
-                    onPermanentDelete={isDeleted ? () => permanentlyDeleteContact.mutate(contact.id) : undefined}
+                    onPermanentDelete={
+                        isDeleted ? () => permanentlyDeleteContact.mutate(contact.id) : undefined
+                    }
                     index={index}
                     isFocused={contact.id === focusedId}
                 />
@@ -181,7 +189,12 @@ export default function ContactListScreen() {
     const isEmpty = !contacts || contacts.length === 0
 
     if (isEmpty && !filter && !activeLabelId) {
-        return <EmptyState message="No contacts yet." action={{ label: '+ Add Contact', href: newContactHref }} />
+        return (
+            <EmptyState
+                message="No contacts yet."
+                action={{ label: '+ Add Contact', href: newContactHref }}
+            />
+        )
     }
 
     const horizontalPadding = isCompact ? 12 : 24
@@ -248,13 +261,16 @@ export default function ContactListScreen() {
                 <SwipeableRowProvider>
                     <FlashList
                         data={filteredContacts ?? []}
-                        keyExtractor={(item) => item.id}
+                        keyExtractor={item => item.id}
                         getItemType={getItemType}
                         renderItem={renderContact}
                         contentContainerStyle={{ paddingHorizontal: isCompact ? 12 : 24 }}
                         refreshControl={
                             isCompact ? (
-                                <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
+                                <RefreshControl
+                                    refreshing={isRefreshing}
+                                    onRefresh={handleRefresh}
+                                />
                             ) : undefined
                         }
                     />

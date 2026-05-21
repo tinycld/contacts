@@ -16,10 +16,10 @@ interface UseContactsShortcutsArgs {
 }
 
 export function useContactsShortcuts({ items, isEnabled, listKey }: UseContactsShortcutsArgs) {
-    const storedIndex = useContactsUIStore((s) => s.focusedIndex)
-    const hasFocus = useContactsUIStore((s) => s.hasFocus)
-    const setFocusedIndex = useContactsUIStore((s) => s.setFocusedIndex)
-    const clearFocus = useContactsUIStore((s) => s.clearFocus)
+    const storedIndex = useContactsUIStore(s => s.focusedIndex)
+    const hasFocus = useContactsUIStore(s => s.hasFocus)
+    const setFocusedIndex = useContactsUIStore(s => s.setFocusedIndex)
+    const clearFocus = useContactsUIStore(s => s.clearFocus)
     const router = useRouter()
     const orgHref = useOrgHref()
 
@@ -46,8 +46,9 @@ export function useContactsShortcuts({ items, isEnabled, listKey }: UseContactsS
         const lastIndex = Math.max(items.length - 1, 0)
         // First j/k from no-focus lands on row 0 instead of advancing past it.
         const next = () =>
-            hasFocus ? setFocusedIndex((i) => Math.min(i + 1, lastIndex)) : setFocusedIndex(0)
-        const prev = () => (hasFocus ? setFocusedIndex((i) => Math.max(i - 1, 0)) : setFocusedIndex(0))
+            hasFocus ? setFocusedIndex(i => Math.min(i + 1, lastIndex)) : setFocusedIndex(0)
+        const prev = () =>
+            hasFocus ? setFocusedIndex(i => Math.max(i - 1, 0)) : setFocusedIndex(0)
         return [
             {
                 id: 'contacts.list.next',

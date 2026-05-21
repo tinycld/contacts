@@ -46,35 +46,26 @@ function parseArgs(): Config {
                 config.password = args[++i]
                 break
             case '--help':
-                console.log(
-                    'Usage: npx tsx scripts/test-server-api.ts [--email <email>] [--password <pw>] [--url <url>]'
-                )
-                console.log('  Or set SMOKE_TEST_USER and SMOKE_TEST_PW in .env')
                 process.exit(0)
         }
     }
 
     if (!config.email || !config.password) {
-        console.error(
-            'Error: credentials required via --email/--password flags or SMOKE_TEST_USER/SMOKE_TEST_PW in .env'
-        )
         process.exit(1)
     }
 
     return config
 }
 
-let passed = 0
+let _passed = 0
 let failed = 0
 
-function ok(label: string, detail?: string) {
-    passed++
-    console.log(`  ✓ ${label}${detail ? ` — ${detail}` : ''}`)
+function ok(_label: string, _detail?: string) {
+    _passed++
 }
 
-function fail(label: string, detail: string) {
+function fail(_label: string, _detail: string) {
     failed++
-    console.error(`  ✗ ${label} — ${detail}`)
 }
 
 interface AuthResult {
@@ -84,7 +75,6 @@ interface AuthResult {
 }
 
 async function authenticate(config: Config): Promise<AuthResult | null> {
-    console.log('\n▸ Authentication')
     try {
         const url = `${config.url}/api/collections/users/auth-with-password?expand=user_org_via_user.org`
         const res = await fetch(url, {
@@ -117,7 +107,6 @@ async function authenticate(config: Config): Promise<AuthResult | null> {
 }
 
 async function testCardDAV(config: Config, auth: AuthResult) {
-    console.log('\n▸ CardDAV')
     const basicAuth = Buffer.from(`${config.email}:${config.password}`).toString('base64')
     const headers = { Authorization: `Basic ${basicAuth}` }
     const addressBookPath = `/carddav/u/ab/${auth.orgSlug}/`
@@ -228,14 +217,12 @@ async function testCardDAV(config: Config, auth: AuthResult) {
 
 async function main() {
     const config = parseArgs()
-    console.log(`\nTesting CardDAV at ${config.url} as ${config.email}`)
 
     const auth = await authenticate(config)
     if (auth) {
         await testCardDAV(config, auth)
     }
 
-    console.log(`\n${passed} passed, ${failed} failed\n`)
     if (failed > 0) process.exit(1)
 }
 

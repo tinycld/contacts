@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
 import { hexToRgba } from '@tinycld/core/lib/color-utils'
+import { describe, expect, it } from 'vitest'
 import { contactSchema } from '~/tinycld/contacts/components/contactSchema'
 
 describe('contactSchema', () => {

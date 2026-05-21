@@ -31,11 +31,11 @@ interface ContactsUIState {
 
 export const useContactsUIStore = create<ContactsUIState>()(
     persist(
-        (set) => ({
+        set => ({
             focusedIndex: 0,
             hasFocus: false,
-            setFocusedIndex: (next) =>
-                set((state) => ({
+            setFocusedIndex: next =>
+                set(state => ({
                     focusedIndex: typeof next === 'function' ? next(state.focusedIndex) : next,
                     hasFocus: true,
                 })),
@@ -43,9 +43,10 @@ export const useContactsUIStore = create<ContactsUIState>()(
 
             sortField: 'first_name',
             sortDirection: 'asc',
-            setSort: (field, direction = 'asc') => set({ sortField: field, sortDirection: direction }),
-            toggleSort: (field) =>
-                set((state) =>
+            setSort: (field, direction = 'asc') =>
+                set({ sortField: field, sortDirection: direction }),
+            toggleSort: field =>
+                set(state =>
                     state.sortField === field
                         ? { sortDirection: state.sortDirection === 'asc' ? 'desc' : 'asc' }
                         : { sortField: field, sortDirection: 'asc' }
@@ -55,7 +56,7 @@ export const useContactsUIStore = create<ContactsUIState>()(
             name: 'tinycld_contacts_ui',
             storage: asyncStorage,
             // Don't persist focusedIndex/hasFocus — transient interaction state.
-            partialize: (s) => ({ sortField: s.sortField, sortDirection: s.sortDirection }),
+            partialize: s => ({ sortField: s.sortField, sortDirection: s.sortDirection }),
         }
     )
 )

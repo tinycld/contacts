@@ -38,14 +38,19 @@ export default function ContactsSidebar(_props: ContactsSidebarProps) {
     const { labels: orgLabels } = useLabels()
 
     const { data: allContactsRaw } = useOrgLiveQuery((query, { userOrgId }) =>
-        query.from({ contacts: contactsCollection }).where(({ contacts }) => eq(contacts.owner, userOrgId))
+        query
+            .from({ contacts: contactsCollection })
+            .where(({ contacts }) => eq(contacts.owner, userOrgId))
     )
 
     const { data: contactAssignments } = useOrgLiveQuery((query, { userOrgId }) =>
         query
             .from({ label_assignments: assignmentsCollection })
             .where(({ label_assignments }) =>
-                and(eq(label_assignments.collection, 'contacts'), eq(label_assignments.user_org, userOrgId))
+                and(
+                    eq(label_assignments.collection, 'contacts'),
+                    eq(label_assignments.user_org, userOrgId)
+                )
             )
     )
 
@@ -73,9 +78,11 @@ export default function ContactsSidebar(_props: ContactsSidebarProps) {
     }, [contactAssignments])
 
     const isContactsActive =
-        (pathname.endsWith('/contacts') || pathname.endsWith('/contacts/')) && !filter && !activeLabel
+        (pathname.endsWith('/contacts') || pathname.endsWith('/contacts/')) &&
+        !filter &&
+        !activeLabel
 
-    const labelItems = orgLabels.map((label) => (
+    const labelItems = orgLabels.map(label => (
         <SidebarItem
             key={label.id}
             label={label.name}
@@ -89,7 +96,10 @@ export default function ContactsSidebar(_props: ContactsSidebarProps) {
 
     return (
         <SidebarNav>
-            <SidebarActionButton label="+ Create contact" onPress={() => router.push(orgHref('contacts/new'))} />
+            <SidebarActionButton
+                label="+ Create contact"
+                onPress={() => router.push(orgHref('contacts/new'))}
+            />
             <SidebarItem
                 label="Contacts"
                 icon={Users}
@@ -148,7 +158,10 @@ export default function ContactsSidebar(_props: ContactsSidebarProps) {
                 onPress={() => openHelpPackage('contacts')}
             />
 
-            <LabelManagerDialog isVisible={labelManagerOpen} onClose={() => setLabelManagerOpen(false)} />
+            <LabelManagerDialog
+                isVisible={labelManagerOpen}
+                onClose={() => setLabelManagerOpen(false)}
+            />
         </SidebarNav>
     )
 }

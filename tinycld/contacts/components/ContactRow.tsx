@@ -1,3 +1,4 @@
+import { useRecyclingState } from '@shopify/flash-list'
 import { rowFocusStyle } from '@tinycld/core/components/focusable-row'
 import { HoverAction } from '@tinycld/core/components/HoverAction'
 import { LabelDots } from '@tinycld/core/components/LabelBadge'
@@ -10,7 +11,6 @@ import { useOrgHref } from '@tinycld/core/lib/org-routes'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useRouter } from 'expo-router'
 import { Edit3, RotateCcw, Star, Trash2 } from 'lucide-react-native'
-import { useRecyclingState } from '@shopify/flash-list'
 import { Platform, Pressable, Text, View } from 'react-native'
 import { ContactAvatar } from './ContactAvatar'
 
@@ -64,7 +64,9 @@ export function ContactRow({
 
     const tooltipPosition = index === 0 ? ('below' as const) : ('above' as const)
 
-    const navigateToContact = onRestore ? undefined : () => router.push(orgHref('contacts/[id]', { id: contact.id }))
+    const navigateToContact = onRestore
+        ? undefined
+        : () => router.push(orgHref('contacts/[id]', { id: contact.id }))
 
     const isCompact = useBreakpoint() === 'mobile'
 
@@ -135,10 +137,7 @@ export function ContactRow({
                             >
                                 {displayName}
                             </Text>
-                            <Text
-                                className="text-xs text-muted-foreground"
-                                numberOfLines={1}
-                            >
+                            <Text className="text-xs text-muted-foreground" numberOfLines={1}>
                                 {[contact.email, contact.phone].filter(Boolean).join(' · ')}
                             </Text>
                         </View>
@@ -181,7 +180,7 @@ export function ContactRow({
                     onRestore ? null : (
                         <Pressable
                             className="p-1"
-                            onPress={(e) => {
+                            onPress={e => {
                                 e.stopPropagation()
                                 onToggleFavorite()
                             }}
@@ -196,7 +195,7 @@ export function ContactRow({
                             onRestore ? null : (
                                 <Pressable
                                     className="p-1"
-                                    onPress={(e) => {
+                                    onPress={e => {
                                         e.stopPropagation()
                                         onToggleFavorite()
                                     }}
@@ -214,8 +213,11 @@ export function ContactRow({
                                         onPress={onRestore}
                                         tooltipPosition={tooltipPosition}
                                     />
-                                    <ConfirmTrash itemName={displayName} onConfirmed={onPermanentDelete}>
-                                        {(onOpen) => (
+                                    <ConfirmTrash
+                                        itemName={displayName}
+                                        onConfirmed={onPermanentDelete}
+                                    >
+                                        {onOpen => (
                                             <HoverAction
                                                 icon={Trash2}
                                                 label="Delete permanently"
@@ -228,7 +230,7 @@ export function ContactRow({
                             ) : (
                                 <>
                                     <ConfirmTrash itemName={displayName} onConfirmed={onDelete}>
-                                        {(onOpen) => (
+                                        {onOpen => (
                                             <HoverAction
                                                 icon={Trash2}
                                                 label="Delete"

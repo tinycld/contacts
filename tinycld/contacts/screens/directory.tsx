@@ -75,7 +75,7 @@ export default function DirectoryScreen() {
     const filtered = useMemo(() => {
         if (!searchQuery) return members
         const q = searchQuery.toLowerCase()
-        return members.filter((m) => {
+        return members.filter(m => {
             const fullName = `${m.firstName} ${m.lastName}`.toLowerCase()
             return fullName.includes(q) || m.email.toLowerCase().includes(q)
         })
@@ -102,7 +102,7 @@ export default function DirectoryScreen() {
             </View>
 
             <View className="flex-row flex-wrap gap-4">
-                {filtered.map((member) => {
+                {filtered.map(member => {
                     const badge = badgeColors[member.role] ?? defaultBadge
                     return (
                         <View
@@ -110,7 +110,11 @@ export default function DirectoryScreen() {
                             className="w-[220px] border border-border rounded-lg p-3 bg-background"
                         >
                             <View className="items-center gap-3">
-                                <NameAvatar firstName={member.firstName} lastName={member.lastName} size={56} />
+                                <NameAvatar
+                                    firstName={member.firstName}
+                                    lastName={member.lastName}
+                                    size={56}
+                                />
                                 <View className="items-center gap-1">
                                     <Text
                                         className="text-base font-semibold text-foreground"
@@ -118,7 +122,10 @@ export default function DirectoryScreen() {
                                     >
                                         {member.firstName} {member.lastName}
                                     </Text>
-                                    <Text className="text-xs text-muted-foreground" numberOfLines={1}>
+                                    <Text
+                                        className="text-xs text-muted-foreground"
+                                        numberOfLines={1}
+                                    >
                                         {member.email}
                                     </Text>
                                     <View
@@ -128,7 +135,10 @@ export default function DirectoryScreen() {
                                             borderColor: badge.border,
                                         }}
                                     >
-                                        <Text className="text-[11px] font-medium" style={{ color: badge.fg }}>
+                                        <Text
+                                            className="text-[11px] font-medium"
+                                            style={{ color: badge.fg }}
+                                        >
                                             {member.role}
                                         </Text>
                                     </View>
@@ -141,9 +151,7 @@ export default function DirectoryScreen() {
 
             {filtered.length === 0 ? (
                 <View className="flex-1 items-center justify-center p-10">
-                    <Text className="text-base text-muted-foreground">
-                        No members found.
-                    </Text>
+                    <Text className="text-base text-muted-foreground">No members found.</Text>
                 </View>
             ) : null}
         </View>
