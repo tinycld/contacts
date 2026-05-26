@@ -162,7 +162,7 @@ Contacts has no custom WebSocket layer. PocketBase ships with a built-in realtim
 
 ### Audit
 
-`audit.RegisterCollection(app, "contacts", ...)` wires contacts into core's audit subsystem. The `ResolveOrg` callback walks `owner → user_org.org` so audit-log queries scoped to an org return contact events. The label for each audit row is the contact's `name` field — note this is a *legacy* field name that no longer exists on the record (the schema migrated to `first_name` / `last_name` in `_add_contact_fields`), so the labeller currently emits an empty string for new contacts. This is a known minor issue.
+`audit.RegisterCollection(app, "contacts", ...)` wires contacts into core's audit subsystem. The `ResolveOrg` callback walks `owner → user_org.org` so audit-log queries scoped to an org return contact events. The label for each audit row is built by `ExtractLabel(first_name, last_name)`; since `first_name` is required by the schema, every contact has a non-empty audit label.
 
 ## Platform support
 
