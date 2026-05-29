@@ -5,6 +5,7 @@ import { useOrgHref } from '@tinycld/core/lib/org-routes'
 import { useStore } from '@tinycld/core/lib/pocketbase'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useCurrentUserOrg } from '@tinycld/core/lib/use-current-user-org'
+import { useDocumentTitle } from '@tinycld/core/lib/use-document-title'
 import { useNavigateBack } from '@tinycld/core/lib/use-navigate-back'
 import { useOrgInfo } from '@tinycld/core/lib/use-org-info'
 import { Button, ButtonText } from '@tinycld/core/ui/button'
@@ -16,6 +17,7 @@ import { ContactForm } from '../components/ContactForm'
 import { contactSchema } from '../components/contactSchema'
 
 export default function NewContactScreen() {
+    useDocumentTitle('New contact')
     const { orgSlug } = useOrgInfo()
     const userOrg = useCurrentUserOrg(orgSlug)
     const [contactsCollection] = useStore('contacts')

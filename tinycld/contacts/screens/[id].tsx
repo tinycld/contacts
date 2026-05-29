@@ -6,6 +6,7 @@ import { mutation, useMutation } from '@tinycld/core/lib/mutations'
 import { useOrgHref } from '@tinycld/core/lib/org-routes'
 import { useStore } from '@tinycld/core/lib/pocketbase'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
+import { useDocumentTitle } from '@tinycld/core/lib/use-document-title'
 import { useNavigateBack } from '@tinycld/core/lib/use-navigate-back'
 import { useOrgLiveQuery } from '@tinycld/core/lib/use-org-live-query'
 import { Button, ButtonText } from '@tinycld/core/ui/button'
@@ -46,6 +47,11 @@ export default function ContactDetailScreen() {
     )
 
     const contact = data?.[0] ?? null
+
+    const contactName = contact
+        ? `${contact.first_name ?? ''} ${contact.last_name ?? ''}`.trim() || (contact.email ?? '')
+        : ''
+    useDocumentTitle(contactName ? `Contacts — ${contactName}` : 'Contacts')
 
     const {
         control,

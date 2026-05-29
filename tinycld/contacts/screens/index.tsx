@@ -9,6 +9,7 @@ import { useBreakpoint } from '@tinycld/core/components/workspace/useBreakpoint'
 import { useOrgHref } from '@tinycld/core/lib/org-routes'
 import { queryClient } from '@tinycld/core/lib/pocketbase'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
+import { useDocumentTitle } from '@tinycld/core/lib/use-document-title'
 import { useLabels } from '@tinycld/core/ui/hooks/useLabels'
 import { Menu } from '@tinycld/core/ui/menu'
 import { useLocalSearchParams } from 'expo-router'
@@ -132,6 +133,8 @@ export default function ContactListScreen() {
           : filter === 'favorites'
             ? 'Favorites'
             : 'Contacts'
+
+    useDocumentTitle(title === 'Contacts' ? 'Contacts' : `Contacts — ${title}`)
 
     const getItemType = useCallback(() => (isCompact ? 'mobile' : 'desktop'), [isCompact])
 
