@@ -1,10 +1,10 @@
 import { eq } from '@tanstack/db'
+import { DocumentTitle } from '@tinycld/core/components/DocumentTitle'
 import { HelpIcon } from '@tinycld/core/components/help/HelpIcon'
 import { NameAvatar } from '@tinycld/core/components/NameAvatar'
 import { hexToRgba } from '@tinycld/core/lib/color-utils'
 import { useStore } from '@tinycld/core/lib/pocketbase'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
-import { useDocumentTitle } from '@tinycld/core/lib/use-document-title'
 import { useOrgLiveQuery } from '@tinycld/core/lib/use-org-live-query'
 import { useMemo, useState } from 'react'
 import { Text, TextInput, View } from 'react-native'
@@ -18,7 +18,6 @@ interface MemberCard {
 }
 
 export default function DirectoryScreen() {
-    useDocumentTitle('Contacts — Directory')
     const [searchQuery, setSearchQuery] = useState('')
     const [userOrgCollection] = useStore('user_org')
     const mutedColor = useThemeColor('muted-foreground')
@@ -85,6 +84,7 @@ export default function DirectoryScreen() {
 
     return (
         <View className="flex-1 p-5 bg-background">
+            <DocumentTitle pkg="Contacts" title="Directory" />
             <View className="flex-row justify-between items-center mb-4">
                 <View className="flex-row items-center gap-2">
                     <Text className="text-2xl font-bold text-foreground">

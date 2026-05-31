@@ -1,4 +1,5 @@
 import { eq } from '@tanstack/db'
+import { DocumentTitle } from '@tinycld/core/components/DocumentTitle'
 import { LabelBadge } from '@tinycld/core/components/LabelBadge'
 import { StarIcon } from '@tinycld/core/components/StarIcon'
 import { handleMutationErrorsWithForm } from '@tinycld/core/lib/errors'
@@ -6,7 +7,6 @@ import { mutation, useMutation } from '@tinycld/core/lib/mutations'
 import { useOrgHref } from '@tinycld/core/lib/org-routes'
 import { useStore } from '@tinycld/core/lib/pocketbase'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
-import { useDocumentTitle } from '@tinycld/core/lib/use-document-title'
 import { useNavigateBack } from '@tinycld/core/lib/use-navigate-back'
 import { useOrgLiveQuery } from '@tinycld/core/lib/use-org-live-query'
 import { Button, ButtonText } from '@tinycld/core/ui/button'
@@ -51,7 +51,6 @@ export default function ContactDetailScreen() {
     const contactName = contact
         ? `${contact.first_name ?? ''} ${contact.last_name ?? ''}`.trim() || (contact.email ?? '')
         : ''
-    useDocumentTitle(contactName ? `Contacts — ${contactName}` : 'Contacts')
 
     const {
         control,
@@ -133,6 +132,7 @@ export default function ContactDetailScreen() {
     if (!contact) {
         return (
             <View className="flex-1 p-5 bg-background">
+                <DocumentTitle pkg="Contacts" />
                 <Text className="text-base text-muted-foreground">Contact not found</Text>
             </View>
         )
@@ -145,6 +145,7 @@ export default function ContactDetailScreen() {
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             className="flex-1 bg-background"
         >
+            <DocumentTitle pkg="Contacts" title={contactName} />
             <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
                 <View className="flex-1 p-5">
                     <View className="flex-row justify-between items-center mb-5">

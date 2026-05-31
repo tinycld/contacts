@@ -1,3 +1,4 @@
+import { DocumentTitle } from '@tinycld/core/components/DocumentTitle'
 import { HelpIcon } from '@tinycld/core/components/help/HelpIcon'
 import { handleMutationErrorsWithForm } from '@tinycld/core/lib/errors'
 import { mutation, useMutation } from '@tinycld/core/lib/mutations'
@@ -5,7 +6,6 @@ import { useOrgHref } from '@tinycld/core/lib/org-routes'
 import { useStore } from '@tinycld/core/lib/pocketbase'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useCurrentUserOrg } from '@tinycld/core/lib/use-current-user-org'
-import { useDocumentTitle } from '@tinycld/core/lib/use-document-title'
 import { useNavigateBack } from '@tinycld/core/lib/use-navigate-back'
 import { useOrgInfo } from '@tinycld/core/lib/use-org-info'
 import { Button, ButtonText } from '@tinycld/core/ui/button'
@@ -17,7 +17,6 @@ import { ContactForm } from '../components/ContactForm'
 import { contactSchema } from '../components/contactSchema'
 
 export default function NewContactScreen() {
-    useDocumentTitle('New contact')
     const { orgSlug } = useOrgInfo()
     const userOrg = useCurrentUserOrg(orgSlug)
     const [contactsCollection] = useStore('contacts')
@@ -75,6 +74,7 @@ export default function NewContactScreen() {
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             className="flex-1 bg-background"
         >
+            <DocumentTitle pkg="Contacts" title="New contact" />
             <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
                 <View className="flex-1 p-5">
                     <View className="flex-row justify-between items-center mb-5">
