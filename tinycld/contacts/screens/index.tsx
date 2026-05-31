@@ -1,5 +1,6 @@
 import { FlashList } from '@shopify/flash-list'
 import { DataTableHeader } from '@tinycld/core/components/DataTableHeader'
+import { DocumentTitle } from '@tinycld/core/components/DocumentTitle'
 import { MenuCheckboxItem } from '@tinycld/core/components/DropdownMenu'
 import { EmptyState } from '@tinycld/core/components/EmptyState'
 import { HelpIcon } from '@tinycld/core/components/help/HelpIcon'
@@ -9,7 +10,6 @@ import { useBreakpoint } from '@tinycld/core/components/workspace/useBreakpoint'
 import { useOrgHref } from '@tinycld/core/lib/org-routes'
 import { queryClient } from '@tinycld/core/lib/pocketbase'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
-import { useDocumentTitle } from '@tinycld/core/lib/use-document-title'
 import { useLabels } from '@tinycld/core/ui/hooks/useLabels'
 import { Menu } from '@tinycld/core/ui/menu'
 import { useLocalSearchParams } from 'expo-router'
@@ -134,8 +134,6 @@ export default function ContactListScreen() {
             ? 'Favorites'
             : 'Contacts'
 
-    useDocumentTitle(title === 'Contacts' ? 'Contacts' : `Contacts — ${title}`)
-
     const getItemType = useCallback(() => (isCompact ? 'mobile' : 'desktop'), [isCompact])
 
     const renderContact = useCallback(
@@ -193,17 +191,22 @@ export default function ContactListScreen() {
 
     if (isEmpty && !filter && !activeLabelId) {
         return (
-            <EmptyState
-                message="No contacts yet."
-                action={{ label: '+ Add Contact', href: newContactHref }}
-            />
+            <>
+                <DocumentTitle pkg="Contacts" />
+                <EmptyState
+                    message="No contacts yet."
+                    action={{ label: '+ Add Contact', href: newContactHref }}
+                />
+            </>
         )
     }
 
     const horizontalPadding = isCompact ? 12 : 24
+    const leaf = title === 'Contacts' ? undefined : title
 
     return (
         <View className="flex-1 bg-background">
+            <DocumentTitle pkg="Contacts" title={leaf} />
             <View
                 style={{
                     paddingHorizontal: horizontalPadding,
