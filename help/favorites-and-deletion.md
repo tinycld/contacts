@@ -7,9 +7,9 @@ order: 40
 
 ## Favorites
 
-Toggle the star on any contact row to mark it as a favorite. The **Favorites** sidebar entry shows only starred contacts, with a count badge.
+Tap the star on any contact row to mark it as a favorite. The **Favorites** sidebar entry shows only starred contacts, with a count badge.
 
-You can also toggle the **Favorite** switch from the contact's detail screen.
+You can also tap the star in the header of the contact's detail view. The star toggles immediately — you don't need to save the form.
 
 Stars are per-contact, not per-list — every place the contact appears (main list, label view, search) shows the star.
 

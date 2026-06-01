@@ -70,7 +70,6 @@ export default function ContactDetailScreen() {
                   company: contact.company ?? '',
                   job_title: contact.job_title ?? '',
                   notes: contact.notes ?? '',
-                  favorite: contact.favorite ?? false,
               }
             : undefined,
         defaultValues: {
@@ -81,7 +80,6 @@ export default function ContactDetailScreen() {
             company: '',
             job_title: '',
             notes: '',
-            favorite: false,
         },
     })
 
@@ -94,7 +92,6 @@ export default function ContactDetailScreen() {
             company: string
             job_title: string
             notes: string
-            favorite: boolean
         }) {
             yield contactsCollection.update(id, draft => {
                 draft.first_name = formData.first_name.trim()
@@ -104,7 +101,9 @@ export default function ContactDetailScreen() {
                 draft.company = formData.company.trim()
                 draft.job_title = formData.job_title.trim()
                 draft.notes = formData.notes
-                draft.favorite = formData.favorite
+                // favorite is intentionally not written here — it's owned by the
+                // star toggle in the header. Writing the (stale) form value would
+                // clobber a star change made without re-saving the form.
             })
         }),
         onError: handleMutationErrorsWithForm({ setError, getValues }),

@@ -1,4 +1,4 @@
-import { FormErrorSummary, TextAreaInput, TextInput, Toggle } from '@tinycld/core/ui/form'
+import { FormErrorSummary, TextAreaInput, TextInput } from '@tinycld/core/ui/form'
 import { Building2, FileText, Mail, Phone, User } from 'lucide-react-native'
 import type { Control, FieldErrors } from 'react-hook-form'
 import { View } from 'react-native'
@@ -81,8 +81,6 @@ export function ContactForm({ control, errors, isSubmitted }: ContactFormProps) 
                 placeholder="Optional notes..."
                 numberOfLines={3}
             />
-
-            <Toggle name="favorite" control={control} label="Favorite" />
         </View>
     )
 }
