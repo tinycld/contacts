@@ -266,6 +266,15 @@ export default function ContactListScreen() {
             ) : (
                 <SwipeableRowProvider>
                     <FlashList
+                        // Remount on sort change. A pure reorder of `data` (same
+                        // item ids, same item type) doesn't reliably reflow
+                        // FlashList's recycled row positions — the cells keep
+                        // their old visual slots, so on mobile the list stays
+                        // scrolled where it was. Keying on the sort signal forces
+                        // a fresh layout and resets scroll to the top, which is
+                        // the expected behaviour for a deliberate sort change.
+                        // Mirrors the same fix in drive's list/grid screens.
+                        key={`${sortField}:${sortDirection}`}
                         data={filteredContacts ?? []}
                         keyExtractor={item => item.id}
                         getItemType={getItemType}
