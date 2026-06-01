@@ -11,7 +11,7 @@ Click any row in the Contacts list. You can also press **j** / **k** to move bet
 
 ## What you can edit
 
-The detail screen exposes every field of the contact: first name, last name, company, job title, email, phone, notes, and the favorite toggle.
+The detail screen exposes every editable field of the contact: first name, last name, company, job title, email, phone, and notes. The **star** in the header marks the contact as a favorite — it toggles on its own, independently of the form's **Save**.
 
 You also see the contact's **labels** above the form — click the labels area to add or remove labels. See [Labels](help://contacts:labels).
 

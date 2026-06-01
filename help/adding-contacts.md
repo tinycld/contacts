@@ -18,9 +18,10 @@ Fill in:
 - **Email** — one address.
 - **Phone** — one number.
 - **Notes** — a rich-text field for free-form info. Markdown-like formatting works.
-- **Favorite** — toggle to star the contact so it shows up in the Favorites view.
 
 Click **Save** to commit. The contact appears in your list immediately and propagates to any CardDAV clients connected to your address book within seconds.
+
+To mark a contact as a favorite, tap the **star** on its row or on the contact's detail view — see [Favorites and deletion](help://contacts:favorites-and-deletion).
 
 ## One value per field
 

@@ -8,5 +8,4 @@ export const contactSchema = z.object({
     company: z.string(),
     job_title: z.string(),
     notes: z.string(),
-    favorite: z.boolean(),
 })

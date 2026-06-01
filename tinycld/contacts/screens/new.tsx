@@ -41,7 +41,6 @@ export default function NewContactScreen() {
             company: '',
             job_title: '',
             notes: '',
-            favorite: false,
         },
     })
 
@@ -57,7 +56,9 @@ export default function NewContactScreen() {
                 company: data.company.trim(),
                 job_title: data.job_title.trim(),
                 notes: data.notes,
-                favorite: data.favorite,
+                // New contacts start un-favorited; favoriting is done afterward
+                // via the star on the contact row or detail header.
+                favorite: false,
                 owner: userOrg.id,
                 vcard_uid: crypto.randomUUID(),
             })

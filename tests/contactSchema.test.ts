@@ -12,7 +12,6 @@ describe('contactSchema', () => {
             company: '',
             job_title: '',
             notes: '',
-            favorite: false,
         })
         expect(result.success).toBe(false)
     })
@@ -26,7 +25,6 @@ describe('contactSchema', () => {
             company: '',
             job_title: '',
             notes: '',
-            favorite: true,
         })
         expect(result.success).toBe(true)
     })
