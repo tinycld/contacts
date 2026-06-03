@@ -1,4 +1,4 @@
-#!/usr/bin/env -S npx tsx
+#!/usr/bin/env -S pnpm exec tsx
 /**
  * Contacts server API smoke test
  *
@@ -8,7 +8,7 @@
  * contacts package is linked).
  *
  * Usage:
- *   npx tsx ../contacts/scripts/test-server-api.ts \
+ *   pnpm exec tsx ../contacts/scripts/test-server-api.ts \
  *     --url http://127.0.0.1:7091 \
  *     --email user@tinycld.org \
  *     --password TestUser1234!

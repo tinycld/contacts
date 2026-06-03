@@ -237,10 +237,10 @@ git clone <this-remote>     ~/code/tinycld/new/contacts  # @tinycld/contacts
 
 # Install at the WORKSPACE ROOT — links members + runs the generator (postinstall)
 cd ~/code/tinycld/new
-npm install
+pnpm install
 
 # Run the full stack (Expo + PocketBase behind a proxy)
-cd app && npm run dev
+cd app && pnpm run dev
 ```
 
 ## Standalone checks
@@ -249,10 +249,10 @@ Run checks from **inside this package** — they scope to this package only:
 
 ```sh
 cd ~/code/tinycld/new/contacts
-npm run typecheck   # tsc against this package's tsconfig (extends the shared base)
-npm run test        # vitest, this package's tests/ only
-npm run check       # typecheck + unit
-npm run test:e2e    # Playwright against the app shell's live stack
+pnpm run typecheck   # tsc against this package's tsconfig (extends the shared base)
+pnpm run test        # vitest, this package's tests/ only
+pnpm run check       # typecheck + unit
+pnpm run test:e2e    # Playwright against the app shell's live stack
 ```
 
 These scripts delegate to `tinycld-pkg` (the `@tinycld/package-scripts` workspace
@@ -264,15 +264,15 @@ To run checks across **every** member at once, from the app shell:
 
 ```sh
 cd ~/code/tinycld/new/app
-npm run pkg:check      # typecheck + unit, every member, with a per-package summary
-npm run pkg:test:unit  # unit only, every member
-npm run pkg:test:e2e   # e2e, every member with a Playwright project
+pnpm run pkg:check      # typecheck + unit, every member, with a per-package summary
+pnpm run pkg:test:unit  # unit only, every member
+pnpm run pkg:test:e2e   # e2e, every member with a Playwright project
 ```
 
 ## CI
 
-`.github/workflows/ci.yml` (in the workspace root) runs `npm install` then
-`cd app && npm run pkg:check` — typecheck + unit across every member, exactly
+`.github/workflows/ci.yml` (in the workspace root) runs `pnpm install` then
+`cd app && pnpm run pkg:check` — typecheck + unit across every member, exactly
 what you'd run locally. Go tests and live e2e run in separate lanes.
 
 ## Package anatomy
