@@ -4,6 +4,7 @@ import { useStore } from '@tinycld/core/lib/pocketbase'
 import { useOrgLiveQuery } from '@tinycld/core/lib/use-org-live-query'
 import { useMemo } from 'react'
 import { type SortField, useContactsUIStore } from '../stores/contacts-ui-store'
+import { filterContacts } from './filter-contacts'
 import type { ContactSearchResult } from './useContactSearch'
 
 function sortAccessor(contacts: Record<SortField, unknown>, field: SortField) {
@@ -122,33 +123,18 @@ export function useContactList(params: {
     }, [activeLabelId, contactAssignments])
 
     const useServerSearch = searchQuery.length >= 2
-    const filteredContacts = useMemo(() => {
-        if (useServerSearch) return serverSearchResults
-
-        let list = contacts ?? []
-
-        if (filter === 'favorites') {
-            list = list.filter(c => c.favorite)
-        }
-
-        if (contactIdsForLabel) {
-            list = list.filter(c => contactIdsForLabel.has(c.id))
-        }
-
-        const q = searchQuery.toLowerCase()
-        if (q) {
-            list = list.filter(c => {
-                const fullName = `${c.first_name} ${c.last_name}`.toLowerCase()
-                return (
-                    fullName.includes(q) ||
-                    c.email?.toLowerCase().includes(q) ||
-                    c.company?.toLowerCase().includes(q)
-                )
-            })
-        }
-
-        return list
-    }, [useServerSearch, serverSearchResults, searchQuery, contacts, filter, contactIdsForLabel])
+    const filteredContacts = useMemo(
+        () =>
+            filterContacts({
+                contacts,
+                serverSearchResults,
+                useServerSearch,
+                searchQuery,
+                filter,
+                contactIdsForLabel,
+            }),
+        [useServerSearch, serverSearchResults, searchQuery, contacts, filter, contactIdsForLabel]
+    )
 
     return {
         contacts,

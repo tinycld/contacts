@@ -8,8 +8,17 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 )
 
-// fts5SpecialChars matches characters that have special meaning in FTS5 queries.
-var fts5SpecialChars = regexp.MustCompile(`[":*^{}()\[\]~\-]`)
+// fts5SpecialChars matches characters that have special meaning in FTS5 queries,
+// plus the email punctuation `@` and `.`. The unicode61 tokenizer treats `@`/`.`
+// as token boundaries when indexing, so an email like "a.b@example.com" is stored
+// as the separate tokens [a, b, example, com]. If we leave `@`/`.` inside the
+// *query* the whole address is wrapped as a single ordered phrase ("a@example.com"*),
+// which only matches when those tokens are adjacent in that exact order — so a
+// partial address that skips a token (e.g. "a@example.com" against stored
+// "a.b@example.com") silently matches nothing. Splitting on `@`/`.` instead turns
+// the query into independent AND-ed prefix terms, which matches regardless of the
+// in-between tokens. See TestFTSEmailQueryMatrix.
+var fts5SpecialChars = regexp.MustCompile(`[":*^{}()\[\]~\-@.]`)
 
 // sanitizeFTSQuery escapes special FTS5 characters for safe MATCH queries.
 func sanitizeFTSQuery(input string) string {
