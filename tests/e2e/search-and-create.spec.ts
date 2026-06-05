@@ -18,8 +18,13 @@ async function gotoContacts(page: Page) {
     await expect(page.getByText('Alice', { exact: false }).first()).toBeAttached(ATTACH)
 }
 
+// FrozenSlideStack keeps previously-visited contacts screens mounted-but-frozen
+// (react-native-screens hides them with display:none rather than unmounting), so
+// in a full assembly a stale, hidden copy of the search box can linger in the
+// DOM alongside the live one. Scope to the visible input so the locator always
+// resolves to the foreground screen and never trips strict-mode on the ghost.
 function searchBox(page: Page) {
-    return page.getByPlaceholder('Search contacts...')
+    return page.getByPlaceholder('Search contacts...').locator('visible=true')
 }
 
 // Bug #2: searching and then clearing the field must restore the full list.
@@ -71,15 +76,16 @@ test('a newly created contact shows up in the list', async ({ page }) => {
     const email = 'zephyrina.testcase@example.com'
 
     // Open the create form via the sidebar action (SPA nav), not page.goto.
-    await page.getByText('+ Create contact', { exact: true }).click()
-    await expect(page.getByPlaceholder('First name')).toBeAttached(ATTACH)
+    // visible=true scopes past any frozen (hidden) screen the stack keeps mounted.
+    await page.getByText('+ Create contact', { exact: true }).locator('visible=true').click()
+    await expect(page.getByPlaceholder('First name').locator('visible=true')).toBeAttached(ATTACH)
 
-    await page.getByPlaceholder('First name').fill(first)
-    await page.getByPlaceholder('Last name').fill(last)
-    await page.getByPlaceholder('email@example.com').fill(email)
+    await page.getByPlaceholder('First name').locator('visible=true').fill(first)
+    await page.getByPlaceholder('Last name').locator('visible=true').fill(last)
+    await page.getByPlaceholder('email@example.com').locator('visible=true').fill(email)
 
     // The submit button reads "Create" (becomes "Creating..." while pending).
-    await page.getByText('Create', { exact: true }).click()
+    await page.getByText('Create', { exact: true }).locator('visible=true').click()
 
     // Back on the list, the new contact must be present without any manual
     // refresh.
