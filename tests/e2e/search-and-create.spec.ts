@@ -40,8 +40,13 @@ test('clearing the search field restores the full contact list', async ({ page }
     // Narrow to a single seeded contact.
     await searchBox(page).fill('Isabelle')
     await expect(page.getByText('Isabelle', { exact: false }).first()).toBeAttached(ATTACH)
-    // A contact that should now be filtered out.
-    await expect(page.getByText('Alice', { exact: false })).toHaveCount(0, ATTACH)
+    // A contact that should now be filtered out of the visible list. Scope to
+    // visible: a frozen (hidden) prior screen keeps an unfiltered "Alice" in the
+    // DOM, so an unscoped count never reaches 0.
+    await expect(page.getByText('Alice', { exact: false }).locator('visible=true')).toHaveCount(
+        0,
+        ATTACH
+    )
 
     // Clear the field — the full list must come back, not a stale/empty set.
     await searchBox(page).fill('')
