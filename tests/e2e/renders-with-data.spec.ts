@@ -1,24 +1,19 @@
 import { expect, test } from '@playwright/test'
+import { login, navigateToPackage } from '../../../app/tests/e2e/helpers'
 
 // The expo:test stack (Playwright's webServer) resets + seeds the test DB, so
 // these seeded values exist. The contacts package seed inserts Alice/Bob/… into
-// the PRIMARY org (test-org); login redirects to the org root which redirects to
-// the first available package (contacts).
-const SEEDED_EMAIL = 'user@tinycld.org'
-const SEEDED_PASSWORD = 'TestUser1234!'
+// the PRIMARY org (test-org).
 const A_SEEDED_CONTACT = 'Alice'
 
 test('logs in and renders seeded contacts in the workspace', async ({ page }) => {
-    await page.goto('/')
+    await login(page)
 
-    // LoginModal exposes testIDs on its inputs + button (RN testID → web
-    // data-testid). Use them — more robust than placeholder/text, and the
-    // "Sign in" text appears twice (heading + button) so text would be ambiguous.
-    await page.getByTestId('identifier').fill(SEEDED_EMAIL)
-    await page.getByTestId('login-password').fill(SEEDED_PASSWORD)
-    await page.getByTestId('login-submit').click()
+    // After login the workspace redirects to its first nav package (Mail in a
+    // full assembly), so SPA-navigate to contacts via the rail link rather than
+    // relying on the redirect target.
+    await navigateToPackage(page, 'contacts')
 
-    // After login: org root → first-package redirect → /a/test-org/contacts.
     // Assert via toBeAttached (DOM presence), not toBeVisible: react-native-web
     // renders these as nested divs that Playwright's visibility heuristic reports
     // as hidden even when on-screen (confirmed visually). DOM presence of the

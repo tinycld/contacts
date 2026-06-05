@@ -115,6 +115,7 @@ export default function DirectoryScreen() {
                                 <NameAvatar
                                     firstName={member.firstName}
                                     lastName={member.lastName}
+                                    colorKey={member.id}
                                     size={56}
                                 />
                                 <View className="items-center gap-1">

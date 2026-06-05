@@ -171,6 +171,7 @@ export default function ContactDetailScreen() {
                         <ContactAvatar
                             firstName={contact.first_name}
                             lastName={contact.last_name}
+                            colorKey={contact.id}
                             size={80}
                         />
                         <Text className="text-2xl font-bold text-foreground">{displayName}</Text>
