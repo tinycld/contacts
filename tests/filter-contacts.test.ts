@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { type FilterableContact, filterContacts } from '../tinycld/contacts/hooks/filter-contacts'
+import { type FilterableContact, filterContacts } from '~/tinycld/contacts/hooks/filter-contacts'
 
 function contact(over: Partial<FilterableContact> & { id: string }): FilterableContact {
     return {
