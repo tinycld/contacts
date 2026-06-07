@@ -1,5 +1,5 @@
 import { expect, type Page, test } from '@playwright/test'
-import { login, navigateToPackage } from '../../../app/tests/e2e/helpers'
+import { login, navigateToPackage } from '@tinycld/core/e2e-helpers'
 
 // The expo:test stack (Playwright's webServer) resets + seeds the test DB before
 // the run, so the seeded contacts referenced below exist. See seed.ts.
