@@ -1,4 +1,4 @@
-import { FlashList } from '@shopify/flash-list'
+import { FlashList, type FlashListRef } from '@shopify/flash-list'
 import { DataTableHeader } from '@tinycld/core/components/DataTableHeader'
 import { DocumentTitle } from '@tinycld/core/components/DocumentTitle'
 import { MenuCheckboxItem } from '@tinycld/core/components/DropdownMenu'
@@ -14,9 +14,10 @@ import { useLabels } from '@tinycld/core/ui/hooks/useLabels'
 import { Menu } from '@tinycld/core/ui/menu'
 import { useLocalSearchParams } from 'expo-router'
 import { ArrowUpDown } from 'lucide-react-native'
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { Pressable, RefreshControl, Text, TextInput, View } from 'react-native'
 import { ContactRow } from '../components/ContactRow'
+import type { FilterableContact } from '../hooks/filter-contacts'
 import { useContactList } from '../hooks/useContactList'
 import { useContactSearch } from '../hooks/useContactSearch'
 import { useContactsShortcuts } from '../hooks/useContactsShortcuts'
@@ -72,6 +73,15 @@ function MobileSortMenu({ iconColor }: { iconColor: string }) {
 
 export default function ContactListScreen() {
     const [searchQuery, setSearchQuery] = useState('')
+    const listRef = useRef<FlashListRef<FilterableContact>>(null)
+    // Changing the search term replaces the result set, but FlashList keeps its
+    // scroll offset — a user who'd scrolled down then sees only the tail of the
+    // new (often shorter) results, looking as if the search returned almost
+    // nothing. Reset to the top on every query change so results read correctly.
+    const handleSearchChange = useCallback((text: string) => {
+        setSearchQuery(text)
+        listRef.current?.scrollToOffset({ offset: 0, animated: false })
+    }, [])
     const [isRefreshing, setIsRefreshing] = useState(false)
     const handleRefresh = useCallback(async () => {
         setIsRefreshing(true)
@@ -232,7 +242,7 @@ export default function ContactListScreen() {
                         <TextInput
                             placeholder="Search contacts..."
                             value={searchQuery}
-                            onChangeText={setSearchQuery}
+                            onChangeText={handleSearchChange}
                             className="border border-border rounded-lg px-3 py-2 text-sm bg-background text-foreground"
                             style={{
                                 width: isCompact ? 200 : 250,
@@ -266,6 +276,7 @@ export default function ContactListScreen() {
             ) : (
                 <SwipeableRowProvider>
                     <FlashList
+                        ref={listRef}
                         // Remount on sort change. A pure reorder of `data` (same
                         // item ids, same item type) doesn't reliably reflow
                         // FlashList's recycled row positions — the cells keep
