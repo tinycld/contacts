@@ -14,11 +14,9 @@
  *     --password TestUser1234!
  */
 
-try {
-    process.loadEnvFile()
-} catch {
-    // .env may not exist
-}
+import { loadEnv } from '@tinycld/core/lib/load-env'
+
+loadEnv()
 
 interface Config {
     url: string
