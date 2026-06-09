@@ -2,7 +2,7 @@
 
 Personal address book per user, per org, with a native CardDAV endpoint so any standards-compliant address book client (Apple Contacts, GNOME Contacts / Evolution, DAVx5, Thunderbird) can read and write the same records.
 
-A feature package for the [tinycld](https://tinycld.org/) ecosystem. Lives as a standalone git repo alongside the app shell (`app`), the `@tinycld/core` repo, and other sibling feature packages (`drive`, `mail`, `calendar`, `calc`, `text`, `google-takeout-import`). In this layout `@tinycld/core` is its own standalone repo cloned as a workspace member sibling (not bundled inside the app shell).
+A feature package for the [tinycld](https://tinycld.org/) ecosystem. Lives as a standalone git repo alongside the [`tinycld`](https://tinycld.org/) app shell and other sibling feature packages (`drive`, `mail`, `calendar`, `calc`, `text`, `google-takeout-import`). `@tinycld/core` is the shared runtime/UI library, nested inside the `tinycld` shell repo at `tinycld/core/` and imported as `@tinycld/core`.
 
 ## What it does
 
@@ -240,7 +240,7 @@ cd ~/code/tinycld/new
 pnpm install
 
 # Run the full stack (Expo + PocketBase behind a proxy)
-cd app && pnpm run dev
+cd tinycld && pnpm run dev
 ```
 
 ## Standalone checks
@@ -263,7 +263,7 @@ type augmentation all resolve). No app-shell knowledge required.
 To run checks across **every** member at once, from the app shell:
 
 ```sh
-cd ~/code/tinycld/new/app
+cd ~/code/tinycld/new/tinycld
 pnpm run pkg:check      # typecheck + unit, every member, with a per-package summary
 pnpm run pkg:test:unit  # unit only, every member
 pnpm run pkg:test:e2e   # e2e, every member with a Playwright project
@@ -272,7 +272,7 @@ pnpm run pkg:test:e2e   # e2e, every member with a Playwright project
 ## CI
 
 `.github/workflows/ci.yml` (in the workspace root) runs `pnpm install` then
-`cd app && pnpm run pkg:check` — typecheck + unit across every member, exactly
+`cd tinycld && pnpm run pkg:check` — typecheck + unit across every member, exactly
 what you'd run locally. Go tests and live e2e run in separate lanes.
 
 ## Package anatomy
