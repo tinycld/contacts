@@ -7,15 +7,14 @@ import { login, navigateToPackage } from '@tinycld/core/e2e-helpers'
 // react-native-web renders rows as nested divs that Playwright's visibility
 // heuristic reports as hidden even when on-screen, so assert DOM presence
 // (toBeAttached) rather than visibility — same approach as renders-with-data.spec.
-const ATTACH = { timeout: 30_000 } as const
 
 async function gotoContacts(page: Page) {
     await login(page)
     // SPA-navigate to the contacts package via the rail link (not page.goto,
     // which is a hard nav that cancels in-flight chunk loads — see helpers.ts).
     await navigateToPackage(page, 'contacts')
-    await expect(page.getByText(/Contacts \(\d+\)/).first()).toBeAttached(ATTACH)
-    await expect(page.getByText('Alice', { exact: false }).first()).toBeAttached(ATTACH)
+    await expect(page.getByText(/Contacts \(\d+\)/).first()).toBeAttached()
+    await expect(page.getByText('Alice', { exact: false }).first()).toBeAttached()
 }
 
 // FrozenSlideStack keeps previously-visited contacts screens mounted-but-frozen
@@ -39,20 +38,17 @@ test('clearing the search field restores the full contact list', async ({ page }
 
     // Narrow to a single seeded contact.
     await searchBox(page).fill('Isabelle')
-    await expect(page.getByText('Isabelle', { exact: false }).first()).toBeAttached(ATTACH)
+    await expect(page.getByText('Isabelle', { exact: false }).first()).toBeAttached()
     // A contact that should now be filtered out of the visible list. Scope to
     // visible: a frozen (hidden) prior screen keeps an unfiltered "Alice" in the
     // DOM, so an unscoped count never reaches 0.
-    await expect(page.getByText('Alice', { exact: false }).locator('visible=true')).toHaveCount(
-        0,
-        ATTACH
-    )
+    await expect(page.getByText('Alice', { exact: false }).locator('visible=true')).toHaveCount(0)
 
     // Clear the field — the full list must come back, not a stale/empty set.
     await searchBox(page).fill('')
-    await expect(page.getByText('Alice', { exact: false }).first()).toBeAttached(ATTACH)
-    await expect(page.getByText('Bob', { exact: false }).first()).toBeAttached(ATTACH)
-    await expect(page.getByText(`Contacts (${initialCount})`).first()).toBeAttached(ATTACH)
+    await expect(page.getByText('Alice', { exact: false }).first()).toBeAttached()
+    await expect(page.getByText('Bob', { exact: false }).first()).toBeAttached()
+    await expect(page.getByText(`Contacts (${initialCount})`).first()).toBeAttached()
 })
 
 // Bug #3 end-to-end: a contact whose unique term lives in the email must be
@@ -64,11 +60,11 @@ test('finds a contact by a partial email address that skips a token', async ({ p
     await gotoContacts(page)
 
     await searchBox(page).fill('carol@example.com')
-    await expect(page.getByText('Carol', { exact: false }).first()).toBeAttached(ATTACH)
+    await expect(page.getByText('Carol', { exact: false }).first()).toBeAttached()
 
     // The full address still works too.
     await searchBox(page).fill('carol.w@example.com')
-    await expect(page.getByText('Carol', { exact: false }).first()).toBeAttached(ATTACH)
+    await expect(page.getByText('Carol', { exact: false }).first()).toBeAttached()
 })
 
 // Bug #1: a newly created contact must appear in the list immediately.
@@ -83,7 +79,7 @@ test('a newly created contact shows up in the list', async ({ page }) => {
     // Open the create form via the sidebar action (SPA nav), not page.goto.
     // visible=true scopes past any frozen (hidden) screen the stack keeps mounted.
     await page.getByText('+ Create contact', { exact: true }).locator('visible=true').click()
-    await expect(page.getByPlaceholder('First name').locator('visible=true')).toBeAttached(ATTACH)
+    await expect(page.getByPlaceholder('First name').locator('visible=true')).toBeAttached()
 
     await page.getByPlaceholder('First name').locator('visible=true').fill(first)
     await page.getByPlaceholder('Last name').locator('visible=true').fill(last)
@@ -94,10 +90,10 @@ test('a newly created contact shows up in the list', async ({ page }) => {
 
     // Back on the list, the new contact must be present without any manual
     // refresh.
-    await expect(page.getByText(/Contacts \(\d+\)/).first()).toBeAttached(ATTACH)
-    await expect(page.getByText(first, { exact: false }).first()).toBeAttached(ATTACH)
+    await expect(page.getByText(/Contacts \(\d+\)/).first()).toBeAttached()
+    await expect(page.getByText(first, { exact: false }).first()).toBeAttached()
 
     // And it's findable via search (exercises the same insert through FTS).
     await searchBox(page).fill('Zephyrina')
-    await expect(page.getByText(first, { exact: false }).first()).toBeAttached(ATTACH)
+    await expect(page.getByText(first, { exact: false }).first()).toBeAttached()
 })
