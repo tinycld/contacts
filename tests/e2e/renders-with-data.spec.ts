@@ -19,8 +19,6 @@ test('logs in and renders seeded contacts in the workspace', async ({ page }) =>
     // as hidden even when on-screen (confirmed visually). DOM presence of the
     // "Contacts (N)" header + a seeded contact row proves login → workspace →
     // contacts-with-data worked.
-    await expect(page.getByText(/Contacts \(\d+\)/).first()).toBeAttached({ timeout: 30_000 })
-    await expect(page.getByText(A_SEEDED_CONTACT, { exact: false }).first()).toBeAttached({
-        timeout: 30_000,
-    })
+    await expect(page.getByText(/Contacts \(\d+\)/).first()).toBeAttached()
+    await expect(page.getByText(A_SEEDED_CONTACT, { exact: false }).first()).toBeAttached()
 })
