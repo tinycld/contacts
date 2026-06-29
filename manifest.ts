@@ -1,7 +1,7 @@
 const manifest = {
     name: 'Contacts',
     slug: 'contacts',
-    version: '0.1.0',
+    version: '0.1.1',
     description: 'Shared contacts for your organization',
     routes: { directory: 'screens' },
     nav: { label: 'Contacts', icon: 'users', order: 10, shortcut: 'o' },
