@@ -111,7 +111,12 @@ export function ContactRow({
     const effectStyle = rowFocusStyle({ isFocused, isHovered, borderColor, activeIndicator })
 
     const row = (
-        <Pressable onPress={navigateToContact} {...hoverWebProps} style={{ width: '100%' }}>
+        <Pressable
+            onPress={navigateToContact}
+            {...hoverWebProps}
+            style={{ width: '100%' }}
+            testID={index !== undefined ? `contact-row-${index}` : undefined}
+        >
             <View
                 className="flex-row items-center pr-1 py-3 gap-2 border-b border-border bg-background"
                 style={[
