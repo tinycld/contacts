@@ -19,7 +19,7 @@ interface MemberCard {
 
 export default function DirectoryScreen() {
     const [searchQuery, setSearchQuery] = useState('')
-    const [userOrgCollection] = useStore('user_org')
+    const [userOrgCollection, usersCollection] = useStore('user_org', 'users')
     const mutedColor = useThemeColor('muted-foreground')
     const placeholderColor = useThemeColor('field-placeholder')
     const primaryColor = useThemeColor('primary')
@@ -51,27 +51,43 @@ export default function DirectoryScreen() {
         border: hexToRgba(mutedColor, 0.3),
     }
 
-    const { data: userOrgs } = useOrgLiveQuery((query, { orgId }) =>
-        query.from({ user_org: userOrgCollection }).where(({ user_org }) => eq(user_org.org, orgId))
+    // Join the local `users` collection onto each user_org row rather than
+    // reading `uo.expand.user`: a join resolves from the optimistic store
+    // immediately, whereas PB expand waits for a realtime round-trip (so a
+    // freshly-added member reads as missing until PB redelivers the expand).
+    const { data: memberRows } = useOrgLiveQuery((query, { orgId }) =>
+        query
+            .from({ user_org: userOrgCollection })
+            .where(({ user_org }) => eq(user_org.org, orgId))
+            .join(
+                { user: usersCollection },
+                ({ user_org, user }) => eq(user_org.user, user.id),
+                'left'
+            )
+            .select(({ user_org, user }) => ({
+                id: user_org.id,
+                role: user_org.role,
+                name: user?.name,
+                email: user?.email,
+            }))
     )
 
     const members: MemberCard[] = useMemo(() => {
-        if (!userOrgs) return []
+        if (!memberRows) return []
         const result: MemberCard[] = []
-        for (const uo of userOrgs) {
-            const user = uo.expand?.user
-            if (!user) continue
-            const nameParts = (user.name || '').split(' ')
+        for (const row of memberRows) {
+            if (!row.email) continue
+            const nameParts = (row.name || '').split(' ')
             result.push({
-                id: uo.id,
-                firstName: nameParts[0] || user.email.split('@')[0],
+                id: row.id,
+                firstName: nameParts[0] || row.email.split('@')[0],
                 lastName: nameParts.slice(1).join(' '),
-                email: user.email,
-                role: uo.role,
+                email: row.email,
+                role: row.role,
             })
         }
         return result
-    }, [userOrgs])
+    }, [memberRows])
 
     const filtered = useMemo(() => {
         if (!searchQuery) return members
