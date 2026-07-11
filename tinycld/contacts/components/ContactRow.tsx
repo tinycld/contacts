@@ -14,6 +14,13 @@ import { Edit3, RotateCcw, Star, Trash2 } from 'lucide-react-native'
 import { Platform, Pressable, Text, View } from 'react-native'
 import { ContactAvatar } from './ContactAvatar'
 
+// The "starred" gold accent for the favorite hover-action. There is no
+// semantic gold/amber theme token, so this mirrors the single source of
+// truth in core's StarIcon (STARRED_COLOR) rather than repeating a bare
+// hex literal inline — keeping the two star affordances in this row
+// visually identical.
+const STARRED_COLOR = '#facc15'
+
 interface ContactRowProps {
     contact: {
         id: string
@@ -253,8 +260,8 @@ export function ContactRow({
                                         icon={Star}
                                         label={contact.favorite ? 'Unstar' : 'Star'}
                                         onPress={onToggleFavorite}
-                                        iconColor="#facc15"
-                                        iconFill={contact.favorite ? '#facc15' : 'transparent'}
+                                        iconColor={STARRED_COLOR}
+                                        iconFill={contact.favorite ? STARRED_COLOR : 'transparent'}
                                         tooltipPosition={tooltipPosition}
                                     />
                                 </>
