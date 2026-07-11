@@ -108,7 +108,10 @@ export default function ContactListScreen() {
     const toggleSort = useContactsUIStore(s => s.toggleSort)
 
     const useServerSearch = searchQuery.length >= 2
-    const { results: serverResults } = useContactSearch(useServerSearch ? searchQuery : '')
+    const { results: serverResults } = useContactSearch(
+        useServerSearch ? searchQuery : '',
+        filter === 'deleted'
+    )
 
     const {
         contacts,

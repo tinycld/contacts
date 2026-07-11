@@ -18,6 +18,7 @@ type contactSearchResultItem struct {
 	Company   string `json:"company"`
 	Phone     string `json:"phone"`
 	Favorite  bool   `json:"favorite"`
+	DeletedAt string `json:"deleted_at"`
 	Highlight string `json:"highlight"`
 }
 
@@ -31,6 +32,9 @@ func handleContactSearch(app *pocketbase.PocketBase, re *core.RequestEvent) erro
 	q := re.Request.URL.Query().Get("q")
 	limitStr := re.Request.URL.Query().Get("limit")
 	offsetStr := re.Request.URL.Query().Get("offset")
+	// When on the Deleted view the client asks us to search WITHIN soft-deleted
+	// contacts; otherwise the search is scoped to live contacts only.
+	includeDeleted := re.Request.URL.Query().Get("deleted") == "true"
 
 	limit := 25
 	offset := 0
@@ -68,6 +72,13 @@ func handleContactSearch(app *pocketbase.PocketBase, re *core.RequestEvent) erro
 	}
 	inClause := "(" + strings.Join(ownerPlaceholders, ", ") + ")"
 
+	// Fixed SQL fragment (no user input) that scopes to live vs. soft-deleted
+	// contacts — mirrors useContactList's `isDeleted ? deleted_at != '' : deleted_at = ''`.
+	deletedClause := "AND c.deleted_at = ''"
+	if includeDeleted {
+		deletedClause = "AND c.deleted_at != ''"
+	}
+
 	searchQuery := `
 		SELECT
 			c.id,
@@ -77,12 +88,13 @@ func handleContactSearch(app *pocketbase.PocketBase, re *core.RequestEvent) erro
 			c.company,
 			c.phone,
 			c.favorite,
+			c.deleted_at,
 			snippet(fts_contacts, -1, '<mark>', '</mark>', '...', 30) as highlight
 		FROM fts_contacts
 		JOIN contacts c ON c.id = fts_contacts.record_id
 		WHERE fts_contacts MATCH {:ftsQuery}
 		AND c.owner IN ` + inClause + `
-		AND c.deleted_at = ''
+		` + deletedClause + `
 		ORDER BY fts_contacts.rank
 		LIMIT {:limit} OFFSET {:offset}
 	`
@@ -104,6 +116,7 @@ func handleContactSearch(app *pocketbase.PocketBase, re *core.RequestEvent) erro
 		Company   string `db:"company"`
 		Phone     string `db:"phone"`
 		Favorite  bool   `db:"favorite"`
+		DeletedAt string `db:"deleted_at"`
 		Highlight string `db:"highlight"`
 	}
 
@@ -123,6 +136,7 @@ func handleContactSearch(app *pocketbase.PocketBase, re *core.RequestEvent) erro
 			Company:   r.Company,
 			Phone:     r.Phone,
 			Favorite:  r.Favorite,
+			DeletedAt: r.DeletedAt,
 			Highlight: r.Highlight,
 		}
 	}
@@ -134,7 +148,7 @@ func handleContactSearch(app *pocketbase.PocketBase, re *core.RequestEvent) erro
 		JOIN contacts c ON c.id = fts_contacts.record_id
 		WHERE fts_contacts MATCH {:ftsQuery}
 		AND c.owner IN ` + inClause + `
-		AND c.deleted_at = ''`
+		` + deletedClause
 
 	var countResult struct {
 		Total int `db:"total"`
