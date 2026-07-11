@@ -9,6 +9,7 @@ function contact(over: Partial<FilterableContact> & { id: string }): FilterableC
         company: '',
         phone: '',
         favorite: false,
+        deleted_at: '',
         ...over,
     }
 }
@@ -33,6 +34,15 @@ const carol = contact({
     last_name: 'Nguyen',
     email: 'carol@initech.dev',
     favorite: true,
+})
+
+// A soft-deleted contact (lives only in the Deleted view).
+const dave = contact({
+    id: 'dave',
+    first_name: 'Dave',
+    last_name: 'Example',
+    email: 'dave@example.com',
+    deleted_at: '2026-03-15T00:00:00.000Z',
 })
 
 const everyone = [alice, bob, carol]
@@ -169,6 +179,58 @@ describe('filterContacts — server search path', () => {
             contactIdsForLabel: new Set(['carol']),
         })
         expect(ids(out)).toEqual(['carol'])
+    })
+})
+
+// The reported bug (§4.25): searching in the Deleted view returned live
+// contacts (and hid deleted ones), because the deleted scope was never applied.
+describe('filterContacts — deleted scope', () => {
+    it('shows only deleted contacts when browsing the Deleted view', () => {
+        const out = filterContacts({
+            contacts: [alice, dave],
+            serverSearchResults: undefined,
+            useServerSearch: false,
+            searchQuery: '',
+            filter: 'deleted',
+            contactIdsForLabel: null,
+        })
+        expect(ids(out)).toEqual(['dave'])
+    })
+
+    it('excludes deleted contacts from every non-deleted view', () => {
+        const out = filterContacts({
+            contacts: [alice, bob, carol, dave],
+            serverSearchResults: undefined,
+            useServerSearch: false,
+            searchQuery: '',
+            contactIdsForLabel: null,
+        })
+        expect(ids(out)).toEqual(['alice', 'bob', 'carol'])
+    })
+
+    it('searching the Deleted view returns matching DELETED contacts, not live ones', () => {
+        // Server FTS (told to search deleted) returned dave; a live contact must
+        // never leak in even if the client ever hands one over.
+        const out = filterContacts({
+            contacts: [alice, bob, carol, dave],
+            serverSearchResults: [alice, dave],
+            useServerSearch: true,
+            searchQuery: 'example',
+            filter: 'deleted',
+            contactIdsForLabel: null,
+        })
+        expect(ids(out)).toEqual(['dave'])
+    })
+
+    it('searching a normal view returns only LIVE contacts, never deleted ones', () => {
+        const out = filterContacts({
+            contacts: [alice, bob, carol, dave],
+            serverSearchResults: [alice, dave],
+            useServerSearch: true,
+            searchQuery: 'example',
+            contactIdsForLabel: null,
+        })
+        expect(ids(out)).toEqual(['alice'])
     })
 })
 

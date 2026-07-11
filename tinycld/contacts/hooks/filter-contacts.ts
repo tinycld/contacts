@@ -4,9 +4,10 @@
  * decides which contacts are visible given the active scope (favorites / label),
  * the current search term, and whether the server-search path is active.
  *
- * Invariant the tests pin down: the favorites/label scope is applied to BOTH
- * the live list and the server-search results, so toggling search on/off only
- * ever changes the set by the search term — never drops in-scope contacts.
+ * Invariant the tests pin down: the favorites/label/deleted scope is applied to
+ * BOTH the live list and the server-search results, so toggling search on/off
+ * only ever changes the set by the search term — never drops in-scope contacts
+ * and never leaks out-of-scope ones (e.g. live contacts into the Deleted view).
  */
 
 export interface FilterableContact {
@@ -17,6 +18,7 @@ export interface FilterableContact {
     company: string
     phone: string
     favorite: boolean
+    deleted_at: string
 }
 
 export interface ContactFilterParams {
@@ -48,6 +50,15 @@ export function filterContacts(params: ContactFilterParams): FilterableContact[]
 
     if (filter === 'favorites') {
         list = list.filter(c => c.favorite)
+    }
+
+    // The Deleted view shows only soft-deleted contacts; every other view shows
+    // only live ones. The server-search path is told which scope to query, but
+    // enforce it here too so neither path can leak the wrong set.
+    if (filter === 'deleted') {
+        list = list.filter(c => c.deleted_at !== '')
+    } else {
+        list = list.filter(c => c.deleted_at === '')
     }
 
     if (contactIdsForLabel) {
