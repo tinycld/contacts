@@ -10,7 +10,6 @@ export interface ContactSearchResult {
     phone: string
     favorite: boolean
     deleted_at: string
-    highlight: string
 }
 
 interface ContactSearchResponse {
