@@ -2,7 +2,7 @@ const manifest = {
     name: 'Contacts',
     slug: 'contacts',
     version: '0.1.1',
-    description: 'Shared contacts for your organization',
+    description: 'Your personal contacts, private to you',
     routes: { directory: 'screens' },
     nav: { label: 'Contacts', icon: 'users', order: 10, shortcut: 'o' },
     migrations: { directory: 'pb-migrations' },

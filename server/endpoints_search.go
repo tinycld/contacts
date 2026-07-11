@@ -19,7 +19,6 @@ type contactSearchResultItem struct {
 	Phone     string `json:"phone"`
 	Favorite  bool   `json:"favorite"`
 	DeletedAt string `json:"deleted_at"`
-	Highlight string `json:"highlight"`
 }
 
 type contactSearchResponse struct {
@@ -79,6 +78,10 @@ func handleContactSearch(app *pocketbase.PocketBase, re *core.RequestEvent) erro
 		deletedClause = "AND c.deleted_at != ''"
 	}
 
+	// We deliberately do NOT select a snippet()/highlight column: it wraps raw
+	// user-entered contact data in <mark> tags, so any client that rendered it
+	// as HTML (dangerouslySetInnerHTML) would be an XSS sink. The field was
+	// unused, so it's omitted entirely rather than shipped as a footgun.
 	searchQuery := `
 		SELECT
 			c.id,
@@ -88,8 +91,7 @@ func handleContactSearch(app *pocketbase.PocketBase, re *core.RequestEvent) erro
 			c.company,
 			c.phone,
 			c.favorite,
-			c.deleted_at,
-			snippet(fts_contacts, -1, '<mark>', '</mark>', '...', 30) as highlight
+			c.deleted_at
 		FROM fts_contacts
 		JOIN contacts c ON c.id = fts_contacts.record_id
 		WHERE fts_contacts MATCH {:ftsQuery}
@@ -117,7 +119,6 @@ func handleContactSearch(app *pocketbase.PocketBase, re *core.RequestEvent) erro
 		Phone     string `db:"phone"`
 		Favorite  bool   `db:"favorite"`
 		DeletedAt string `db:"deleted_at"`
-		Highlight string `db:"highlight"`
 	}
 
 	err = app.DB().NewQuery(searchQuery).Bind(dbx.Params(params)).All(&results)
@@ -137,7 +138,6 @@ func handleContactSearch(app *pocketbase.PocketBase, re *core.RequestEvent) erro
 			Phone:     r.Phone,
 			Favorite:  r.Favorite,
 			DeletedAt: r.DeletedAt,
-			Highlight: r.Highlight,
 		}
 	}
 
