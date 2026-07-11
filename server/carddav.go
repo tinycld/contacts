@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/tools/types"
 )
 
 type CardDAVBackend struct {
@@ -92,7 +93,10 @@ func (b *CardDAVBackend) ListAddressObjects(ctx context.Context, path string, re
 		return nil, err
 	}
 
-	records, err := b.app.FindRecordsByFilter("contacts", "owner = {:ownerId}", "-updated", 0, 0,
+	// Exclude soft-deleted contacts (deleted_at = '') so contacts removed in the
+	// web UI don't reappear in CardDAV clients and re-sync back, mirroring the
+	// web query (useContactList.ts) and FTS search (endpoints_search.go).
+	records, err := b.app.FindRecordsByFilter("contacts", "owner = {:ownerId} && deleted_at = ''", "-updated", 0, 0,
 		map[string]any{"ownerId": userOrg.Id})
 	if err != nil {
 		return nil, err
@@ -180,7 +184,11 @@ func (b *CardDAVBackend) DeleteAddressObject(ctx context.Context, path string) e
 	if err != nil {
 		return err
 	}
-	return b.app.Delete(record)
+	// Soft-delete rather than hard-delete so a CardDAV DELETE stays consistent
+	// with the web UI (useContactList.ts sets deleted_at) and the contact remains
+	// restorable from the Deleted view instead of being lost irreversibly.
+	record.Set("deleted_at", types.NowDateTime())
+	return b.app.Save(record)
 }
 
 // authFromContext extracts the authenticated user from the request context.
