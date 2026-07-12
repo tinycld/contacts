@@ -1,6 +1,6 @@
 module tinycld.org/packages/contacts
 
-go 1.25.0
+go 1.26.3
 
 require (
 	github.com/emersion/go-vcard v0.0.0-20230815062825-8fda7d206ec9
