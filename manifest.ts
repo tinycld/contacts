@@ -13,6 +13,7 @@ const manifest = {
     tests: { directory: 'tests' },
     server: { package: 'server', module: 'tinycld.org/packages/contacts' },
     repository: { url: 'https://github.com/tinycld/contacts' },
+    peerVersions: { '@tinycld/core': '>=0.0.4 <0.1.0' },
 }
 
 export default manifest
