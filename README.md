@@ -15,7 +15,7 @@ User-facing features:
 - **Favorites** — toggle a star; the **Favorites** sidebar view filters to starred contacts.
 - **Soft delete with restore and permanent delete** — `deleted_at` is the source of truth; soft-deleted contacts move to a **Deleted** sidebar view; permanent delete removes the row, the FTS entry, and the vcard_uid.
 - **Labels** — colored tags that live in `core`'s `labels` / `label_assignments` collections and work across packages. Contacts contributes nothing to the label system itself; it consumes core's `useLabels`, `useLabelMutations`, and `LabelManagerDialog`. A `label_assignments` row has `(record_id, collection, label, user_org)`, so a label's meaning is consistent across mail, contacts, etc.
-- **Org directory** — a separate sidebar view (`/a/<org>/contacts/directory`) listing **org members** (`user_org` records expanded with their `user` relation), with role badges (owner / admin / member / guest). This is read-only and orthogonal to the contact list — there's no "save member to contacts" action.
+- **Org directory** — a separate sidebar view (`/a/<org>/contacts/directory`) listing **org members** (`user_org` records joined against the local `users` collection — not PB `expand`, so a freshly-added member resolves from the optimistic store immediately), with role badges (owner / admin / member / guest). This is read-only and orthogonal to the contact list — there's no "save member to contacts" action.
 - **Search** — SQLite FTS5 across `first_name`, `last_name`, `email`, `company`, `phone`, and `notes` (HTML-stripped). Porter stemmer for English, prefix matches (typing `joh` matches `john`, `johnson`) via `"term"*` syntax. **Not indexed**: `job_title`, `favorite`, labels, `deleted_at`. The server endpoint filters soft-deleted rows (`c.deleted_at = ''`) so search matches the sidebar's main-list view.
 - **Stable vCard identity** — every contact has a `vcard_uid` (UUID v4 with `urn:uuid:` prefix), auto-generated on create via an `OnRecordCreate` hook if the client didn't set one. A partial unique index (`WHERE vcard_uid != ''`) guarantees uniqueness without breaking the empty-string fallback. This is how [Google Takeout import](https://tinycld.org/docs) and CardDAV re-syncs dedupe instead of creating duplicates.
 - **CardDAV** — full read-write CardDAV server at `/carddav/`, served via `github.com/emersion/go-webdav/carddav` over HTTP Basic auth. One address book is exposed per `user_org` the caller has, at `/carddav/u/ab/<orgSlug>/`. There's a `/.well-known/carddav` redirect for auto-discovery.
@@ -133,7 +133,7 @@ Audit-log entries are retained even after permanent delete.
 - **After create / update** — `syncContactToFTS(record, "create"|"update")` does a `DELETE WHERE record_id = ?` (idempotent upsert) followed by an `INSERT`. HTML in `notes` is stripped via a `<[^>]*>` regex before indexing.
 - **After delete** — `syncContactToFTS(record, "delete")` drops the row.
 
-The search endpoint (`endpoints_search.go`) takes a `q` query parameter (min length 2), runs it through `sanitizeFTSQuery` (strips FTS5 special characters, splits on whitespace, wraps each term in double quotes and adds a `*` suffix for prefix matching), then queries `fts_contacts MATCH '"term1"* "term2"* ...'` joined back to `contacts`. The user's `user_org` IDs gate which rows can be returned. `snippet(..., '<mark>', '</mark>', '...', 30)` returns highlighted excerpts for the client UI.
+The search endpoint (`endpoints_search.go`) takes a `q` query parameter (min length 2), runs it through `sanitizeFTSQuery` (strips FTS5 special characters, splits on whitespace, wraps each term in double quotes and adds a `*` suffix for prefix matching), then queries `fts_contacts MATCH '"term1"* "term2"* ...'` joined back to `contacts`. The user's `user_org` IDs gate which rows can be returned. It deliberately does **not** select a `snippet()`/highlight column — that would wrap raw user-entered contact data in `<mark>` tags and hand an XSS vector to any client that rendered it — so the response carries no highlighted excerpt.
 
 A 100-row hard cap and offset-based pagination are enforced server-side.
 
@@ -202,7 +202,7 @@ Go module: `tinycld.org/packages/contacts`. Imports `tinycld.org/core/audit` via
 tinycld/contacts/
     manifest.ts                 package manifest (slug, nav, sidebar, server, help)
     sidebar.tsx                 Contacts / Favorites / Directory / Deleted + Labels
-    collections.ts              contacts + label_assignments pbtsdb registration
+    collections.ts              contacts pbtsdb registration (label_assignments is core-owned)
     types.ts                    ContactsSchema (merged into MergedSchema)
     seed.ts                     sample data
     screens/
