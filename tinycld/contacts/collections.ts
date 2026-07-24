@@ -12,7 +12,7 @@ export function registerCollections(
 ) {
     const contacts = newCollection('contacts', {
         omitOnInsert: ['created', 'updated', 'deleted_at'] as const,
-        expand: { owner: coreStores.user_org },
+        expand: { owner: coreStores.users },
         collectionOptions: {
             autoIndex: 'eager' as const,
             defaultIndexType: BasicIndex,

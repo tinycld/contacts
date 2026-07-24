@@ -1,4 +1,4 @@
-import type { UserOrg } from '@tinycld/core/types/pbSchema'
+import type { Users } from '@tinycld/core/types/pbSchema'
 
 export interface Contacts {
     id: string
@@ -21,7 +21,7 @@ export type ContactsSchema = {
     contacts: {
         type: Contacts
         relations: {
-            owner: UserOrg
+            owner: Users
         }
     }
 }

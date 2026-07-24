@@ -1,4 +1,3 @@
-import { eq } from '@tanstack/db'
 import { DocumentTitle } from '@tinycld/core/components/DocumentTitle'
 import { HelpIcon } from '@tinycld/core/components/help/HelpIcon'
 import { NameAvatar } from '@tinycld/core/components/NameAvatar'
@@ -19,7 +18,7 @@ interface MemberCard {
 
 export default function DirectoryScreen() {
     const [searchQuery, setSearchQuery] = useState('')
-    const [userOrgCollection, usersCollection] = useStore('user_org', 'users')
+    const [usersCollection] = useStore('users')
     const mutedColor = useThemeColor('muted-foreground')
     const placeholderColor = useThemeColor('field-placeholder')
     const primaryColor = useThemeColor('primary')
@@ -51,25 +50,15 @@ export default function DirectoryScreen() {
         border: hexToRgba(mutedColor, 0.3),
     }
 
-    // Join the local `users` collection onto each user_org row rather than
-    // reading `uo.expand.user`: a join resolves from the optimistic store
-    // immediately, whereas PB expand waits for a realtime round-trip (so a
-    // freshly-added member reads as missing until PB redelivers the expand).
-    const { data: memberRows } = useOrgLiveQuery((query, { orgId }) =>
-        query
-            .from({ user_org: userOrgCollection })
-            .where(({ user_org }) => eq(user_org.org, orgId))
-            .join(
-                { user: usersCollection },
-                ({ user_org, user }) => eq(user_org.user, user.id),
-                'left'
-            )
-            .select(({ user_org, user }) => ({
-                id: user_org.id,
-                role: user_org.role,
-                name: user?.name,
-                email: user?.email,
-            }))
+    // Single-org: every user in the database is a member of the org, so the
+    // directory is just the full `users` collection.
+    const { data: memberRows } = useOrgLiveQuery(query =>
+        query.from({ user: usersCollection }).select(({ user }) => ({
+            id: user.id,
+            role: user.role,
+            name: user.name,
+            email: user.email,
+        }))
     )
 
     const members: MemberCard[] = useMemo(() => {
