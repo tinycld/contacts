@@ -84,8 +84,34 @@ var cardDAVSource = carddav.Source{
 	},
 }
 
-// Register wires all of the contacts feature's server-side Go against the app.
+// Register composes the contacts server for the SINGLE-ORG app: the shared set
+// plus the host-only tail. The generator's package_extensions.go calls it.
 func Register(app *pocketbase.PocketBase) {
+	registerShared(app)
+
+	// ---- Host-only ----
+	// CardDAV mount. A multi-org tenant mounts /carddav itself, from the
+	// materialized manifest `carddav` block (coreserver.RegisterTenant), so
+	// mounting here too would double-bind the routes. The materialized lists
+	// are authoritative for what a tenant serves; this call is the single-org
+	// equivalent.
+	carddav.Register(app, []carddav.Source{cardDAVSource})
+}
+
+// RegisterTenant composes the contacts server for a multi-org TENANT process:
+// the shared set only. The router's pinned package menu calls it, gated by the
+// org's resolved package set (multi-org/docs/SCOPE-tenant-feature-go.md).
+//
+// Do NOT hand-pick registrations here — add to registerShared so both
+// compositions get them, or to Register's host-only tail with a reason. A
+// hand-rolled subset is exactly the drift that produced
+// multi-org/docs/FINDING-tenant-composition-gap.md.
+func RegisterTenant(app *pocketbase.PocketBase) {
+	registerShared(app)
+}
+
+// registerShared is the single source of truth for what BOTH compositions run.
+func registerShared(app *pocketbase.PocketBase) {
 	// Audit logging via core's reusable helper. Single-org: audit rows carry no
 	// org, so only the display label (first + last name) is customized.
 	audit.RegisterCollection(app, "contacts", &audit.CollectionConfig{
@@ -98,9 +124,6 @@ func Register(app *pocketbase.PocketBase) {
 
 	// FTS index-sync record hooks + GET /api/contacts/search, from core/fts.
 	fts.Register(app, []fts.Config{ftsConfig})
-
-	// CardDAV over /carddav for the contacts collection, from core/carddav.
-	carddav.Register(app, []carddav.Source{cardDAVSource})
 
 	// Auto-generate a stable vcard_uid for contacts created via the web UI so
 	// CardDAV clients get a consistent object path. (core/carddav also backfills
