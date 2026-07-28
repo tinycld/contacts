@@ -14,7 +14,7 @@ async function gotoContacts(page: Page) {
     // which is a hard nav that cancels in-flight chunk loads — see helpers.ts).
     await navigateToPackage(page, 'contacts')
     await expect(page.getByText(/Contacts \(\d+\)/).first()).toBeAttached()
-    await expect(page.getByText('Alice', { exact: false }).first()).toBeAttached()
+    await expect(contactRows(page).filter({ hasText: 'Alice' }).first()).toBeAttached()
 }
 
 // FrozenSlideStack keeps previously-visited screens mounted-but-frozen
@@ -49,14 +49,14 @@ test('clearing the search field restores the full contact list', async ({ page }
 
     // Narrow to a single seeded contact.
     await searchBox(page).fill('Isabelle')
-    await expect(page.getByText('Isabelle', { exact: false }).first()).toBeAttached()
+    await expect(contactRows(page).filter({ hasText: 'Isabelle' }).first()).toBeAttached()
     // A contact that should now be filtered out of the list.
     await expect(contactRows(page).filter({ hasText: 'Alice' })).toHaveCount(0)
 
     // Clear the field — the full list must come back, not a stale/empty set.
     await searchBox(page).fill('')
-    await expect(page.getByText('Alice', { exact: false }).first()).toBeAttached()
-    await expect(page.getByText('Bob', { exact: false }).first()).toBeAttached()
+    await expect(contactRows(page).filter({ hasText: 'Alice' }).first()).toBeAttached()
+    await expect(contactRows(page).filter({ hasText: 'Bob' }).first()).toBeAttached()
     await expect(page.getByText(`Contacts (${initialCount})`).first()).toBeAttached()
 })
 
@@ -69,11 +69,11 @@ test('finds a contact by a partial email address that skips a token', async ({ p
     await gotoContacts(page)
 
     await searchBox(page).fill('carol@example.com')
-    await expect(page.getByText('Carol', { exact: false }).first()).toBeAttached()
+    await expect(contactRows(page).filter({ hasText: 'Carol' }).first()).toBeAttached()
 
     // The full address still works too.
     await searchBox(page).fill('carol.w@example.com')
-    await expect(page.getByText('Carol', { exact: false }).first()).toBeAttached()
+    await expect(contactRows(page).filter({ hasText: 'Carol' }).first()).toBeAttached()
 })
 
 // Bug #1: a newly created contact must appear in the list immediately.
