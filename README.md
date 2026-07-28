@@ -1,31 +1,31 @@
 # contacts
 
-Personal address book per user, per org, with a native CardDAV endpoint so any standards-compliant address book client (Apple Contacts, GNOME Contacts / Evolution, DAVx5, Thunderbird) can read and write the same records.
+Personal address book per user, with a native CardDAV endpoint so any standards-compliant address book client (Apple Contacts, GNOME Contacts / Evolution, DAVx5, Thunderbird) can read and write the same records.
 
 A feature package for the [tinycld](https://tinycld.org/) ecosystem. Lives as a standalone git repo alongside the [`tinycld`](https://tinycld.org/) app shell and other sibling feature packages (`drive`, `mail`, `calendar`, `calc`, `text`, `google-takeout-import`). `@tinycld/core` is the shared runtime/UI library, nested inside the `tinycld` shell repo at `tinycld/core/` and imported as `@tinycld/core`.
 
 ## What it does
 
-Stores contacts in a single `contacts` PocketBase collection, scoped to the calling user's `user_org` membership. A user with memberships in multiple orgs has one address book per org. CardDAV exposes the same collection at `/carddav/` with one address book per org-membership.
+Stores contacts in a single `contacts` PocketBase collection, owned by the user who created them. CardDAV exposes the same collection at `/carddav/` as a single address book per user.
 
 User-facing features:
 
-- **Per-user, per-org address book** — contacts are owned by a `user_org`, not the org itself, and PocketBase access rules (`owner.user = @request.auth.id`) enforce that other org members can't see them. CardDAV honors the same scope.
+- **Per-user address book** — contacts are owned by a `users` record (the `owner` relation), and PocketBase access rules (`owner = @request.auth.id`) enforce that other users can't see them. CardDAV honors the same scope.
 - **Rich contact fields** — `first_name` (required), `last_name`, `company`, `job_title`, `email` (one), `phone` (one), `notes` (rich-text / HTML), `favorite` flag. The web UI's avatar is `NameAvatar` (initials with a deterministic color); there is no avatar-image upload.
 - **Favorites** — toggle a star; the **Favorites** sidebar view filters to starred contacts.
 - **Soft delete with restore and permanent delete** — `deleted_at` is the source of truth; soft-deleted contacts move to a **Deleted** sidebar view; permanent delete removes the row, the FTS entry, and the vcard_uid.
-- **Labels** — colored tags that live in `core`'s `labels` / `label_assignments` collections and work across packages. Contacts contributes nothing to the label system itself; it consumes core's `useLabels`, `useLabelMutations`, and `LabelManagerDialog`. A `label_assignments` row has `(record_id, collection, label, user_org)`, so a label's meaning is consistent across mail, contacts, etc.
-- **Org directory** — a separate sidebar view (`/a/<org>/contacts/directory`) listing **org members** (`user_org` records joined against the local `users` collection — not PB `expand`, so a freshly-added member resolves from the optimistic store immediately), with role badges (owner / admin / member / guest). This is read-only and orthogonal to the contact list — there's no "save member to contacts" action.
+- **Labels** — colored tags that live in `core`'s `labels` / `label_assignments` collections and work across packages. Contacts contributes nothing to the label system itself; it consumes core's `useLabels`, `useLabelMutations`, and `LabelManagerDialog`. A `label_assignments` row has `(record_id, collection, label, user)`, so a label's meaning is consistent across mail, contacts, etc.
+- **Directory** — a separate sidebar view (`/contacts/directory`) listing the deployment's **users** (read from the local `users` collection — not PB `expand`, so a freshly-added user resolves from the optimistic store immediately), with role badges (owner / admin / member / guest). This is read-only and orthogonal to the contact list — there's no "save member to contacts" action.
 - **Search** — SQLite FTS5 across `first_name`, `last_name`, `email`, `company`, `phone`, and `notes` (HTML-stripped). Porter stemmer for English, prefix matches (typing `joh` matches `john`, `johnson`) via `"term"*` syntax. **Not indexed**: `job_title`, `favorite`, labels, `deleted_at`. The server endpoint filters soft-deleted rows (`c.deleted_at = ''`) so search matches the sidebar's main-list view.
 - **Stable vCard identity** — every contact has a `vcard_uid` (UUID v4 with `urn:uuid:` prefix), auto-generated on create via an `OnRecordCreate` hook if the client didn't set one. A partial unique index (`WHERE vcard_uid != ''`) guarantees uniqueness without breaking the empty-string fallback. This is how [Google Takeout import](https://tinycld.org/docs) and CardDAV re-syncs dedupe instead of creating duplicates.
-- **CardDAV** — full read-write CardDAV server at `/carddav/`, served via `github.com/emersion/go-webdav/carddav` over HTTP Basic auth. One address book is exposed per `user_org` the caller has, at `/carddav/u/ab/<orgSlug>/`. There's a `/.well-known/carddav` redirect for auto-discovery.
+- **CardDAV** — full read-write CardDAV server at `/carddav/`, served via `github.com/emersion/go-webdav/carddav` over HTTP Basic auth. A single address book is exposed per user, at `/carddav/u/ab/default/`. There's a `/.well-known/carddav` redirect for auto-discovery.
 - **Keyboard shortcuts** — `t o` jumps to Contacts; `j` / `k` navigate the list; `Enter` opens the focused contact; `c` creates a new one.
 - **Realtime updates** — edits made anywhere (web UI, mobile UI, CardDAV client) appear in other open sessions within seconds via PocketBase's built-in collection-realtime subscriptions, consumed through `pbtsdb`'s `useLiveQuery`.
-- **Audit logging** — every contact mutation goes through `core/audit`, with the org resolved via `owner → user_org.org`.
+- **Audit logging** — every contact mutation goes through `core/audit`, labeled with the contact's first + last name.
 
 ## Theory of operations
 
-The short version: contacts is a single `contacts` PocketBase collection plus a SQLite FTS5 virtual table that mirrors it. Access control is enforced via PocketBase's `owner.user = @request.auth.id` rule. A pair of OnRecord hooks keep the FTS row and the `vcard_uid` in sync. The CardDAV adapter is a thin layer that authenticates via HTTP Basic, resolves the caller's `user_org` for the requested org, and translates between vCards and `contacts` records.
+The short version: contacts is a single `contacts` PocketBase collection plus a SQLite FTS5 virtual table that mirrors it. Access control is enforced via PocketBase's `owner = @request.auth.id` rule. The generic Go — the CardDAV protocol server + vCard codec and the FTS index sync + search — lives once in core (`tinycld.org/core/{carddav,fts}`); contacts' `server/register.go` drives it with a contacts-shaped config and adds the `vcard_uid` autogen hook. The CardDAV adapter authenticates via HTTP Basic, scopes everything to the authenticated user's id as the `owner`, and translates between vCards and `contacts` records.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
@@ -44,10 +44,10 @@ The short version: contacts is a single `contacts` PocketBase collection plus a 
 │  Server (Go, PocketBase + tinycld.org/core)      │                   │
 │                                                  ▼                   │
 │   Collections                                                        │
-│     contacts            ── owner.user = @request.auth.id             │
+│     contacts            ── owner = @request.auth.id                  │
 │     fts_contacts        ── FTS5 virtual table                        │
 │                                                                      │
-│   Hooks (register.go)                                                │
+│   Hooks (register.go + core/fts)                                     │
 │     OnRecordCreate(contacts):              auto-generate vcard_uid   │
 │     OnRecordAfterCreate / Update / Delete:  sync fts_contacts row    │
 │                                                                      │
@@ -62,19 +62,19 @@ The short version: contacts is a single `contacts` PocketBase collection plus a 
 
 ### Ownership model
 
-`contacts.owner` is a relation to `user_org` (not directly to `user`), so the same human in two orgs has two address books. The collection's PocketBase access rules are *all* `owner.user = @request.auth.id`:
+`contacts.owner` is a relation straight to `users`. The collection's PocketBase access rules are *all* `owner = @request.auth.id`:
 
 - **list / view** — only your contacts come back.
-- **create** — you can only insert rows whose `owner` resolves to one of your `user_org` IDs.
+- **create** — you can only insert rows whose `owner` is your own user id.
 - **update / delete** — only on your own contacts.
 
 This is a hard isolation: there is no admin / owner / superuser path through the regular API that returns someone else's contacts. CardDAV uses the same `owner` filter manually because its SDK calls bypass collection rules.
 
 ### CardDAV authorization (the manual filter)
 
-`github.com/emersion/go-webdav/carddav` uses the `Backend` interface, which calls our methods directly — it doesn't speak PocketBase's REST API, so it doesn't pass through the collection rules. Every `Backend` method (`ListAddressObjects`, `GetAddressObject`, `PutAddressObject`, `DeleteAddressObject`) re-authenticates the caller via `authenticateRequest` and re-applies the `owner = <userOrg.Id>` filter manually. The two enforcement paths converge on the same predicate (`owner.user == auth.id`) by construction.
+`github.com/emersion/go-webdav/carddav` uses the `Backend` interface, which calls core's `carddav.Backend` methods directly — it doesn't speak PocketBase's REST API, so it doesn't pass through the collection rules. Every `Backend` method resolves the caller via `davauth.Authenticate` and re-applies the Source's `ListFilter` (`owner = {:ownerId} && deleted_at = ''`, with `ownerId` bound to the authenticated user's id) manually. The two enforcement paths converge on the same predicate (`owner == auth.id`) by construction.
 
-The middleware in `register.go` does the HTTP-Basic challenge once per request (sending `WWW-Authenticate: Basic realm="TinyCld CardDAV"` on missing creds). The authenticated request is stashed in the context under `httpRequestKey`; backend methods retrieve it via `authFromContext`, then call `bcrypt`-validated `authenticateRequest` to resolve the `*core.Record`. There is no token caching; every CardDAV request re-runs `ValidatePassword`. Clients typically batch (PROPFIND once, GETs in parallel), so the bcrypt cost is amortized.
+The route handler in core's `carddav/register.go` does the HTTP-Basic challenge (sending `WWW-Authenticate: Basic realm="TinyCld CardDAV"` on missing or bad creds). Credentials are `bcrypt`-verified by the shared `davauth` package against the `users` collection, and `davauth.WithRequestCache` memoizes the result for the request's lifetime, so a PROPFIND that fans out into many backend calls runs bcrypt once, not once per call. Repeated failures from one source are refused before spending bcrypt.
 
 ### CardDAV paths
 
@@ -82,10 +82,10 @@ The path layout is hand-rolled rather than auto-derived from the carddav library
 
 - `/carddav/u/` — `CurrentUserPrincipal`. Returned to clients that ask "who am I?".
 - `/carddav/u/ab/` — `AddressBookHomeSetPath`. The collection of address books.
-- `/carddav/u/ab/<orgSlug>/` — one address book per `user_org` the caller has. `ListAddressBooks` enumerates `user_org` rows for the user and produces a book per org with `Name = orgs.name` and `Description = "Contacts for <orgName>"`.
-- `/carddav/u/ab/<orgSlug>/<vcard_uid>.vcf` — individual contact path. `vcard_uid` is the `urn:uuid:` value.
+- `/carddav/u/ab/default/` — the caller's single address book (`Name = "Contacts"`). Its objects are the contacts the authenticated user owns.
+- `/carddav/u/ab/default/<vcard_uid>.vcf` — individual contact path. `vcard_uid` is the `urn:uuid:` value.
 
-`CreateAddressBook` and `DeleteAddressBook` return errors — the set of address books is derived from org membership and can't be mutated from a CardDAV client.
+`CreateAddressBook` and `DeleteAddressBook` return errors — there is exactly one book per user and the set can't be mutated from a CardDAV client.
 
 ### vCard mapping
 
@@ -112,7 +112,7 @@ When a vCard *with multiple* `EMAIL` / `TEL` entries is `PUT` from a client, onl
 
 - Every web-UI-created contact has a UID without the form needing to know about it.
 - CardDAV `PUT`s that supply their own `UID` (the normal case) are honored verbatim.
-- Google Takeout imports that carry their own UIDs round-trip cleanly: re-importing the same export hits the existing row via `FindFirstRecordByFilter('contacts', 'vcard_uid = {:uid}')` and updates it instead of creating a duplicate.
+- Google Takeout imports that carry their own UIDs round-trip cleanly: re-importing the same export looks up the existing row with a `vcard_uid = {:uid}` filter and updates it instead of creating a duplicate.
 
 A backfill loop in the `_add_vcard_uid` migration assigns UIDs to pre-existing rows. The unique index is partial (`WHERE vcard_uid != ''`) so the migration's two-step backfill (column-add followed by row-update) doesn't violate uniqueness mid-flight.
 
@@ -128,21 +128,21 @@ Audit-log entries are retained even after permanent delete.
 
 ### FTS5 index
 
-`fts_contacts` is a SQLite FTS5 virtual table with columns `(record_id UNINDEXED, first_name, last_name, email, company, phone, notes)` and `tokenize='porter unicode61'`. The hooks in `register.go` keep it in sync:
+`fts_contacts` is a SQLite FTS5 virtual table with columns `(record_id UNINDEXED, first_name, last_name, email, company, phone, notes)` and `tokenize='porter unicode61'`. The sync hooks come from `core/fts`, bound from the `fts.Config` in `register.go`:
 
-- **After create / update** — `syncContactToFTS(record, "create"|"update")` does a `DELETE WHERE record_id = ?` (idempotent upsert) followed by an `INSERT`. HTML in `notes` is stripped via a `<[^>]*>` regex before indexing.
-- **After delete** — `syncContactToFTS(record, "delete")` drops the row.
+- **After create / update** — `syncRecord` does a `DELETE WHERE record_id = ?` (idempotent upsert) followed by an `INSERT`. HTML in `notes` is stripped via a `<[^>]*>` regex before indexing.
+- **After delete** — `syncRecord` drops the row.
 
-The search endpoint (`endpoints_search.go`) takes a `q` query parameter (min length 2), runs it through `sanitizeFTSQuery` (strips FTS5 special characters, splits on whitespace, wraps each term in double quotes and adds a `*` suffix for prefix matching), then queries `fts_contacts MATCH '"term1"* "term2"* ...'` joined back to `contacts`. The user's `user_org` IDs gate which rows can be returned. It deliberately does **not** select a `snippet()`/highlight column — that would wrap raw user-entered contact data in `<mark>` tags and hand an XSS vector to any client that rendered it — so the response carries no highlighted excerpt.
+The search endpoint (`GET /api/contacts/search`, registered by `core/fts` from the same config) takes a `q` query parameter (min length 2), runs it through `SanitizeQuery` (strips FTS5 special characters, splits on whitespace, wraps each term in double quotes and adds a `*` suffix for prefix matching), then queries `fts_contacts MATCH '"term1"* "term2"* ...'` joined back to `contacts`. Results are scoped to rows whose `owner` is the caller's user id. It deliberately does **not** select a `snippet()`/highlight column — that would wrap raw user-entered contact data in `<mark>` tags and hand an XSS vector to any client that rendered it — so the response carries no highlighted excerpt.
 
-A 100-row hard cap and offset-based pagination are enforced server-side.
+A 100-row hard cap (`limit` defaults to 25) and offset-based pagination are enforced server-side.
 
 ### Labels (consumed from core)
 
 Labels live in core. The schema is:
 
-- `labels` — `(id, name, color, user_org)`. Owned by a `user_org`.
-- `label_assignments` — `(id, record_id, collection, label, user_org)`. Labels can be assigned to records in *any* collection by reference (untyped FK).
+- `labels` — `(id, name, color, user)`. Owned by a user.
+- `label_assignments` — `(id, record_id, collection, label, user)`. Labels can be assigned to records in *any* collection by reference (untyped FK).
 
 Contacts uses both:
 
@@ -162,7 +162,7 @@ Contacts has no custom WebSocket layer. PocketBase ships with a built-in realtim
 
 ### Audit
 
-`audit.RegisterCollection(app, "contacts", ...)` wires contacts into core's audit subsystem. The `ResolveOrg` callback walks `owner → user_org.org` so audit-log queries scoped to an org return contact events. The label for each audit row is built by `ExtractLabel(first_name, last_name)`; since `first_name` is required by the schema, every contact has a non-empty audit label.
+`audit.RegisterCollection(app, "contacts", ...)` wires contacts into core's audit subsystem. The `ExtractLabel` callback builds each audit row's label from `first_name` + `last_name`; since `first_name` is required by the schema, every contact has a non-empty audit label.
 
 ## Platform support
 
@@ -174,7 +174,7 @@ Contacts has no custom WebSocket layer. PocketBase ships with a built-in realtim
 | Labels                               | ✅  | ✅   |
 | Soft delete + restore                | ✅  | ✅   |
 | Permanent delete                     | ✅  | ✅   |
-| Org directory                        | ✅  | ✅   |
+| Directory                            | ✅  | ✅   |
 | FTS search                           | ✅  | ✅   |
 | `j` / `k` / Enter / `c` shortcuts    | ✅  | external keyboard only |
 | CardDAV mount                        | OS-native (Apple Contacts, DAVx5, Thunderbird, Evolution) | — |
@@ -186,15 +186,15 @@ iPhone (small phone screens) isn't supported yet.
 
 ```
 server/
-    register.go              Register(app) — hooks, search endpoint, CardDAV
-    auth.go                  HTTP Basic authentication for CardDAV
-    carddav.go               CardDAVBackend (emersion/go-webdav/carddav)
-    vcard.go                 record ↔ vcard.Card translation (one of each field)
-    search.go                fts_contacts upsert + FTS5 query sanitization
-    endpoints_search.go      /api/contacts/search handler
+    register.go              Register / RegisterTenant — audit config, the core/fts
+                             config (index sync + /api/contacts/search), the
+                             core/carddav Source, and the vcard_uid autogen hook
+    bindings.go              $contacts.* JS binding for server-side TS hooks
 ```
 
-Go module: `tinycld.org/packages/contacts`. Imports `tinycld.org/core/audit` via the standard go.mod replace directive the app shell installs.
+The heavy, generic Go lives once in core: the CardDAV protocol server + vCard codec at `tinycld/core/server/carddav/` and the FTS5 index sync + search at `tinycld/core/server/fts/`. This package contributes only the field maps.
+
+Go module: `tinycld.org/packages/contacts`. Imports `tinycld.org/core/{audit,carddav,fts}` via the standard go.mod replace directive the app shell installs.
 
 ## Client package layout
 
@@ -207,7 +207,7 @@ tinycld/contacts/
     seed.ts                     sample data
     screens/
         index.tsx               main list (filter / label / search aware)
-        directory.tsx           org members view with role badges
+        directory.tsx           directory view of the deployment's users, with role badges
         [id].tsx                contact detail editor
         new.tsx                 create form
     components/
