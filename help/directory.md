@@ -9,7 +9,7 @@ order: 70
 
 The **Directory** view (sidebar → Directory) shows everyone in your organization — not your personal contacts. It's the answer to "who's in this org with me, and what's their role?"
 
-It does not pull from your contact list. Members appear here because they have a `user_org` row linking them to this org, regardless of whether you have them in Contacts.
+It does not pull from your contact list. Members appear here because they have an account in this organization, regardless of whether you have them in Contacts.
 
 ## What each row shows
 

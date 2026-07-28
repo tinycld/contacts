@@ -23,7 +23,7 @@ The CardDAV endpoint is at:
 https://<your-instance>/carddav/
 ```
 
-Authentication is HTTP Basic using your TinyCld email and password. One address book is exposed per organization you belong to, served at `/carddav/u/ab/<orgSlug>/`. There's also a `/.well-known/carddav` URL that redirects to the right place, which most clients auto-discover.
+Authentication is HTTP Basic using your TinyCld email and password. Your contacts are exposed as a single address book at `/carddav/u/ab/default/`. There's also a `/.well-known/carddav` URL that redirects to the right place, which most clients auto-discover.
 
 ## Connecting Apple Contacts (macOS)
 
@@ -59,7 +59,7 @@ DAVx5 is the standard third-party CardDAV/CalDAV client for Android.
 4. User name: your TinyCld email.
 5. Password: your TinyCld password.
 6. Tap **Login**, then **Create account**.
-7. After it syncs, open the account's **CARDDAV** tab and enable the address book(s) you want — one per org.
+7. After it syncs, open the account's **CARDDAV** tab and enable the TinyCld address book.
 
 DAVx5 exposes the contacts to Android's system address book; any contacts app picks them up.
 
@@ -69,7 +69,7 @@ DAVx5 exposes the contacts to Android's system address book; any contacts app pi
 2. User name: your TinyCld email.
 3. Location: `https://your-instance.tinycld.app/carddav/`.
 4. Click **Continue**, enter your password when prompted.
-5. Tick the address book(s) you want to subscribe to (one per org).
+5. Tick the TinyCld address book to subscribe to it.
 6. Click **Continue**, then **Done**.
 
 ## Connecting GNOME Contacts / Evolution

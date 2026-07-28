@@ -9,7 +9,7 @@ order: 90
 
 The **Google Takeout Import** package (a separate optional install) can bring your existing Google contacts into TinyCld. Each contact arrives with its phone numbers, email addresses, company, title, and notes mapped to TinyCld fields.
 
-Imports use your TinyCld user_org as the owner, so imported contacts go into *your* personal address book, not a shared one.
+Imports are owned by your TinyCld account, so imported contacts go into *your* personal address book, not a shared one.
 
 ## To import
 
