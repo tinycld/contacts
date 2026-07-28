@@ -44,37 +44,42 @@ function parseArgs(): Config {
                 config.password = args[++i]
                 break
             case '--help':
+                console.log(
+                    'Usage: test-server-api.ts --url <server> --email <email> --password <pw>'
+                )
                 process.exit(0)
         }
     }
 
     if (!config.email || !config.password) {
+        console.error('Missing --email/--password (or SMOKE_TEST_USER/SMOKE_TEST_PW)')
         process.exit(1)
     }
 
     return config
 }
 
-let _passed = 0
+let passed = 0
 let failed = 0
 
-function ok(_label: string, _detail?: string) {
-    _passed++
+function ok(label: string, detail?: string) {
+    passed++
+    console.log(`  ✓ ${label}${detail ? ` — ${detail}` : ''}`)
 }
 
-function fail(_label: string, _detail: string) {
+function fail(label: string, detail: string) {
     failed++
+    console.error(`  ✗ ${label} — ${detail}`)
 }
 
 interface AuthResult {
     token: string
     userId: string
-    orgSlug: string
 }
 
 async function authenticate(config: Config): Promise<AuthResult | null> {
     try {
-        const url = `${config.url}/api/collections/users/auth-with-password?expand=user_org_via_user.org`
+        const url = `${config.url}/api/collections/users/auth-with-password`
         const res = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -89,25 +94,19 @@ async function authenticate(config: Config): Promise<AuthResult | null> {
             return null
         }
         ok('POST auth-with-password', `user ${data.record.id}`)
-
-        const userOrgs = data.record?.expand?.user_org_via_user ?? []
-        const orgSlug = userOrgs[0]?.expand?.org?.slug
-        if (!orgSlug) {
-            fail('Auth', 'no org found for user')
-            return null
-        }
-        ok('User org', orgSlug)
-        return { token: data.token, userId: data.record.id, orgSlug }
+        return { token: data.token, userId: data.record.id }
     } catch (err) {
         fail('Auth', String(err))
         return null
     }
 }
 
-async function testCardDAV(config: Config, auth: AuthResult) {
+async function testCardDAV(config: Config, _auth: AuthResult) {
     const basicAuth = Buffer.from(`${config.email}:${config.password}`).toString('base64')
     const headers = { Authorization: `Basic ${basicAuth}` }
-    const addressBookPath = `/carddav/u/ab/${auth.orgSlug}/`
+    // The single-org deployment serves one address book per user at a fixed
+    // segment — see core/server/carddav/scope.go.
+    const addressBookPath = '/carddav/u/ab/default/'
 
     try {
         const res = await fetch(`${config.url}/.well-known/carddav`, {
@@ -215,12 +214,14 @@ async function testCardDAV(config: Config, auth: AuthResult) {
 
 async function main() {
     const config = parseArgs()
+    console.log(`Contacts CardDAV smoke test against ${config.url}`)
 
     const auth = await authenticate(config)
     if (auth) {
         await testCardDAV(config, auth)
     }
 
+    console.log(`${passed} passed, ${failed} failed`)
     if (failed > 0) process.exit(1)
 }
 
