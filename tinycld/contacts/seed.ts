@@ -5,8 +5,7 @@ function log(...args: unknown[]) {
 }
 
 interface SeedContext {
-    userOrg: { id: string }
-    org: { id: string }
+    user: { id: string }
 }
 
 const SAMPLE_LABELS = [
@@ -242,7 +241,7 @@ const SAMPLE_CONTACTS = [
     },
 ]
 
-export default async function seed(pb: PocketBase, { userOrg, org }: SeedContext) {
+export default async function seed(pb: PocketBase, { user }: SeedContext) {
     log(`Creating ${SAMPLE_LABELS.length} labels...`)
     const labelIdByName: Record<string, string> = {}
     for (const label of SAMPLE_LABELS) {
@@ -250,10 +249,10 @@ export default async function seed(pb: PocketBase, { userOrg, org }: SeedContext
         try {
             record = await pb
                 .collection('labels')
-                .getFirstListItem(`org = "${org.id}" && name = "${label.name}"`)
+                .getFirstListItem(`user = "${user.id}" && name = "${label.name}"`)
         } catch {
             record = await pb.collection('labels').create({
-                org: org.id,
+                user: user.id,
                 name: label.name,
                 color: label.color,
             })
@@ -265,7 +264,7 @@ export default async function seed(pb: PocketBase, { userOrg, org }: SeedContext
     for (const contact of SAMPLE_CONTACTS) {
         const created = await pb.collection('contacts').create({
             ...contact,
-            owner: userOrg.id,
+            owner: user.id,
         })
 
         const labelNames = CONTACT_LABEL_ASSIGNMENTS[contact.first_name]
@@ -277,7 +276,7 @@ export default async function seed(pb: PocketBase, { userOrg, org }: SeedContext
                 label: labelId,
                 record_id: created.id,
                 collection: 'contacts',
-                user_org: userOrg.id,
+                user: user.id,
             })
         }
     }

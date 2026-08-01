@@ -9,7 +9,7 @@ order: 50
 
 Labels are colored, named tags you can apply to contacts. A contact can have any number of labels, and a label can be on any number of contacts.
 
-Labels live in your **user_org** — they're shared across the contact list and any other package that uses labels (mail, for example). A label called "Clients" works the same way wherever it appears.
+Labels belong to your **account** — they're shared across the contact list and any other package that uses labels (mail, for example). A label called "Clients" works the same way wherever it appears.
 
 ## Managing labels
 

@@ -40,12 +40,12 @@ export function useContactList(params: {
     const sortDirection = useContactsUIStore(s => s.sortDirection)
 
     const { data: contacts, isLoading } = useOrgLiveQuery(
-        (query, { userOrgId }) =>
+        (query, { userId }) =>
             query
                 .from({ contacts: contactsCollection })
                 .where(({ contacts }) =>
                     and(
-                        eq(contacts.owner, userOrgId),
+                        eq(contacts.owner, userId),
                         isDeleted ? not(eq(contacts.deleted_at, '')) : eq(contacts.deleted_at, '')
                     )
                 )
@@ -53,13 +53,13 @@ export function useContactList(params: {
         [isDeleted, sortField, sortDirection]
     )
 
-    const { data: contactAssignments } = useOrgLiveQuery((query, { userOrgId }) =>
+    const { data: contactAssignments } = useOrgLiveQuery((query, { userId }) =>
         query
             .from({ label_assignments: assignmentsCollection })
             .where(({ label_assignments }) =>
                 and(
                     eq(label_assignments.collection, 'contacts'),
-                    eq(label_assignments.user_org, userOrgId)
+                    eq(label_assignments.user, userId)
                 )
             )
     )

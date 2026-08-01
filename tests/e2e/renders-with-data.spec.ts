@@ -20,5 +20,10 @@ test('logs in and renders seeded contacts in the workspace', async ({ page }) =>
     // "Contacts (N)" header + a seeded contact row proves login → workspace →
     // contacts-with-data worked.
     await expect(page.getByText(/Contacts \(\d+\)/).first()).toBeAttached()
-    await expect(page.getByText(A_SEEDED_CONTACT, { exact: false }).first()).toBeAttached()
+    // Scope to the contact row testID: in a full assembly other packages render
+    // the same name (mail's sidebar previews say "Hey Alice, …"), so a bare
+    // getByText would pass even with the contacts list empty.
+    await expect(
+        page.locator('[data-testid^="contact-row-"]').filter({ hasText: A_SEEDED_CONTACT }).first()
+    ).toBeAttached()
 })

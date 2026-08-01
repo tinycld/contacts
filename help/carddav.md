@@ -20,10 +20,10 @@ Your TinyCld contacts and your client's contacts merge into a single address boo
 The CardDAV endpoint is at:
 
 ```
-https://<your-instance>/carddav/
+https://{{server-host}}/carddav/
 ```
 
-Authentication is HTTP Basic using your TinyCld email and password. One address book is exposed per organization you belong to, served at `/carddav/u/ab/<orgSlug>/`. There's also a `/.well-known/carddav` URL that redirects to the right place, which most clients auto-discover.
+Authentication is HTTP Basic using your TinyCld username or email, and your password. Your contacts are exposed as a single address book at `/carddav/u/ab/default/`. There's also a `/.well-known/carddav` URL that redirects to the right place, which most clients auto-discover.
 
 ## Connecting Apple Contacts (macOS)
 
@@ -31,9 +31,9 @@ Authentication is HTTP Basic using your TinyCld email and password. One address 
 2. Choose **Contacts → Settings → Accounts → +**.
 3. Pick **Other Contacts Account…**, click **Continue**.
 4. Choose Account Type: **CardDAV**.
-5. Username: your TinyCld email.
+5. Username: your TinyCld username or email.
 6. Password: your TinyCld password.
-7. Server address: `your-instance.tinycld.app` (no `https://`, no path — Apple Contacts auto-discovers via `/.well-known/carddav`).
+7. Server address: `{{server-host}}` (no `https://`, no path — Apple Contacts auto-discovers via `/.well-known/carddav`).
 8. Click **Sign In**.
 
 Your TinyCld contacts appear as a new group in the sidebar. New contacts you add to that group sync back to TinyCld.
@@ -41,8 +41,8 @@ Your TinyCld contacts appear as a new group in the sidebar. New contacts you add
 ## Connecting Apple Contacts (iOS / iPadOS)
 
 1. **Settings → Contacts → Accounts → Add Account → Other → Add CardDAV Account**.
-2. Server: `your-instance.tinycld.app`.
-3. User Name: your TinyCld email.
+2. Server: `{{server-host}}`.
+3. User Name: your TinyCld username or email.
 4. Password: your TinyCld password.
 5. Description: anything you like (e.g. "TinyCld").
 6. Tap **Next** — iOS validates and finishes setup.
@@ -55,29 +55,29 @@ DAVx5 is the standard third-party CardDAV/CalDAV client for Android.
 
 1. Open **DAVx5** and tap **+ Add account**.
 2. Choose **Login with URL and user name**.
-3. Base URL: `https://your-instance.tinycld.app/carddav/`.
-4. User name: your TinyCld email.
+3. Base URL: `https://{{server-host}}/carddav/`.
+4. User name: your TinyCld username or email.
 5. Password: your TinyCld password.
 6. Tap **Login**, then **Create account**.
-7. After it syncs, open the account's **CARDDAV** tab and enable the address book(s) you want — one per org.
+7. After it syncs, open the account's **CARDDAV** tab and enable the TinyCld address book.
 
 DAVx5 exposes the contacts to Android's system address book; any contacts app picks them up.
 
 ## Connecting Thunderbird
 
 1. **Address Book → File → New → CardDAV Address Book**.
-2. User name: your TinyCld email.
-3. Location: `https://your-instance.tinycld.app/carddav/`.
+2. User name: your TinyCld username or email.
+3. Location: `https://{{server-host}}/carddav/`.
 4. Click **Continue**, enter your password when prompted.
-5. Tick the address book(s) you want to subscribe to (one per org).
+5. Tick the TinyCld address book to subscribe to it.
 6. Click **Continue**, then **Done**.
 
 ## Connecting GNOME Contacts / Evolution
 
 1. Open **Evolution** (or **GNOME Online Accounts** in Settings).
 2. **Edit → Accounts → Add → CardDAV**.
-3. URL: `https://your-instance.tinycld.app/carddav/`.
-4. Username: your TinyCld email.
+3. URL: `https://{{server-host}}/carddav/`.
+4. Username: your TinyCld username or email.
 5. Password: your TinyCld password.
 6. Click **Find** to discover the address book(s), then check the ones you want.
 

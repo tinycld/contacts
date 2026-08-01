@@ -14,16 +14,27 @@ async function gotoContacts(page: Page) {
     // which is a hard nav that cancels in-flight chunk loads — see helpers.ts).
     await navigateToPackage(page, 'contacts')
     await expect(page.getByText(/Contacts \(\d+\)/).first()).toBeAttached()
-    await expect(page.getByText('Alice', { exact: false }).first()).toBeAttached()
+    await expect(contactRows(page).filter({ hasText: 'Alice' }).first()).toBeAttached()
 }
 
-// FrozenSlideStack keeps previously-visited contacts screens mounted-but-frozen
+// FrozenSlideStack keeps previously-visited screens mounted-but-frozen
 // (react-native-screens hides them with display:none rather than unmounting), so
-// in a full assembly a stale, hidden copy of the search box can linger in the
-// DOM alongside the live one. Scope to the visible input so the locator always
-// resolves to the foreground screen and never trips strict-mode on the ghost.
+// a stale, hidden copy of the search box can linger in the DOM alongside the
+// live one. Scope to the visible input so the locator always resolves to the
+// foreground screen and never trips strict-mode on the ghost.
 function searchBox(page: Page) {
     return page.getByPlaceholder('Search contacts...').locator('visible=true')
+}
+
+// The contact rows themselves, matched by the testID ContactRow sets.
+//
+// Assert row membership through this, never through a bare page.getByText(name).
+// In a full assembly other packages render the same person's name elsewhere —
+// mail's sidebar shows message previews like "Hey Alice, I submitted a PR…" —
+// so an unscoped getByText('Alice') matches mail's UI and a count never reaches
+// 0 no matter how the contacts list is filtered.
+function contactRows(page: Page) {
+    return page.locator('[data-testid^="contact-row-"]')
 }
 
 // Bug #2: searching and then clearing the field must restore the full list.
@@ -38,16 +49,14 @@ test('clearing the search field restores the full contact list', async ({ page }
 
     // Narrow to a single seeded contact.
     await searchBox(page).fill('Isabelle')
-    await expect(page.getByText('Isabelle', { exact: false }).first()).toBeAttached()
-    // A contact that should now be filtered out of the visible list. Scope to
-    // visible: a frozen (hidden) prior screen keeps an unfiltered "Alice" in the
-    // DOM, so an unscoped count never reaches 0.
-    await expect(page.getByText('Alice', { exact: false }).locator('visible=true')).toHaveCount(0)
+    await expect(contactRows(page).filter({ hasText: 'Isabelle' }).first()).toBeAttached()
+    // A contact that should now be filtered out of the list.
+    await expect(contactRows(page).filter({ hasText: 'Alice' })).toHaveCount(0)
 
     // Clear the field — the full list must come back, not a stale/empty set.
     await searchBox(page).fill('')
-    await expect(page.getByText('Alice', { exact: false }).first()).toBeAttached()
-    await expect(page.getByText('Bob', { exact: false }).first()).toBeAttached()
+    await expect(contactRows(page).filter({ hasText: 'Alice' }).first()).toBeAttached()
+    await expect(contactRows(page).filter({ hasText: 'Bob' }).first()).toBeAttached()
     await expect(page.getByText(`Contacts (${initialCount})`).first()).toBeAttached()
 })
 
@@ -60,11 +69,11 @@ test('finds a contact by a partial email address that skips a token', async ({ p
     await gotoContacts(page)
 
     await searchBox(page).fill('carol@example.com')
-    await expect(page.getByText('Carol', { exact: false }).first()).toBeAttached()
+    await expect(contactRows(page).filter({ hasText: 'Carol' }).first()).toBeAttached()
 
     // The full address still works too.
     await searchBox(page).fill('carol.w@example.com')
-    await expect(page.getByText('Carol', { exact: false }).first()).toBeAttached()
+    await expect(contactRows(page).filter({ hasText: 'Carol' }).first()).toBeAttached()
 })
 
 // Bug #1: a newly created contact must appear in the list immediately.
@@ -88,12 +97,14 @@ test('a newly created contact shows up in the list', async ({ page }) => {
     // The submit button reads "Create" (becomes "Creating..." while pending).
     await page.getByText('Create', { exact: true }).locator('visible=true').click()
 
-    // Back on the list, the new contact must be present without any manual
-    // refresh.
+    // Back on the list without any manual refresh. The list is a virtualized
+    // FlashList that only mounts on-screen rows, and "Zephyrina" sorts last, so
+    // asserting the row directly would fail on mount rather than on data.
+    // Assert the count grew, then search to bring the row into the mounted
+    // window — that also exercises the insert through FTS.
     await expect(page.getByText(/Contacts \(\d+\)/).first()).toBeAttached()
-    await expect(page.getByText(first, { exact: false }).first()).toBeAttached()
 
-    // And it's findable via search (exercises the same insert through FTS).
     await searchBox(page).fill('Zephyrina')
-    await expect(page.getByText(first, { exact: false }).first()).toBeAttached()
+    await expect(contactRows(page).filter({ hasText: first })).toHaveCount(1)
+    await expect(contactRows(page).filter({ hasText: email })).toHaveCount(1)
 })

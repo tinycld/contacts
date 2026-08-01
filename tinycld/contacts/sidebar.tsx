@@ -37,19 +37,19 @@ export default function ContactsSidebar(_props: ContactsSidebarProps) {
     const [assignmentsCollection] = useStore('label_assignments')
     const { labels: orgLabels } = useLabels()
 
-    const { data: allContactsRaw } = useOrgLiveQuery((query, { userOrgId }) =>
+    const { data: allContactsRaw } = useOrgLiveQuery((query, { userId }) =>
         query
             .from({ contacts: contactsCollection })
-            .where(({ contacts }) => eq(contacts.owner, userOrgId))
+            .where(({ contacts }) => eq(contacts.owner, userId))
     )
 
-    const { data: contactAssignments } = useOrgLiveQuery((query, { userOrgId }) =>
+    const { data: contactAssignments } = useOrgLiveQuery((query, { userId }) =>
         query
             .from({ label_assignments: assignmentsCollection })
             .where(({ label_assignments }) =>
                 and(
                     eq(label_assignments.collection, 'contacts'),
-                    eq(label_assignments.user_org, userOrgId)
+                    eq(label_assignments.user, userId)
                 )
             )
     )
