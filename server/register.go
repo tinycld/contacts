@@ -84,33 +84,18 @@ var cardDAVSource = carddav.Source{
 	},
 }
 
-// Register composes the contacts server for the SINGLE-ORG app: the shared set
-// plus the host-only tail. The generator's package_extensions.go calls it.
+// Register composes the contacts server — the package's single entry point,
+// called by the generator's package_extensions.go in BOTH the single-org app
+// and a multi-org tenant. The CardDAV mount runs in both: a per-org tenant
+// build links exactly the org's features, so the artifact is the gate and no
+// tenant-specific composition exists (packages that must differ hosted detect
+// it via coreserver.GetTenantContext — contacts has no such difference).
 func Register(app *pocketbase.PocketBase) {
 	registerShared(app)
-
-	// ---- Host-only ----
-	// CardDAV mount. A multi-org tenant mounts /carddav itself, from the
-	// materialized manifest `carddav` block (coreserver.RegisterTenant), so
-	// mounting here too would double-bind the routes. The materialized lists
-	// are authoritative for what a tenant serves; this call is the single-org
-	// equivalent.
 	carddav.Register(app, []carddav.Source{cardDAVSource})
 }
 
-// RegisterTenant composes the contacts server for a multi-org TENANT process:
-// the shared set only. The router's pinned package menu calls it, gated by the
-// org's resolved package set (multi-org/docs/SCOPE-tenant-feature-go.md).
-//
-// Do NOT hand-pick registrations here — add to registerShared so both
-// compositions get them, or to Register's host-only tail with a reason. A
-// hand-rolled subset is exactly the drift that produced
-// multi-org/docs/FINDING-tenant-composition-gap.md.
-func RegisterTenant(app *pocketbase.PocketBase) {
-	registerShared(app)
-}
-
-// registerShared is the single source of truth for what BOTH compositions run.
+// registerShared is kept as the non-mount bulk of the composition.
 func registerShared(app *pocketbase.PocketBase) {
 	// Audit logging via core's reusable helper. Single-org: audit rows carry no
 	// org, so only the display label (first + last name) is customized.
