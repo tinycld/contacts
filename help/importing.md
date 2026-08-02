@@ -13,7 +13,7 @@ Imports are owned by your TinyCld account, so imported contacts go into *your* p
 
 ## To import
 
-1. Make sure the **Google Takeout Import** package is installed. If you don't see an **Import** section in your account settings, it isn't — installing packages is done by whoever operates your TinyCld deployment (a super admin), so ask them.
+1. Make sure the **Google Takeout Import** package is installed. If you don't see an **Import** section in your account settings, it isn't — installing packages is done by your deployment's owner, so ask them.
 2. Go to [google.com/takeout](https://takeout.google.com/), select **Contacts**, request the export, and download the resulting `.zip` when Google emails you the link.
 3. In TinyCld, open **Settings → Google Takeout Import**, drop the `.zip` onto the upload zone.
 4. The importer inspects the archive, detects that it contains contacts, and shows a confirmation with the contact count.
