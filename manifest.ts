@@ -11,6 +11,7 @@ const manifest = {
     help: { directory: 'help' },
     seed: { script: 'seed' },
     tests: { directory: 'tests' },
+    search: { endpoint: '/api/contacts/search', adapter: 'search-adapter' },
     // Go server extension: CardDAV, full-text search + /api/contacts/search, audit
     // logging (via core's audit helper), and the vcard_uid autogen hook all live
     // in the package's own Go module (server/register.go → Register(app)).
@@ -46,7 +47,7 @@ const manifest = {
         },
     },
     repository: { url: 'https://github.com/tinycld/contacts' },
-    peerVersions: { '@tinycld/core': '>=0.0.4 <0.1.0' },
+    peerVersions: { '@tinycld/core': '>=0.0.6 <0.1.0' },
 }
 
 export default manifest
