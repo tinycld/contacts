@@ -209,17 +209,37 @@ describe('filterContacts — deleted scope', () => {
     })
 
     it('searching the Deleted view returns matching DELETED contacts, not live ones', () => {
-        // Server FTS (told to search deleted) returned dave; a live contact must
-        // never leak in even if the client ever hands one over.
+        // The federated search source returns ONLY live contacts, so the Deleted
+        // view must search the client list — which is the one place the
+        // soft-deleted rows exist. Taking the server path here would intersect
+        // "not deleted" with "must be deleted" and render an empty list for
+        // every query, so searching the Trash would look broken rather than
+        // unsupported. serverSearchResults is deliberately live-only here to
+        // model what the server actually sends.
         const out = filterContacts({
             contacts: [alice, bob, carol, dave],
-            serverSearchResults: [alice, dave],
+            serverSearchResults: [alice],
             useServerSearch: true,
             searchQuery: 'example',
             filter: 'deleted',
             contactIdsForLabel: null,
         })
         expect(ids(out)).toEqual(['dave'])
+    })
+
+    it('still text-filters the Deleted view, which never uses the server path', () => {
+        // The client path owns matching here, so the term must actually narrow —
+        // otherwise the Deleted view would list every trashed contact
+        // regardless of what was typed.
+        const out = filterContacts({
+            contacts: [alice, bob, carol, dave],
+            serverSearchResults: [],
+            useServerSearch: true,
+            searchQuery: 'nomatch',
+            filter: 'deleted',
+            contactIdsForLabel: null,
+        })
+        expect(ids(out)).toEqual([])
     })
 
     it('searching a normal view returns only LIVE contacts, never deleted ones', () => {
