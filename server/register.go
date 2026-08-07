@@ -47,7 +47,7 @@ var ftsConfig = fts.Config{
 		{FTS: "phone", Field: "phone"},
 		{FTS: "notes", Field: "notes", Strip: true},
 	},
-	Owner: fts.OwnerScope{Field: "owner"},
+	Scope: fts.OwnerScope{Field: "owner"},
 	Output: []fts.OutputColumn{
 		{Name: "first_name"},
 		{Name: "last_name"},
