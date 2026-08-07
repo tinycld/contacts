@@ -12,7 +12,8 @@
         "./seed": "./tinycld/contacts/seed.ts",
         "./sidebar": "./tinycld/contacts/sidebar.tsx",
         "./hooks/*": "./tinycld/contacts/hooks/*.ts",
-        "./components/*": "./tinycld/contacts/components/*.tsx"
+        "./components/*": "./tinycld/contacts/components/*.tsx",
+        "./search-adapter": "./tinycld/contacts/search-adapter.ts"
     },
     "scripts": {
         "typecheck": "tinycld-pkg typecheck",
