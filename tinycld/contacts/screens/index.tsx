@@ -108,10 +108,10 @@ export default function ContactListScreen() {
     const toggleSort = useContactsUIStore(s => s.toggleSort)
 
     const useServerSearch = searchQuery.length >= 2
-    const { results: serverResults } = useContactSearch(
-        useServerSearch ? searchQuery : '',
-        filter === 'deleted'
-    )
+    // The Deleted view searches client-side only: the federated source never
+    // returns soft-deleted contacts, and searching the Trash was an unintended
+    // capability of the old contacts-only endpoint rather than a feature.
+    const { results: serverResults } = useContactSearch(useServerSearch ? searchQuery : '')
 
     const {
         contacts,

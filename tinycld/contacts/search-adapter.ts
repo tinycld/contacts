@@ -2,24 +2,12 @@ import { useOrgHref } from '@tinycld/core/lib/org-routes'
 import type { SearchRow } from '@tinycld/core/lib/search/types'
 import { useRouter } from 'expo-router'
 
-interface ContactSearchHit {
-    id: string
-    first_name: string
-    last_name: string
-    email: string
-    company: string
-}
-
-export function toRow(hit: unknown): Omit<SearchRow, 'slug'> | null {
-    const c = hit as ContactSearchHit
-    const name = [c.first_name, c.last_name].filter(Boolean).join(' ')
-    return {
-        id: c.id,
-        title: name || c.email || 'Unnamed contact',
-        subtitle: c.email || undefined,
-        meta: c.company || undefined,
-    }
-}
+// Row shaping (title, subtitle, meta) is the server's job — see contacts'
+// search source in contacts/server. Normalizing there rather than here means
+// the palette and the CLI render identical rows from one implementation; a
+// TypeScript version could only ever serve the browser.
+//
+// What remains client-side is selection, which needs the router.
 
 export function useSearchActions() {
     const router = useRouter()

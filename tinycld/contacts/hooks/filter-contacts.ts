@@ -46,7 +46,13 @@ export function filterContacts(params: ContactFilterParams): FilterableContact[]
         contactIdsForLabel,
     } = params
 
-    let list: FilterableContact[] = useServerSearch ? (serverSearchResults ?? []) : (contacts ?? [])
+    // The Deleted view always searches the client list. The federated search
+    // source returns only live contacts, so taking the server path here would
+    // intersect "not deleted" with "must be deleted" and render an empty list
+    // for every query — searching the Trash would look broken rather than
+    // unsupported. The client list already holds the soft-deleted rows.
+    const serverPath = useServerSearch && filter !== 'deleted'
+    let list: FilterableContact[] = serverPath ? (serverSearchResults ?? []) : (contacts ?? [])
 
     if (filter === 'favorites') {
         list = list.filter(c => c.favorite)
@@ -65,11 +71,11 @@ export function filterContacts(params: ContactFilterParams): FilterableContact[]
         list = list.filter(c => contactIdsForLabel.has(c.id))
     }
 
-    // The server path has already matched the term; only the live list needs a
-    // client-side text filter (this also covers 1-char queries below the server
-    // threshold).
+    // The server path has already matched the term; every client-list path needs
+    // the text filter — 1-char queries below the server threshold, and the
+    // Deleted view, which never uses the server path.
     const q = searchQuery.trim().toLowerCase()
-    if (!useServerSearch && q) {
+    if (!serverPath && q) {
         list = list.filter(c => {
             const fullName = `${c.first_name} ${c.last_name}`.toLowerCase()
             return (

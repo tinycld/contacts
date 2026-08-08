@@ -29,12 +29,13 @@ import (
 	"tinycld.org/core/audit"
 	"tinycld.org/core/carddav"
 	"tinycld.org/core/fts"
+	"tinycld.org/core/search"
 )
 
-// ftsConfig is the contacts FTS index/search config, shared by Register (sync
-// hooks + the /api/contacts/search route) and the $contacts.search binding
-// (bindings.go). The fts_contacts virtual table is created by the package's
-// pb-migration; this only reads/writes it.
+// ftsConfig is the contacts FTS index/search config, shared by the index-sync
+// hooks, the federated search source (search_source.go) and the
+// $contacts.search binding (bindings.go). The fts_contacts virtual table is
+// created by the package's pb-migration; this only reads/writes it.
 var ftsConfig = fts.Config{
 	Slug:       "contacts",
 	Collection: "contacts",
@@ -107,8 +108,15 @@ func registerShared(app *pocketbase.PocketBase) {
 		},
 	})
 
-	// FTS index-sync record hooks + GET /api/contacts/search, from core/fts.
-	fts.Register(app, []fts.Config{ftsConfig})
+	// FTS index-sync record hooks only — deliberately NOT fts.Register, which
+	// would also mount GET /api/contacts/search. Both the palette and the
+	// contacts screen's own search box now read the federated /api/search
+	// (the screen scopes it with pkg=contacts), so a per-package route would
+	// have no reader.
+	fts.RegisterSync(app, ftsConfig)
+
+	// Contacts' contribution to the federated GET /api/search.
+	search.RegisterSources(searchSource())
 
 	// Auto-generate a stable vcard_uid for contacts created via the web UI so
 	// CardDAV clients get a consistent object path. (core/carddav also backfills
