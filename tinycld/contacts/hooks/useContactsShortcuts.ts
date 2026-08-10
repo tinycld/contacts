@@ -23,7 +23,7 @@ export function useContactsShortcuts({ items, isEnabled, listKey }: UseContactsS
     const router = useRouter()
     const orgHref = useOrgHref()
 
-    useShortcutScope('list')
+    const scopeOwner = useShortcutScope('list')
 
     // Reset focus when the listing identity changes. Done in an effect so the
     // store update doesn't fire during render (which trips React's
@@ -88,7 +88,7 @@ export function useContactsShortcuts({ items, isEnabled, listKey }: UseContactsS
         ]
     }, [isEnabled, items.length, hasFocus, focusedId, orgHref, router, setFocusedIndex])
 
-    useRegisterShortcuts(shortcuts)
+    useRegisterShortcuts(shortcuts, scopeOwner)
 
     return { focusedIndex, focusedId }
 }
