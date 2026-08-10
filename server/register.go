@@ -82,6 +82,7 @@ var cardDAVSource = carddav.Source{
 			"NOTE":  "notes",
 		},
 		RevField: "updated",
+		UIDField: "vcard_uid",
 	},
 }
 
