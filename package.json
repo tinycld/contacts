@@ -8,6 +8,7 @@
         "./manifest": "./manifest.ts",
         "./types": "./tinycld/contacts/types.ts",
         "./collections": "./tinycld/contacts/collections.ts",
+        "./automation": "./tinycld/contacts/automation.ts",
         "./screens/*": "./tinycld/contacts/screens/*.tsx",
         "./seed": "./tinycld/contacts/seed.ts",
         "./sidebar": "./tinycld/contacts/sidebar.tsx",
