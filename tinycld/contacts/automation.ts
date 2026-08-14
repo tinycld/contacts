@@ -25,6 +25,36 @@ const automation = {
                 'favorite',
             ],
         },
+        {
+            id: 'contact-updated',
+            label: 'A contact changes',
+            collection: 'contacts',
+            on: 'update',
+            // Watched columns are the ones a person edits. vcard_uid is
+            // assigned once by the server hook and deleted_at is bookkeeping
+            // for the trash — an update touching either is not "a contact
+            // changed" in any sense a user would recognize, and watching them
+            // would fire this on every CardDAV sync and every delete.
+            watch: [
+                'first_name',
+                'last_name',
+                'email',
+                'phone',
+                'company',
+                'job_title',
+                'favorite',
+                'notes',
+            ],
+            fields: [
+                { key: 'first_name', label: 'First name' },
+                { key: 'last_name', label: 'Last name' },
+                'email',
+                'phone',
+                'company',
+                { key: 'job_title', label: 'Job title' },
+                'favorite',
+            ],
+        },
     ],
     actions: [
         {

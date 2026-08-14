@@ -18,6 +18,13 @@ name, email, phone, company, job title, and whether it's a favorite.
 Pair it with an action from another package: notify yourself when a contact
 with a particular company is added, for example.
 
+## When a contact changes
+
+The trigger **A contact changes** fires when someone edits a contact's name,
+email, phone, company, job title, notes, or favorite status. It deliberately
+ignores bookkeeping: a CardDAV sync assigning an internal identifier, or a
+contact being moved to the trash, doesn't count as a change.
+
 ## Adding a contact from a rule
 
 The action **Add a contact** creates a contact with the first name, last name,
