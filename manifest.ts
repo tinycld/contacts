@@ -7,6 +7,10 @@ const manifest = {
     nav: { label: 'Contacts', icon: 'users', order: 10, shortcut: 'o' },
     migrations: { directory: 'pb-migrations' },
     collections: { register: 'collections', types: 'types' },
+    // Trigger + action catalog for workflow rules. Pure data — contacts needs
+    // no automation Go: owner auto-detects, and add-contact is a record-op
+    // core's engine executes generically.
+    automation: { definitions: 'automation' },
     sidebar: { component: 'sidebar' },
     help: { directory: 'help' },
     seed: { script: 'seed' },
