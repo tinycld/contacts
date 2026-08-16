@@ -82,6 +82,11 @@ var cardDAVSource = carddav.Source{
 			"NOTE":  "notes",
 		},
 		RevField: "updated",
+		// CardDAV addresses objects by URL path and so never needed UID in the
+		// card body. A vCard FILE has no path, so the export endpoint's cards
+		// carry no identity without this and re-importing one's own export
+		// duplicates every contact instead of matching it.
+		UIDField: "vcard_uid",
 	},
 }
 
@@ -94,6 +99,14 @@ var cardDAVSource = carddav.Source{
 func Register(app *pocketbase.PocketBase) {
 	registerShared(app)
 	carddav.Register(app, []carddav.Source{cardDAVSource})
+
+	// vCard file export/import for the CLI. CardDAV cannot serve it: it is
+	// Basic-Auth only and mounted outside the API router, while the CLI carries
+	// an OAuth bearer token. Both share cardDAVSource's field map.
+	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
+		bindVCardEndpoints(app, e)
+		return e.Next()
+	})
 }
 
 // registerShared is kept as the non-mount bulk of the composition.
@@ -118,16 +131,24 @@ func registerShared(app *pocketbase.PocketBase) {
 	// Contacts' contribution to the federated GET /api/search.
 	search.RegisterSources(searchSource())
 
-	// Auto-generate a stable vcard_uid for contacts created via the web UI so
-	// CardDAV clients get a consistent object path. (core/carddav also backfills
-	// a UID on read for older rows; this covers the create path.)
+	bindVCardUIDHook(app)
+
+	// $contacts.* JS binding for TS hooks that need Go-backed contacts logic.
+	registerJSVMBinding(app)
+}
+
+// bindVCardUIDHook auto-generates a stable vcard_uid for contacts created via
+// the web UI so CardDAV clients get a consistent object path. (core/carddav
+// also backfills a UID on read for older rows; this covers the create path.)
+//
+// It is a named function so the vCard endpoint tests can bind the real hook
+// instead of stamping UIDs by hand — the UID is the identity file import
+// matches on, so a fixture that faked it would hide a regression here.
+func bindVCardUIDHook(app core.App) {
 	app.OnRecordCreate("contacts").BindFunc(func(e *core.RecordEvent) error {
 		if e.Record.GetString("vcard_uid") == "" {
 			e.Record.Set("vcard_uid", "urn:uuid:"+uuid.NewString())
 		}
 		return e.Next()
 	})
-
-	// $contacts.* JS binding for TS hooks that need Go-backed contacts logic.
-	registerJSVMBinding(app)
 }

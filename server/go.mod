@@ -3,6 +3,7 @@ module tinycld.org/packages/contacts
 go 1.26.3
 
 require (
+	github.com/emersion/go-vcard v0.0.0-20260618161152-d854b7e0e2d3
 	github.com/google/uuid v1.6.0
 	github.com/grafana/sobek v0.0.0-20260722203707-64fef69693b6
 	github.com/pocketbase/pocketbase v0.39.8
@@ -20,7 +21,6 @@ require (
 	github.com/dop251/base64dec v0.0.0-20231022112746-c6c9f9a96217 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/emersion/go-message v0.18.2 // indirect
-	github.com/emersion/go-vcard v0.0.0-20260618161152-d854b7e0e2d3 // indirect
 	github.com/emersion/go-webdav v0.7.0 // indirect
 	github.com/evanw/esbuild v0.28.1 // indirect
 	github.com/fatih/color v1.19.0 // indirect
