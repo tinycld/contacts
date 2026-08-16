@@ -15,10 +15,21 @@ const manifest = {
     // the Go source registered in server/. The contacts screen's own search box
     // reads the same endpoint scoped to this package.
     search: { adapter: 'search-adapter' },
-    // Go server extension: CardDAV, full-text search + /api/contacts/search, audit
-    // logging (via core's audit helper), and the vcard_uid autogen hook all live
-    // in the package's own Go module (server/register.go → Register(app)).
+    // Go server extension: CardDAV, the federated search source, the vCard
+    // file endpoints (/api/contacts/export and /api/contacts/import, which back
+    // the CLI's export/import), audit logging (via core's audit helper), and the
+    // vcard_uid autogen hook all live in the package's own Go module
+    // (server/register.go → Register(app)). There is deliberately no
+    // /api/contacts/search: register.go calls fts.RegisterSync instead of
+    // fts.Register so search is served only by core's federated /api/search.
     server: { package: 'server', module: 'tinycld.org/packages/contacts' },
+    // Contributes the `tinycld contacts` command group. Both scopes are needed:
+    // read for list/search/show/export, write for add/edit/rm/import.
+    cli: {
+        package: 'cli',
+        module: 'tinycld.org/packages/contacts/cli',
+        scopes: ['contacts:read', 'contacts:write'],
+    },
     // Server-side TS hooks: package authors / customizers can drop a *.pb.ts into
     // pb-hooks/ to extend contacts behavior alongside the Go (see pb-hooks/README
     // and the $contacts.* JS binding the Go server exposes).
