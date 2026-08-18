@@ -23,6 +23,20 @@ User-facing features:
 - **Realtime updates** — edits made anywhere (web UI, mobile UI, CardDAV client) appear in other open sessions within seconds via PocketBase's built-in collection-realtime subscriptions, consumed through `pbtsdb`'s `useLiveQuery`.
 - **Audit logging** — every contact mutation goes through `core/audit`, labeled with the contact's first + last name.
 
+## Automation rules
+
+Contacts publishes two triggers and one action to the automation-rules engine:
+
+- **`contacts:contact-added`** — "A contact is added". A `contacts` create. Condition fields: `first_name`, `last_name`, `email`, `phone`, `company`, `job_title`, `favorite`.
+- **`contacts:contact-updated`** — "A contact changes". An update watching exactly `first_name`, `last_name`, `email`, `phone`, `company`, `job_title`, `favorite`, and `notes`. It deliberately excludes `vcard_uid` and `deleted_at`, so a CardDAV sync assigning an internal identifier, or a soft delete, does not count as a change.
+- **`contacts:add-contact`** — "Add a contact". A `kind: 'record-op'` action: a create with `first_name`, `last_name`, `email`, and `company` params. `owner` is set from the engine's `{ context: 'owner' }`.
+
+Contacts ships **no** `server/automation.go` at all. Because `contacts.owner` is a direct relation to `users`, the engine's owner auto-detection resolves personal-rule scoping with no Go resolver needed — the simplest possible case for a package joining the rules system.
+
+The add-contact action does not check for duplicates: a rule saving every sender will save the same person once per message.
+
+Rules are declared with `automation: { definitions: 'automation' }` in `manifest.ts` plus a `"./automation"` entry in the `package.json` exports map; the catalog lives in `tinycld/contacts/automation.ts`. In-app help is `help/rules.md`. See [Automation rules](https://tinycld.org/docs/automation-rules) and [the automation anatomy reference](https://tinycld.org/docs/anatomy/automation).
+
 ## Theory of operations
 
 The short version: contacts is a single `contacts` PocketBase collection plus a SQLite FTS5 virtual table that mirrors it. Access control is enforced via PocketBase's `owner = @request.auth.id` rule. The generic Go — the CardDAV protocol server + vCard codec and the FTS index sync + search — lives once in core (`tinycld.org/core/{carddav,fts}`); contacts' `server/register.go` drives it with a contacts-shaped config and adds the `vcard_uid` autogen hook. The CardDAV adapter authenticates via HTTP Basic, scopes everything to the authenticated user's id as the `owner`, and translates between vCards and `contacts` records.
@@ -223,6 +237,27 @@ tinycld/contacts/
         contacts-ui-store       zustand: sort field, sort direction
 ```
 
+## Command line
+
+This package contributes its own command group to the `tinycld` binary. The Go source lives in `cli/` and is declared by a `cli` block in `manifest.ts` naming the Go module and the OAuth scopes it needs (`contacts:read`, `contacts:write`). The server cross-compiles the binary; users download it from **Settings → Personal → About**.
+
+Eight commands, under `tinycld contacts` (or the `contact` group alias):
+
+```sh
+tinycld contacts list       # --trashed lists soft-deleted contacts
+tinycld contacts search
+tinycld contacts show
+tinycld contacts add
+tinycld contacts edit       # --restore undoes a soft delete
+tinycld contacts rm         # soft delete; --permanent is the only hard delete
+tinycld contacts export     # vCard to stdout unless --out
+tinycld contacts import     # upserts on the vCard UID
+```
+
+`rm` is a soft delete — the round trip is `list --trashed` then `edit --restore`; `--permanent` is the only hard delete. `import` upserts on the vCard UID, so re-importing updates rather than duplicating, and `export` writes vCard to stdout unless `--out` is given.
+
+In-app help is `help/command-line.md`. See [the command line tool](https://tinycld.org/docs/command-line-tool) and the [CLI reference](https://tinycld.org/docs/reference/cli-reference).
+
 ## Development
 
 This package is a member of the TinyCld npm workspace. Clone the workspace
@@ -282,7 +317,9 @@ what you'd run locally. Go tests and live e2e run in separate lanes.
 - `tsconfig.json` — typecheck config (a thin extend of the app's `tsconfig.package-base.json`)
 - `pb-migrations/` — PocketBase migrations (symlinked into the app shell's server on `packages:generate`)
 - `server/` — Go server module, registered by the generator
+- `cli/` — Go source for this package's `tinycld` command group
 - `help/` — in-app help topics (markdown + frontmatter)
 - `tests/` — vitest unit tests + Playwright e2e specs (run via `tinycld-pkg` from this dir)
 - `vitest.config.ts` / `playwright.config.ts` — thin per-package configs inheriting the app shell's canonical config
 - `tinycld/contacts/` — TypeScript source
+- `tinycld/contacts/automation.ts` — the automation trigger + action catalog
