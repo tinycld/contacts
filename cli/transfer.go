@@ -10,6 +10,7 @@ import (
 
 	"tinycld.org/cli/client"
 	"tinycld.org/cli/output"
+	"tinycld.org/cli/ui"
 )
 
 // transfer.go holds the two commands that move a whole address book as a vCard
@@ -43,7 +44,7 @@ func newExportCmd(c *client.Client) *cobra.Command {
 		Example: "  tinycld contacts export --out contacts.vcf\n" +
 			"  tinycld contacts export > backup.vcf",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			o, _, err := output.FromCommand(cmd)
+			o, yes, err := output.FromCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -61,6 +62,9 @@ func newExportCmd(c *client.Client) *cobra.Command {
 				return err
 			}
 
+			if err := ui.ConfirmOverwrite(o, yes, cmd.InOrStdin(), cmd.OutOrStdout(), out); err != nil {
+				return err
+			}
 			file, err := os.Create(out)
 			if err != nil {
 				return err
