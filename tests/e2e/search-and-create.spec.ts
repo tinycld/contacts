@@ -42,6 +42,12 @@ test('clearing the search field restores the full contact list', async ({ page }
     await gotoContacts(page)
 
     // Capture the unfiltered header count, e.g. "Contacts (24)".
+    //
+    // Read as a LOWER BOUND, never re-asserted as an exact value: spec files
+    // run in parallel workers against one shared database, and rules.spec.ts
+    // creates a contact — so the true count can grow while this test is
+    // mid-flight. Pinning the number made this test fail whenever that
+    // creation happened to land inside this window.
     const header = page.getByText(/Contacts \(\d+\)/).first()
     const initial = await header.textContent()
     const initialCount = Number(initial?.match(/\((\d+)\)/)?.[1] ?? '0')
@@ -57,7 +63,20 @@ test('clearing the search field restores the full contact list', async ({ page }
     await searchBox(page).fill('')
     await expect(contactRows(page).filter({ hasText: 'Alice' }).first()).toBeAttached()
     await expect(contactRows(page).filter({ hasText: 'Bob' }).first()).toBeAttached()
-    await expect(page.getByText(`Contacts (${initialCount})`).first()).toBeAttached()
+
+    // The header is back to an UNFILTERED count. Asserted as "at least what we
+    // started with" rather than that exact number: a concurrent spec may have
+    // added a contact since, which is not a failure of the thing under test.
+    // The filtered state this is distinguishing itself from showed 1.
+    await expect
+        .poll(async () => {
+            const text = await page
+                .getByText(/Contacts \(\d+\)/)
+                .first()
+                .textContent()
+            return Number(text?.match(/\((\d+)\)/)?.[1] ?? '0')
+        })
+        .toBeGreaterThanOrEqual(initialCount)
 })
 
 // Bug #3 end-to-end: a contact whose unique term lives in the email must be
