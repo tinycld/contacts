@@ -27,8 +27,8 @@
     },
     "peerDependencies": {
         "@shopify/flash-list": "2.0.2",
-        "@tanstack/db": ">=0.6",
-        "@tanstack/react-db": ">=0.1",
+        "@tanstack/db": ">=0.8",
+        "@tanstack/react-db": ">=0.3",
         "expo-router": ">=55.0.0",
         "lucide-react-native": "^1.7.0",
         "pbtsdb": ">=0.6.3",
