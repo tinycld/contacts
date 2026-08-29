@@ -8,7 +8,7 @@ import {
     SidebarNav,
 } from '@tinycld/core/components/sidebar-primitives'
 import { openHelpPackage } from '@tinycld/core/lib/help/open-help'
-import { useOrgHref } from '@tinycld/core/lib/org-routes'
+import { appHref, useOrgHref } from '@tinycld/core/lib/org-routes'
 import { useStore } from '@tinycld/core/lib/pocketbase'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useOrgLiveQuery } from '@tinycld/core/lib/use-org-live-query'
@@ -77,10 +77,13 @@ export default function ContactsSidebar(_props: ContactsSidebarProps) {
         return counts
     }, [contactAssignments])
 
+    // The contacts INDEX specifically, not the package as a whole: Directory is
+    // a sibling item under the same slug, so activeSlugFromPathname would light
+    // both. Anchored on the package root so the test stays about "no further
+    // segment" rather than about where /contacts happens to sit in the path.
+    const contactsRoot = appHref('contacts')
     const isContactsActive =
-        (pathname.endsWith('/contacts') || pathname.endsWith('/contacts/')) &&
-        !filter &&
-        !activeLabel
+        (pathname === contactsRoot || pathname === `${contactsRoot}/`) && !filter && !activeLabel
 
     const labelItems = orgLabels.map(label => (
         <SidebarItem
@@ -119,7 +122,7 @@ export default function ContactsSidebar(_props: ContactsSidebarProps) {
             <SidebarItem
                 label="Directory"
                 icon={Building2}
-                isActive={pathname.includes('/contacts/directory')}
+                isActive={pathname.startsWith(`${contactsRoot}/directory`)}
                 closesDrawer
                 onPress={() => router.push(orgHref('contacts/directory'))}
             />
