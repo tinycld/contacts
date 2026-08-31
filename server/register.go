@@ -92,7 +92,7 @@ var cardDAVSource = carddav.Source{
 
 // Register composes the contacts server — the package's single entry point,
 // called by the generator's package_extensions.go in BOTH the single-org app
-// and a multi-org tenant. The CardDAV mount runs in both: a per-org tenant
+// and a hosting tenant. The CardDAV mount runs in both: a per-org tenant
 // build links exactly the org's features, so the artifact is the gate and no
 // tenant-specific composition exists (packages that must differ hosted detect
 // it via coreserver.GetTenantContext — contacts has no such difference).

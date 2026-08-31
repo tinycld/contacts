@@ -40,7 +40,7 @@ const manifest = {
     hooks: { directory: 'pb-hooks' },
     // CardDAV over /carddav, served by core (tinycld.org/core/carddav). This
     // mirrors the cardDAVSource literal in server/register.go, which is what the
-    // single-tenant app registers. A multi-org tenant serves CardDAV from this
+    // single-tenant app registers. A hosting tenant serves CardDAV from this
     // block (the router materializes it into the tenant's runtime config) —
     // that is why the Go-side mount is host-only even though contacts' other
     // Go links into tenants via RegisterTenant.
