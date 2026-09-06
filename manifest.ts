@@ -27,12 +27,12 @@ const manifest = {
     // /api/contacts/search: register.go calls fts.RegisterSync instead of
     // fts.Register so search is served only by core's federated /api/search.
     server: { package: 'server', module: 'tinycld.org/packages/contacts' },
-    // Contributes the `tinycld contacts` command group. Both scopes are needed:
-    // read for list/search/show/export, write for add/edit/rm/import.
+    // Contributes the `tinycld contacts` command group. Its OAuth scopes are
+    // registered by server/oauth_scopes.go: read for list/search/show/export,
+    // write for add/edit/rm/import.
     cli: {
         package: 'cli',
         module: 'tinycld.org/packages/contacts/cli',
-        scopes: ['contacts:read', 'contacts:write'],
     },
     // Server-side TS hooks: package authors / customizers can drop a *.pb.ts into
     // pb-hooks/ to extend contacts behavior alongside the Go (see pb-hooks/README
