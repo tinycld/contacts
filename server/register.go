@@ -29,6 +29,7 @@ import (
 	"tinycld.org/core/audit"
 	"tinycld.org/core/carddav"
 	"tinycld.org/core/fts"
+	"tinycld.org/core/oauth"
 	"tinycld.org/core/search"
 )
 
@@ -111,6 +112,10 @@ func Register(app *pocketbase.PocketBase) {
 
 // registerShared is kept as the non-mount bulk of the composition.
 func registerShared(app *pocketbase.PocketBase) {
+	// What an OAuth token may reach in this package. Core knows nothing about
+	// it until this runs; see oauth.Package for the shape.
+	oauth.RegisterPackage(oauthPackage())
+
 	// Audit logging via core's reusable helper. Single-org: audit rows carry no
 	// org, so only the display label (first + last name) is customized.
 	audit.RegisterCollection(app, "contacts", &audit.CollectionConfig{
