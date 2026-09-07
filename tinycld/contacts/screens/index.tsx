@@ -1,7 +1,6 @@
 import { FlashList, type FlashListRef } from '@shopify/flash-list'
 import { DataTableHeader } from '@tinycld/core/components/DataTableHeader'
 import { DocumentTitle } from '@tinycld/core/components/DocumentTitle'
-import { MenuCheckboxItem } from '@tinycld/core/components/DropdownMenu'
 import { EmptyState } from '@tinycld/core/components/EmptyState'
 import { HelpIcon } from '@tinycld/core/components/help/HelpIcon'
 import { LoadingState } from '@tinycld/core/components/LoadingState'
@@ -43,30 +42,27 @@ function MobileSortMenu({ iconColor }: { iconColor: string }) {
     const toggleSort = useContactsUIStore(s => s.toggleSort)
 
     return (
-        <Menu>
-            <Menu.Trigger>
+        <Menu
+            trigger={
                 <Pressable className="p-2" accessibilityLabel="Sort contacts">
                     <ArrowUpDown size={18} color={iconColor} />
                 </Pressable>
-            </Menu.Trigger>
-            <Menu.Portal>
-                <Menu.Overlay />
-                <Menu.Content presentation="popover" placement="bottom" align="end">
-                    <Menu.Label>Sort by</Menu.Label>
-                    {SORT_OPTIONS.map(opt => {
-                        const isActive = sortField === opt.field
-                        const arrow = isActive ? (sortDirection === 'asc' ? ' ↑' : ' ↓') : ''
-                        return (
-                            <MenuCheckboxItem
-                                key={opt.field}
-                                label={`${opt.label}${arrow}`}
-                                checked={isActive}
-                                onToggle={() => toggleSort(opt.field)}
-                            />
-                        )
-                    })}
-                </Menu.Content>
-            </Menu.Portal>
+            }
+            placement="bottom-end"
+            title="Sort by"
+        >
+            {SORT_OPTIONS.map(opt => {
+                const isActive = sortField === opt.field
+                const arrow = isActive ? (sortDirection === 'asc' ? ' ↑' : ' ↓') : ''
+                return (
+                    <Menu.CheckboxItem
+                        key={opt.field}
+                        label={`${opt.label}${arrow}`}
+                        isChecked={isActive}
+                        onToggle={() => toggleSort(opt.field)}
+                    />
+                )
+            })}
         </Menu>
     )
 }

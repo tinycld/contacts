@@ -1,7 +1,7 @@
 /// <reference path="../../tinycld/server/pb_data/types.d.ts" />
 
 // Contacts server-side TS hooks (runs on the sobek jsvm in both the single-tenant
-// app and multi-org tenants).
+// app and hosting tenants).
 //
 // This is the customization seam for package authors and downstream integrators:
 // the contacts feature's core behavior (CardDAV, full-text search, audit, and
