@@ -96,7 +96,7 @@ var cardDAVSource = carddav.Source{
 // and a hosting tenant. The CardDAV mount runs in both: a per-org tenant
 // build links exactly the org's features, so the artifact is the gate and no
 // tenant-specific composition exists (packages that must differ hosted detect
-// it via coreserver.GetTenantContext — contacts has no such difference).
+// it via coreserver.GetEmbeddedContext — contacts has no such difference).
 func Register(app *pocketbase.PocketBase) {
 	registerShared(app)
 	carddav.Register(app, []carddav.Source{cardDAVSource})
