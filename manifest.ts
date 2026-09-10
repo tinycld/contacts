@@ -35,8 +35,9 @@ const manifest = {
         module: 'tinycld.org/packages/contacts/cli',
     },
     // Server-side TS hooks: package authors / customizers can drop a *.pb.ts into
-    // pb-hooks/ to extend contacts behavior alongside the Go (see pb-hooks/README
-    // and the $contacts.* JS binding the Go server exposes).
+    // pb-hooks/ to extend contacts behavior alongside the Go (see the header
+    // comment in pb-hooks/contacts.pb.ts and the $contacts.* JS binding the Go
+    // server exposes in server/bindings.go).
     hooks: { directory: 'pb-hooks' },
     // CardDAV over /carddav, served by core (tinycld.org/core/carddav). This
     // mirrors the cardDAVSource literal in server/register.go, which is what the
