@@ -1,13 +1,12 @@
 import { DocumentTitle } from '@tinycld/core/components/DocumentTitle'
 import { HelpIcon } from '@tinycld/core/components/help/HelpIcon'
+import { useAuth } from '@tinycld/core/lib/auth'
 import { handleMutationErrorsWithForm } from '@tinycld/core/lib/errors'
 import { mutation, useMutation } from '@tinycld/core/lib/mutations'
 import { useOrgHref } from '@tinycld/core/lib/org-routes'
 import { useStore } from '@tinycld/core/lib/pocketbase'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
-import { useCurrentUserOrg } from '@tinycld/core/lib/use-current-user-org'
 import { useNavigateBack } from '@tinycld/core/lib/use-navigate-back'
-import { useOrgInfo } from '@tinycld/core/lib/use-org-info'
 import { Button, ButtonText } from '@tinycld/core/ui/button'
 import { useForm, type z, zodResolver } from '@tinycld/core/ui/form'
 import { ArrowLeft } from 'lucide-react-native'
@@ -17,8 +16,7 @@ import { ContactForm } from '../components/ContactForm'
 import { contactSchema } from '../components/contactSchema'
 
 export default function NewContactScreen() {
-    const { orgSlug } = useOrgInfo()
-    const userOrg = useCurrentUserOrg(orgSlug)
+    const { user } = useAuth({ throwIfAnon: false })
     const [contactsCollection] = useStore('contacts')
     const fgColor = useThemeColor('foreground')
     const orgHref = useOrgHref()
@@ -46,7 +44,7 @@ export default function NewContactScreen() {
 
     const createContact = useMutation({
         mutationFn: mutation(function* (data: z.infer<typeof contactSchema>) {
-            if (!userOrg) throw new Error('No organization context')
+            if (!user) throw new Error('Not signed in')
             yield contactsCollection.insert({
                 id: newRecordId(),
                 first_name: data.first_name.trim(),
@@ -59,7 +57,7 @@ export default function NewContactScreen() {
                 // New contacts start un-favorited; favoriting is done afterward
                 // via the star on the contact row or detail header.
                 favorite: false,
-                owner: userOrg.id,
+                owner: user.id,
                 vcard_uid: crypto.randomUUID(),
             })
         }),
@@ -68,7 +66,7 @@ export default function NewContactScreen() {
     })
 
     const onSubmit = handleSubmit(data => createContact.mutate(data))
-    const canSubmit = !createContact.isPending && !!userOrg
+    const canSubmit = !createContact.isPending && !!user
 
     return (
         <KeyboardAvoidingView
