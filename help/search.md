@@ -9,6 +9,10 @@ order: 60
 
 The search box sits at the top of the Contacts list. Type and matches appear as you type — no Enter required.
 
+Contacts also appear in the cross-app search palette: press `/` anywhere in the app to open it. From inside Contacts it opens already scoped to contacts; from elsewhere, type `contacts:` to add a scope chip, or leave the chip off to search every package at once. Selecting a result opens that contact. See [Searching across packages](help://core:search) for the palette's full grammar.
+
+The Contacts list's search box, the palette, and `tinycld contacts search` on the command line all query the same search index through the same endpoint, so a term that finds someone in one finds them in all three.
+
 Search runs across:
 
 - **First name**
@@ -33,7 +37,7 @@ Some things aren't part of the search index:
 - **Labels** — to filter by label, click the label in the sidebar.
 - **Favorite flag** — to see only favorites, click **Favorites** in the sidebar.
 - **Job title** — the title field is not indexed for search.
-- **Deleted contacts** — soft-deleted contacts are excluded from search results. To search inside Deleted, open the Deleted view from the sidebar — its search filters client-side.
+- **Deleted contacts** — soft-deleted contacts are excluded from search results (in the list, the palette, and the command line). To search inside Deleted, open the Deleted view from the sidebar — its search box filters that view on your device rather than asking the server.
 
 You can combine sidebar views with search: click **Favorites** then type to search only within your starred contacts. (When the search box has 2+ characters, results come from the server, scoped to non-deleted contacts; the sidebar's Favorites / label filters then narrow the result set client-side.)
 
@@ -43,5 +47,7 @@ The search index is updated automatically as contacts change. New contacts are s
 
 ## See also
 
+- [Searching across packages](help://core:search)
+- [Contacts from the command line](help://contacts:command-line)
 - [Labels](help://contacts:labels)
 - [Favorites and deletion](help://contacts:favorites-and-deletion)
