@@ -169,8 +169,8 @@ export default function ContactDetailScreen() {
 
                     <View className="items-center mb-5 gap-2">
                         <ContactAvatar
-                            firstName={contact.first_name}
-                            lastName={contact.last_name}
+                            name={displayName}
+                            email={contact.email}
                             colorKey={contact.id}
                             size={80}
                         />

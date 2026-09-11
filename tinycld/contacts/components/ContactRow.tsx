@@ -138,11 +138,7 @@ export function ContactRow({
                     breakpoints so the flex-tracked columns (which the header
                     also uses) start at the same offset for header and row. */}
                 <View style={{ width: 52, alignItems: 'flex-start' }}>
-                    <ContactAvatar
-                        firstName={contact.first_name}
-                        lastName={contact.last_name}
-                        colorKey={contact.id}
-                    />
+                    <ContactAvatar name={displayName} email={contact.email} colorKey={contact.id} />
                 </View>
                 {isCompact ? (
                     <View className="flex-1 flex-row items-center gap-2 min-w-0">

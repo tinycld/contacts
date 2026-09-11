@@ -1,6 +1,6 @@
+import { Avatar } from '@tinycld/core/components/Avatar'
 import { DocumentTitle } from '@tinycld/core/components/DocumentTitle'
 import { HelpIcon } from '@tinycld/core/components/help/HelpIcon'
-import { NameAvatar } from '@tinycld/core/components/NameAvatar'
 import { hexToRgba } from '@tinycld/core/lib/color-utils'
 import { useStore } from '@tinycld/core/lib/pocketbase'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
@@ -117,9 +117,9 @@ export default function DirectoryScreen() {
                             className="w-[220px] border border-border rounded-lg p-3 bg-background"
                         >
                             <View className="items-center gap-3">
-                                <NameAvatar
-                                    firstName={member.firstName}
-                                    lastName={member.lastName}
+                                <Avatar
+                                    name={`${member.firstName} ${member.lastName ?? ''}`.trim()}
+                                    email={member.email}
                                     colorKey={member.id}
                                     size={56}
                                 />
