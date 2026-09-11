@@ -1,1 +1,1 @@
-export { NameAvatar as ContactAvatar } from '@tinycld/core/components/NameAvatar'
+export { Avatar as ContactAvatar } from '@tinycld/core/components/Avatar'
