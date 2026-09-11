@@ -4,6 +4,7 @@ import { HelpIcon } from '@tinycld/core/components/help/HelpIcon'
 import { hexToRgba } from '@tinycld/core/lib/color-utils'
 import { useStore } from '@tinycld/core/lib/pocketbase'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
+import { useAvatarUrl } from '@tinycld/core/lib/use-avatar-url'
 import { useOrgLiveQuery } from '@tinycld/core/lib/use-org-live-query'
 import { useMemo, useState } from 'react'
 import { Text, TextInput, View } from 'react-native'
@@ -14,6 +15,10 @@ interface MemberCard {
     lastName: string
     email: string
     role: string
+    avatar: string
+    avatarCrop: string
+    avatarColor: string
+    avatarEmoji: string
 }
 
 export default function DirectoryScreen() {
@@ -58,6 +63,10 @@ export default function DirectoryScreen() {
             role: user.role,
             name: user.name,
             email: user.email,
+            avatar: user.avatar,
+            avatar_crop: user.avatar_crop,
+            avatar_color: user.avatar_color,
+            avatar_emoji: user.avatar_emoji,
         }))
     )
 
@@ -73,6 +82,10 @@ export default function DirectoryScreen() {
                 lastName: nameParts.slice(1).join(' '),
                 email: row.email,
                 role: row.role,
+                avatar: row.avatar,
+                avatarCrop: row.avatar_crop,
+                avatarColor: row.avatar_color,
+                avatarEmoji: row.avatar_emoji,
             })
         }
         return result
@@ -117,12 +130,7 @@ export default function DirectoryScreen() {
                             className="w-[220px] border border-border rounded-lg p-3 bg-background"
                         >
                             <View className="items-center gap-3">
-                                <Avatar
-                                    name={`${member.firstName} ${member.lastName ?? ''}`.trim()}
-                                    email={member.email}
-                                    colorKey={member.id}
-                                    size={56}
-                                />
+                                <MemberAvatar member={member} />
                                 <View className="items-center gap-1">
                                     <Text
                                         className="text-base font-semibold text-foreground"
@@ -163,5 +171,27 @@ export default function DirectoryScreen() {
                 </View>
             ) : null}
         </View>
+    )
+}
+
+/** One member's avatar in the grid — its own component so useAvatarUrl,
+ *  a hook, is called once per card rather than inside the .map() above. */
+function MemberAvatar({ member }: { member: MemberCard }) {
+    const avatar = useAvatarUrl({
+        id: member.id,
+        avatar: member.avatar,
+        avatar_crop: member.avatarCrop,
+    })
+
+    return (
+        <Avatar
+            name={`${member.firstName} ${member.lastName ?? ''}`.trim()}
+            email={member.email}
+            colorKey={member.id}
+            avatar={avatar}
+            emoji={member.avatarEmoji || undefined}
+            color={member.avatarColor || undefined}
+            size={56}
+        />
     )
 }
