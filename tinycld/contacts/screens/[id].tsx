@@ -1,4 +1,5 @@
 import { eq } from '@tanstack/db'
+import { useLiveQuery } from '@tanstack/react-db'
 import { DocumentTitle } from '@tinycld/core/components/DocumentTitle'
 import { LabelBadge } from '@tinycld/core/components/LabelBadge'
 import { StarIcon } from '@tinycld/core/components/StarIcon'
@@ -8,7 +9,6 @@ import { useOrgHref } from '@tinycld/core/lib/org-routes'
 import { useStore } from '@tinycld/core/lib/pocketbase'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useNavigateBack } from '@tinycld/core/lib/use-navigate-back'
-import { useOrgLiveQuery } from '@tinycld/core/lib/use-org-live-query'
 import { Button, ButtonText } from '@tinycld/core/ui/button'
 import { useForm, zodResolver } from '@tinycld/core/ui/form'
 import { useLabelMutations } from '@tinycld/core/ui/hooks/useLabelMutations'
@@ -38,7 +38,7 @@ export default function ContactDetailScreen() {
         [recordLabels.labels]
     )
 
-    const { data } = useOrgLiveQuery(
+    const { data } = useLiveQuery(
         query =>
             query
                 .from({ contacts: contactsCollection })

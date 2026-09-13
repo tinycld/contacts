@@ -1,7 +1,7 @@
 import { and, eq, not } from '@tanstack/db'
 import { mutation, useMutation } from '@tinycld/core/lib/mutations'
 import { useStore } from '@tinycld/core/lib/pocketbase'
-import { useOrgLiveQuery } from '@tinycld/core/lib/use-org-live-query'
+import { useMyLiveQuery } from '@tinycld/core/lib/use-my-live-query'
 import { useMemo } from 'react'
 import { type SortField, useContactsUIStore } from '../stores/contacts-ui-store'
 import { filterContacts } from './filter-contacts'
@@ -39,7 +39,7 @@ export function useContactList(params: {
     const sortField = useContactsUIStore(s => s.sortField)
     const sortDirection = useContactsUIStore(s => s.sortDirection)
 
-    const { data: contacts, isLoading } = useOrgLiveQuery(
+    const { data: contacts, isLoading } = useMyLiveQuery(
         (query, { userId }) =>
             query
                 .from({ contacts: contactsCollection })
@@ -53,7 +53,7 @@ export function useContactList(params: {
         [isDeleted, sortField, sortDirection]
     )
 
-    const { data: contactAssignments } = useOrgLiveQuery((query, { userId }) =>
+    const { data: contactAssignments } = useMyLiveQuery((query, { userId }) =>
         query
             .from({ label_assignments: assignmentsCollection })
             .where(({ label_assignments }) =>
