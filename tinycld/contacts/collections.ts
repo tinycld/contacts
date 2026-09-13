@@ -10,7 +10,7 @@ import type { ContactsSchema } from './types'
 type MergedSchema = Omit<Schema, keyof ContactsSchema> & ContactsSchema
 
 // Hoisted rather than written inline at each call site: an inline
-// `collectionOptions` literal defeats `alwaysExpand` inference in pbtsdb 0.8.0.
+// `collectionOptions` literal defeats `alwaysFetchRelations` inference in pbtsdb.
 const indexing = {
     autoIndex: 'eager' as const,
     defaultIndexType: BasicIndex,
@@ -23,7 +23,6 @@ export function registerCollections(
     const contacts = newCollection('contacts', {
         omitOnInsert: ['created', 'updated', 'deleted_at'] as const,
         relations: { owner: coreStores.users },
-        alwaysExpand: ['owner'],
         collectionOptions: indexing,
     })
     return { contacts }
