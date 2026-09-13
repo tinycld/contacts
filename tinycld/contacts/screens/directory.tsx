@@ -1,3 +1,4 @@
+import { useLiveQuery } from '@tanstack/react-db'
 import { Avatar } from '@tinycld/core/components/Avatar'
 import { DocumentTitle } from '@tinycld/core/components/DocumentTitle'
 import { HelpIcon } from '@tinycld/core/components/help/HelpIcon'
@@ -5,7 +6,6 @@ import { hexToRgba } from '@tinycld/core/lib/color-utils'
 import { useStore } from '@tinycld/core/lib/pocketbase'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useAvatarUrl } from '@tinycld/core/lib/use-avatar-url'
-import { useOrgLiveQuery } from '@tinycld/core/lib/use-org-live-query'
 import { useMemo, useState } from 'react'
 import { Text, TextInput, View } from 'react-native'
 
@@ -57,7 +57,7 @@ export default function DirectoryScreen() {
 
     // Single-org: every user in the database is a member of the org, so the
     // directory is just the full `users` collection.
-    const { data: memberRows } = useOrgLiveQuery(query =>
+    const { data: memberRows } = useLiveQuery(query =>
         query.from({ user: usersCollection }).select(({ user }) => ({
             id: user.id,
             role: user.role,

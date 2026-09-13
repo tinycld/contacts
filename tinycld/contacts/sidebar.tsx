@@ -11,7 +11,7 @@ import { openHelpPackage } from '@tinycld/core/lib/help/open-help'
 import { appHref, useOrgHref } from '@tinycld/core/lib/org-routes'
 import { useStore } from '@tinycld/core/lib/pocketbase'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
-import { useOrgLiveQuery } from '@tinycld/core/lib/use-org-live-query'
+import { useMyLiveQuery } from '@tinycld/core/lib/use-my-live-query'
 import { useLabels } from '@tinycld/core/ui/hooks/useLabels'
 import { useGlobalSearchParams, usePathname, useRouter } from 'expo-router'
 import { Building2, HelpCircle, Settings, Star, Trash2, Users } from 'lucide-react-native'
@@ -37,13 +37,13 @@ export default function ContactsSidebar(_props: ContactsSidebarProps) {
     const [assignmentsCollection] = useStore('label_assignments')
     const { labels: orgLabels } = useLabels()
 
-    const { data: allContactsRaw } = useOrgLiveQuery((query, { userId }) =>
+    const { data: allContactsRaw } = useMyLiveQuery((query, { userId }) =>
         query
             .from({ contacts: contactsCollection })
             .where(({ contacts }) => eq(contacts.owner, userId))
     )
 
-    const { data: contactAssignments } = useOrgLiveQuery((query, { userId }) =>
+    const { data: contactAssignments } = useMyLiveQuery((query, { userId }) =>
         query
             .from({ label_assignments: assignmentsCollection })
             .where(({ label_assignments }) =>
