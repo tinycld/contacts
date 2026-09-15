@@ -11,7 +11,7 @@ Stores contacts in a single `contacts` PocketBase collection, owned by the user 
 User-facing features:
 
 - **Per-user address book** — contacts are owned by a `users` record (the `owner` relation), and PocketBase access rules (`@request.auth.disabled != true && owner = @request.auth.id`) enforce that other users can't see them and that a suspended account can't reach its own. CardDAV honors the same scope.
-- **Rich contact fields** — `first_name` (required), `last_name`, `company`, `job_title`, `email` (one), `phone` (one), `notes` (rich-text / HTML), `favorite` flag. The web UI's avatar is `NameAvatar` (initials with a deterministic color); there is no avatar-image upload.
+- **Rich contact fields** — `first_name` (required), `last_name`, `company`, `job_title`, `email` (one), `phone` (one), `notes` (rich-text / HTML), `favorite` flag. The web UI's avatar is core's `Avatar` (initials with a deterministic color); there is no avatar-image upload.
 - **Favorites** — toggle a star; the **Favorites** sidebar view filters to starred contacts.
 - **Soft delete with restore and permanent delete** — `deleted_at` is the source of truth; soft-deleted contacts move to a **Deleted** sidebar view; permanent delete removes the row, the FTS entry, and the vcard_uid.
 - **Labels** — colored tags that live in `core`'s `labels` / `label_assignments` collections and work across packages. Contacts contributes nothing to the label system itself; it consumes core's `useLabels`, `useLabelMutations`, and `LabelManagerDialog`. A `label_assignments` row has `(record_id, collection, label, user)`, so a label's meaning is consistent across mail, contacts, etc.
@@ -248,7 +248,7 @@ tinycld/contacts/
         ContactForm             shared between new + detail screens
         contactSchema.ts        zod schema (single source of truth for validation)
         ContactRow              list row with star + actions
-        ContactAvatar           re-exports core's NameAvatar
+        ContactAvatar           re-exports core's Avatar
     hooks/
         useContactList          list + filters + mutations (favorite / delete / restore)
         filter-contacts.ts      pure scope + search filtering (unit-tested)
@@ -329,9 +329,11 @@ pnpm run pkg:test:e2e   # e2e, every member with a Playwright project
 
 ## CI
 
-`.github/workflows/ci.yml` (in the workspace root) runs `pnpm install` then
-`cd tinycld && pnpm run pkg:check` — typecheck + unit across every member, exactly
-what you'd run locally. Go tests and live e2e run in separate lanes.
+`.github/workflows/ci.yml` (in this repo) assembles a workspace around the
+checkout with `npx @tinycld/bootstrap@latest --assemble-only`, runs `pnpm install`
+at the root, then `pnpm exec tinycld-pkg check` — biome lint + tsc + vitest for this
+package only, exactly what you'd run locally. A separate `e2e` job runs
+`pnpm exec tinycld-pkg test:e2e`.
 
 ## Package anatomy
 
