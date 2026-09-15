@@ -66,7 +66,7 @@ const manifest = {
         },
     },
     repository: { url: 'https://github.com/tinycld/contacts' },
-    peerVersions: { '@tinycld/core': '>=0.0.6 <0.1.0' },
+    peerVersions: { '@tinycld/core': '>=0.1.0 <0.2.0' },
 }
 
 export default manifest
