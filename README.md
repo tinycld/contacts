@@ -11,7 +11,7 @@ Stores contacts in a single `contacts` PocketBase collection, owned by the user 
 User-facing features:
 
 - **Per-user address book** — contacts are owned by a `users` record (the `owner` relation), and PocketBase access rules (`@request.auth.disabled != true && owner = @request.auth.id`) enforce that other users can't see them and that a suspended account can't reach its own. CardDAV honors the same scope.
-- **Rich contact fields** — `first_name` (required), `last_name`, `company`, `job_title`, `email` (one), `phone` (one), `notes` (rich-text / HTML), `favorite` flag. The web UI's avatar is core's `Avatar` (initials with a deterministic color); there is no avatar-image upload.
+- **Rich contact fields** — `first_name` (required), `last_name`, `company`, `job_title`, `email` (one), `phone` (one), `notes` (rich-text / HTML), `favorite` flag. A contact's avatar is core's `Avatar` (initials with a deterministic color) — contact records carry no avatar image and there is nothing to upload. (The Directory view below lists deployment *users*, which do have uploaded avatars, resolved through core's `useAvatarUrl`.)
 - **Favorites** — toggle a star; the **Favorites** sidebar view filters to starred contacts.
 - **Soft delete with restore and permanent delete** — `deleted_at` is the source of truth; soft-deleted contacts move to a **Deleted** sidebar view; permanent delete removes the row, the FTS entry, and the vcard_uid.
 - **Labels** — colored tags that live in `core`'s `labels` / `label_assignments` collections and work across packages. Contacts contributes nothing to the label system itself; it consumes core's `useLabels`, `useLabelMutations`, and `LabelManagerDialog`. A `label_assignments` row has `(record_id, collection, label, user)`, so a label's meaning is consistent across mail, contacts, etc.
@@ -170,7 +170,7 @@ Labels live in core. The schema is:
 Contacts uses both:
 
 - The sidebar queries `label_assignments` filtered by `collection='contacts'` to compute per-label contact counts.
-- The contact detail screen renders core's `LabelManagerDialog` and uses `useLabelMutations()` to assign/unassign labels.
+- The sidebar renders core's `LabelManagerDialog` (creating / renaming / deleting labels); the contact detail screen uses `useLabelMutations()` to assign and unassign them.
 - The list view filters by `?label=<labelId>` via `useContactList`.
 
 Labels are shared with any other package that uses core's label system (mail, for example). Deleting a label removes every assignment row referencing it, across all packages — there is no cascade scoped to a single collection.
@@ -255,7 +255,8 @@ tinycld/contacts/
         useContactSearch        /api/search?pkg=contacts hook
         useContactsShortcuts    j / k / Enter / c
     stores/
-        contacts-ui-store       zustand: sort field, sort direction
+        contacts-ui-store       zustand: sort field + direction (persisted),
+                                keyboard focus index (transient)
 ```
 
 ## Command line
@@ -288,13 +289,12 @@ members as siblings under one root, then install at the **workspace root** (neve
 inside a member — members carry no `node_modules` of their own):
 
 ```sh
-# Clone the workspace members as siblings under one root
-git clone <app-remote>      ~/code/tinycld/new/app       # the app shell (member "app")
-git clone <core-remote>     ~/code/tinycld/new/core      # @tinycld/core
-git clone <this-remote>     ~/code/tinycld/new/contacts  # @tinycld/contacts
+# Assemble the root and clone the members you want. `tinycld` is the app shell
+# and carries @tinycld/core nested at tinycld/core — it is not a separate clone.
+mkdir ~/code/tinycld && cd ~/code/tinycld
+npx @tinycld/bootstrap@latest --assemble-only --with contacts
 
 # Install at the WORKSPACE ROOT — links members + runs the generator (postinstall)
-cd ~/code/tinycld/new
 pnpm install
 
 # Run the full stack (Expo + PocketBase behind a proxy)
@@ -306,7 +306,7 @@ cd tinycld && pnpm run dev
 Run checks from **inside this package** — they scope to this package only:
 
 ```sh
-cd ~/code/tinycld/new/contacts
+cd ~/code/tinycld/contacts
 pnpm run typecheck   # tsc against this package's tsconfig (extends the shared base)
 pnpm run test        # vitest, this package's tests/ only
 pnpm run check       # typecheck + unit
@@ -321,7 +321,7 @@ type augmentation all resolve). No app-shell knowledge required.
 To run checks across **every** member at once, from the app shell:
 
 ```sh
-cd ~/code/tinycld/new/tinycld
+cd ~/code/tinycld/tinycld
 pnpm run pkg:check      # typecheck + unit, every member, with a per-package summary
 pnpm run pkg:test:unit  # unit only, every member
 pnpm run pkg:test:e2e   # e2e, every member with a Playwright project
