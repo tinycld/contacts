@@ -1,7 +1,7 @@
 const manifest = {
     name: 'Contacts',
     slug: 'contacts',
-    version: '0.2.0',
+    version: '0.2.1',
     description: 'Your personal contacts, private to you',
     routes: { directory: 'screens' },
     nav: { label: 'Contacts', icon: 'users', order: 10, shortcut: 'o' },
