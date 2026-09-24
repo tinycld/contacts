@@ -38,13 +38,12 @@ export default function ContactDetailScreen() {
         [recordLabels.labels]
     )
 
-    const { data } = useLiveQuery(
-        query =>
+    const { data } = useLiveQuery({
+        query: query =>
             query
                 .from({ contacts: contactsCollection })
                 .where(({ contacts }) => eq(contacts.id, id)),
-        [id]
-    )
+    })
 
     const contact = data?.[0] ?? null
 
