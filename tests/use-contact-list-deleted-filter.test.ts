@@ -1,21 +1,28 @@
 // @vitest-environment happy-dom
 //
-// useContactList's deleted-view predicate used to read
-// `not(eq(contacts.deleted_at, ''))`. pbtsdp compiles `not(...)` to `!(...)`,
-// which PocketBase's filter parser rejects outright — so under on-demand sync
-// (where the predicate is sent to the server) the Deleted view broke. The fix
-// is the positive form `gt(contacts.deleted_at, '')`: `deleted_at` is either
-// '' (active) or an ISO timestamp (deleted), and any non-empty date string
-// sorts after '' lexically, so `> ''` selects exactly the deleted rows.
+// This test guards the compiled PocketBase filter string useContactList's
+// deleted-view predicate sends, not just its in-memory result.
 //
-// This exercises the real query builder (not a hand-rolled predicate) against
-// a local-only collection, the same technique
-// core/tests/unit/use-mention-candidates.test.tsx uses, so a regression back
-// to `not()` — which a local-only collection would silently still evaluate
-// correctly in memory — is instead caught by asserting the exact row set.
-import { and, BasicIndex, createCollection, eq, gt, localOnlyCollectionOptions } from '@tanstack/db'
+// `not(eq(contacts.deleted_at, ''))` used to be the deleted-view predicate.
+// pbtsdb compiles `not(...)` to `!(...)`, which PocketBase's filter parser
+// rejects outright — but a `localOnlyCollectionOptions` fixture never
+// compiles a filter at all (TanStack DB evaluates the predicate in memory
+// against the local rows), so a test built on one proves nothing about what
+// reaches the server: `not()` and `gt()` return the identical row set in
+// memory, and swapping the query back to `not()` still passes such a test.
+// A real, network-backed `syncMode: 'on-demand'` collection DOES compile —
+// `toRequest()` in pbtsdb calls its (unexported) `convertToPocketBaseFilter`
+// before handing `{ filter }` to `pb.collection(name).getFullList/getList`
+// — so this test stands up one against a stubbed PocketBase client and
+// asserts on the literal `filter` string that request receives: it must
+// read `deleted_at > ""` for the deleted view and contain no `!`.
+
+import { and, eq, gt, not } from '@tanstack/db'
+import { QueryClient } from '@tanstack/query-core'
 import { useLiveQuery } from '@tanstack/react-db'
 import { cleanup, renderHook, waitFor } from '@testing-library/react'
+import { createCollection } from 'pbtsdb/core'
+import type PocketBase from 'pocketbase'
 import { afterEach, describe, expect, it } from 'vitest'
 
 interface Row {
@@ -28,25 +35,62 @@ const rows: Row[] = [
     { id: 'active-1', owner: 'u-me', deleted_at: '' },
     { id: 'active-2', owner: 'u-me', deleted_at: '' },
     { id: 'deleted-1', owner: 'u-me', deleted_at: '2026-01-01T00:00:00.000Z' },
-    { id: 'other-owner', owner: 'u-other', deleted_at: '2026-01-01T00:00:00.000Z' },
 ]
 
-function makeContacts() {
-    const contacts = createCollection(
-        localOnlyCollectionOptions({
-            id: 'test-contacts',
-            getKey: (r: Row) => r.id,
-            initialData: rows,
-            defaultIndexType: BasicIndex,
-        })
-    )
-    return contacts
+/**
+ * A PocketBase stub whose `getFullList` records the `filter` string pbtsdb
+ * compiled for it, and answers from the in-memory fixture so the fetch
+ * still resolves. `subscribe` resolves immediately with a no-op unsubscribe
+ * — this test only exercises the fetch path, not realtime.
+ */
+function makeStubPb() {
+    const seenFilters: string[] = []
+    const collectionApi = {
+        getFullList: async (opts?: { filter?: string }) => {
+            if (opts?.filter) seenFilters.push(opts.filter)
+            return rows
+        },
+        getList: async (_page: number, _perPage: number, opts?: { filter?: string }) => {
+            if (opts?.filter) seenFilters.push(opts.filter)
+            return {
+                items: rows,
+                totalItems: rows.length,
+                totalPages: 1,
+                page: 1,
+                perPage: rows.length,
+            }
+        },
+        subscribe: async () => () => {},
+        create: async () => {
+            throw new Error('not used by this test')
+        },
+        update: async () => {
+            throw new Error('not used by this test')
+        },
+        delete: async () => {
+            throw new Error('not used by this test')
+        },
+    }
+    const pb = { collection: () => collectionApi } as unknown as PocketBase
+    return { pb, seenFilters }
+}
+
+function makeContacts(pb: PocketBase, queryClient: QueryClient) {
+    const c = createCollection(pb, queryClient)
+    return c('contacts', {
+        getKey: (r: Row) => r.id,
+        syncMode: 'on-demand',
+        realtime: 'query',
+    })
 }
 
 afterEach(() => cleanup())
 
-async function queryWith(isDeleted: boolean) {
-    const contacts = makeContacts()
+async function compiledFilterFor(isDeleted: boolean) {
+    const { pb, seenFilters } = makeStubPb()
+    const queryClient = new QueryClient()
+    const contacts = makeContacts(pb, queryClient)
+
     const { result } = renderHook(() =>
         useLiveQuery(q =>
             q
@@ -60,15 +104,44 @@ async function queryWith(isDeleted: boolean) {
         )
     )
     await waitFor(() => expect(result.current.data).toBeDefined())
-    return (result.current.data ?? []).map(r => r.id).sort()
+    await waitFor(() => expect(seenFilters.length).toBeGreaterThan(0))
+    return seenFilters[0]
 }
 
-describe('useContactList deleted-view predicate', () => {
-    it('the active view (eq deleted_at "") returns only non-deleted rows owned by the caller', async () => {
-        expect(await queryWith(false)).toEqual(['active-1', 'active-2'])
+describe('useContactList deleted-view predicate — compiled PocketBase filter', () => {
+    it('the active view compiles to deleted_at = "", with no !', async () => {
+        const filter = await compiledFilterFor(false)
+        expect(filter).toContain('deleted_at = ""')
+        expect(filter).not.toContain('!')
     })
 
-    it('the deleted view (gt deleted_at "") returns only deleted rows owned by the caller', async () => {
-        expect(await queryWith(true)).toEqual(['deleted-1'])
+    it('the deleted view compiles to deleted_at > "", with no !', async () => {
+        const filter = await compiledFilterFor(true)
+        expect(filter).toContain('deleted_at > ""')
+        expect(filter).not.toContain('!')
+    })
+
+    // Proves the assertion above is load-bearing: the same harness run
+    // against the OLD `not(eq(deleted_at, ''))` predicate must fail, because
+    // it compiles to `!(...)` — the exact form PocketBase rejects.
+    it('a not()-based predicate (the old, broken form) compiles with a !, catching a regression', async () => {
+        const { pb, seenFilters } = makeStubPb()
+        const queryClient = new QueryClient()
+        const contacts = makeContacts(pb, queryClient)
+
+        const { result } = renderHook(() =>
+            useLiveQuery(q =>
+                q
+                    .from({ contacts })
+                    .where(({ contacts }) =>
+                        and(eq(contacts.owner, 'u-me'), not(eq(contacts.deleted_at, '')))
+                    )
+            )
+        )
+        await waitFor(() => expect(result.current.data).toBeDefined())
+        await waitFor(() => expect(seenFilters.length).toBeGreaterThan(0))
+
+        expect(seenFilters[0]).toContain('!')
+        expect(seenFilters[0]).not.toContain('deleted_at > ""')
     })
 })
