@@ -1,4 +1,4 @@
-import { and, eq, not } from '@tanstack/db'
+import { and, eq, gt } from '@tanstack/db'
 import { mutation, useMutation } from '@tinycld/core/lib/mutations'
 import { useStore } from '@tinycld/core/lib/pocketbase'
 import { useMyLiveQuery } from '@tinycld/core/lib/use-my-live-query'
@@ -46,7 +46,14 @@ export function useContactList(params: {
                 .where(({ contacts }) =>
                     and(
                         eq(contacts.owner, userId),
-                        isDeleted ? not(eq(contacts.deleted_at, '')) : eq(contacts.deleted_at, '')
+                        // pbtsdb compiles `not(...)` to `!(...)`, which
+                        // PocketBase rejects — so "deleted" is spelled
+                        // positively. `deleted_at` is either '' (active) or
+                        // an ISO timestamp (deleted); `isNull` wouldn't
+                        // match the empty-string sentinel, but any
+                        // non-empty date string sorts after '' lexically,
+                        // so `> ''` selects exactly the deleted rows.
+                        isDeleted ? gt(contacts.deleted_at, '') : eq(contacts.deleted_at, '')
                     )
                 )
                 .orderBy(({ contacts }) => sortAccessor(contacts, sortField), sortDirection),
