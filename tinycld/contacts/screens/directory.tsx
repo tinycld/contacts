@@ -1,3 +1,4 @@
+import { and, eq, inArray } from '@tanstack/db'
 import { useLiveQuery } from '@tanstack/react-db'
 import { Avatar } from '@tinycld/core/components/Avatar'
 import { DocumentTitle } from '@tinycld/core/components/DocumentTitle'
@@ -55,19 +56,26 @@ export default function DirectoryScreen() {
         border: hexToRgba(mutedColor, 0.3),
     }
 
-    // Single-org: every user in the database is a member of the org, so the
-    // directory is just the full `users` collection.
+    // Single-org: every non-guest, non-disabled user in the database is a
+    // member of the org, so the directory is that filtered `users`
+    // collection — a share-link guest holds no org standing and a
+    // disabled account can't sign in, so neither belongs here.
     const { data: memberRows } = useLiveQuery(query =>
-        query.from({ user: usersCollection }).select(({ user }) => ({
-            id: user.id,
-            role: user.role,
-            name: user.name,
-            email: user.email,
-            avatar: user.avatar,
-            avatar_crop: user.avatar_crop,
-            avatar_color: user.avatar_color,
-            avatar_emoji: user.avatar_emoji,
-        }))
+        query
+            .from({ user: usersCollection })
+            .where(({ user }) =>
+                and(inArray(user.role, ['owner', 'admin', 'member']), eq(user.disabled, false))
+            )
+            .select(({ user }) => ({
+                id: user.id,
+                role: user.role,
+                name: user.name,
+                email: user.email,
+                avatar: user.avatar,
+                avatar_crop: user.avatar_crop,
+                avatar_color: user.avatar_color,
+                avatar_emoji: user.avatar_emoji,
+            }))
     )
 
     const members: MemberCard[] = useMemo(() => {
