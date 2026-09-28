@@ -4,8 +4,17 @@
 // deleted-view predicate sends, not just its in-memory result.
 //
 // `not(eq(contacts.deleted_at, ''))` used to be the deleted-view predicate.
-// pbtsdb compiles `not(...)` to `!(...)`, which PocketBase's filter parser
-// rejects outright — but a `localOnlyCollectionOptions` fixture never
+// Older pbtsdb compiled `not(...)` to `!(...)`, which PocketBase's filter
+// parser rejects outright. Since pbtsdb 0.10.1 `not()` compiles by negation
+// push-down instead — this predicate becomes `deleted_at != ""`, which is
+// valid — so the deleted view no longer HAS to avoid `not()`. The production
+// query keeps the positive `gt(deleted_at, '')` by choice: a positive form
+// reads the same as the filter it sends and needs no push-down step to reason
+// about. This test pins both the production form and the compiled shape of the
+// `not()` alternative, so a pbtsdb change to either is caught here.
+//
+// The compiled string is what matters, and a `localOnlyCollectionOptions`
+// fixture never
 // compiles a filter at all (TanStack DB evaluates the predicate in memory
 // against the local rows), so a test built on one proves nothing about what
 // reaches the server: `not()` and `gt()` return the identical row set in
@@ -121,10 +130,14 @@ describe('useContactList deleted-view predicate — compiled PocketBase filter',
         expect(filter).not.toContain('!')
     })
 
-    // Proves the assertion above is load-bearing: the same harness run
-    // against the OLD `not(eq(deleted_at, ''))` predicate must fail, because
-    // it compiles to `!(...)` — the exact form PocketBase rejects.
-    it('a not()-based predicate (the old, broken form) compiles with a !, catching a regression', async () => {
+    // The control for the two assertions above: the same harness run against
+    // the `not(eq(deleted_at, ''))` alternative, which compiles differently
+    // from the production form. Under pbtsdb 0.10.1 negation push-down turns
+    // it into `deleted_at != ""` — valid PocketBase, unlike the `!(...)` older
+    // pbtsdb emitted, but still not the `deleted_at > ""` the production query
+    // sends. If pbtsdb ever regresses to wrapping the whole clause in `!`,
+    // this fails.
+    it('a not()-based predicate compiles to deleted_at != "" by negation push-down', async () => {
         const { pb, seenFilters } = makeStubPb()
         const queryClient = new QueryClient()
         const contacts = makeContacts(pb, queryClient)
@@ -141,7 +154,8 @@ describe('useContactList deleted-view predicate — compiled PocketBase filter',
         await waitFor(() => expect(result.current.data).toBeDefined())
         await waitFor(() => expect(seenFilters.length).toBeGreaterThan(0))
 
-        expect(seenFilters[0]).toContain('!')
+        expect(seenFilters[0]).toContain('deleted_at != ""')
+        expect(seenFilters[0]).not.toContain('!(')
         expect(seenFilters[0]).not.toContain('deleted_at > ""')
     })
 })
