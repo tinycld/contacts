@@ -1,12 +1,12 @@
 module tinycld.org/packages/contacts
 
-go 1.26.3
+go 1.27.1
 
 require (
 	github.com/emersion/go-vcard v0.0.0-20260618161152-d854b7e0e2d3
 	github.com/google/uuid v1.6.0
 	github.com/grafana/sobek v0.0.0-20260722203707-64fef69693b6
-	github.com/pocketbase/pocketbase v0.39.8
+	github.com/pocketbase/pocketbase v0.40.4
 	tinycld.org/core v0.0.0
 )
 
