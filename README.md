@@ -15,7 +15,7 @@ User-facing features:
 - **Favorites** — toggle a star; the **Favorites** sidebar view filters to starred contacts.
 - **Soft delete with restore and permanent delete** — `deleted_at` is the source of truth; soft-deleted contacts move to a **Deleted** sidebar view; permanent delete removes the row, the FTS entry, and the vcard_uid.
 - **Labels** — colored tags that live in `core`'s `labels` / `label_assignments` collections and work across packages. Contacts contributes nothing to the label system itself; it consumes core's `useLabels`, `useLabelMutations`, and `LabelManagerDialog`. A `label_assignments` row has `(record_id, collection, label, user)`, so a label's meaning is consistent across mail, contacts, etc.
-- **Directory** — a separate sidebar view (`/a/contacts/directory`) listing the deployment's **users** (read from the local `users` collection — not PB `expand`, so a freshly-added user resolves from the optimistic store immediately), with role badges (owner / admin / member / guest). This is read-only and orthogonal to the contact list — there's no "save member to contacts" action.
+- **Directory** — a separate sidebar view (`/a/contacts/directory`) listing the deployment's **users** (read from the local `users` collection — not PB `expand`, so a freshly-added user resolves from the optimistic store immediately), with role badges (owner / admin / member). Guests and disabled accounts are excluded — a share-link guest holds no org standing and a disabled account can't sign in. This is read-only and orthogonal to the contact list — there's no "save member to contacts" action.
 - **Search** — SQLite FTS5 across `first_name`, `last_name`, `email`, `company`, `phone`, and `notes` (HTML-stripped). Porter stemmer for English, prefix matches (typing `joh` matches `john`, `johnson`) via `"term"*` syntax. **Not indexed**: `job_title`, `favorite`, labels, `deleted_at`. Contacts has no search route of its own: it registers a source with core's federated `GET /api/search`, so the same index serves the contacts screen's search box (scoped with `pkg=contacts`), the cross-app search palette (`/` anywhere in the app, or a `contacts:` scope chip), and `tinycld contacts search`. The source never returns soft-deleted rows, so search matches the sidebar's main-list view; the Deleted view filters client-side.
 - **Stable vCard identity** — every contact has a `vcard_uid` (UUID v4 with `urn:uuid:` prefix), auto-generated on create via an `OnRecordCreate` hook if the client didn't set one. A partial unique index (`WHERE vcard_uid != ''`) guarantees uniqueness without breaking the empty-string fallback. This is how [Google Takeout import](https://tinycld.org/docs), vCard file import, and CardDAV re-syncs dedupe instead of creating duplicates.
 - **vCard file export / import** — `GET /api/contacts/export` streams the caller's live contacts as one `.vcf`; `POST /api/contacts/import` upserts a `.vcf` on `UID`. Both are OAuth-bearer API routes (`server/vcard_endpoints.go`) that reuse the CardDAV field map, and they exist for the CLI's `export` / `import` commands — there is no in-app UI for them.
@@ -309,7 +309,7 @@ Run checks from **inside this package** — they scope to this package only:
 cd ~/code/tinycld/contacts
 pnpm run typecheck   # tsc against this package's tsconfig (extends the shared base)
 pnpm run test        # vitest, this package's tests/ only
-pnpm run check       # typecheck + unit
+pnpm run check       # biome lint + typecheck + unit
 pnpm run test:e2e    # Playwright against the app shell's live stack
 ```
 
@@ -322,7 +322,7 @@ To run checks across **every** member at once, from the app shell:
 
 ```sh
 cd ~/code/tinycld/tinycld
-pnpm run pkg:check      # typecheck + unit, every member, with a per-package summary
+pnpm run pkg:check      # biome lint + typecheck + unit, every member, with a per-package summary
 pnpm run pkg:test:unit  # unit only, every member
 pnpm run pkg:test:e2e   # e2e, every member with a Playwright project
 ```
@@ -339,7 +339,7 @@ package only, exactly what you'd run locally. A separate `e2e` job runs
 
 - `manifest.ts` — single source of truth for capabilities (routes, nav, sidebar, search, automation, cli, carddav, hooks, collections, migrations, seed, tests, server module, help)
 - `package.json` — name and exports map; framework deps are not declared here (devDependencies only — the workspace root provides them)
-- `tsconfig.json` — typecheck config (a thin extend of the app's `tsconfig.package-base.json`)
+- `tsconfig.json` — typecheck config (a thin extend of core's `tsconfig.package-base.json`, at `tinycld/core/`)
 - `pb-migrations/` — PocketBase migrations (symlinked into the app shell's server on `packages:generate`)
 - `pb-hooks/` — server-side TS hooks (`*.pb.ts`, the manifest's `hooks` directory) that run on the jsvm alongside the Go; `contacts.pb.ts` documents the seam and the `$contacts.*` binding
 - `server/` — Go server module, registered by the generator
