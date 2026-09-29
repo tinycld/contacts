@@ -67,7 +67,7 @@ jobs:
       # bulk of the install step's runtime.
       - uses: actions/setup-go@v6
         with:
-          go-version-file: ws/.go-version
+          go-version-file: ws/tinycld/core/server/go.mod
           cache-dependency-path: |
             ws/contacts/server/go.sum
       # Cache pnpm's content-addressable store. setup-node's built-in `cache: pnpm`
@@ -134,7 +134,7 @@ jobs:
       # bulk of the install step's runtime.
       - uses: actions/setup-go@v6
         with:
-          go-version-file: ws/.go-version
+          go-version-file: ws/tinycld/core/server/go.mod
           cache-dependency-path: |
             ws/contacts/server/go.sum
       # Cache pnpm's content-addressable store. setup-node's built-in `cache: pnpm`
