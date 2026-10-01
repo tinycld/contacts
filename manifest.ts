@@ -39,32 +39,6 @@ const manifest = {
     // comment in pb-hooks/contacts.pb.ts and the $contacts.* JS binding the Go
     // server exposes in server/bindings.go).
     hooks: { directory: 'pb-hooks' },
-    // CardDAV over /carddav, served by core (tinycld.org/core/carddav). This
-    // mirrors the cardDAVSource literal in server/register.go, which is what the
-    // single-tenant app registers. A hosting tenant serves CardDAV from this
-    // block (the router materializes it into the tenant's runtime config) —
-    // that is why the Go-side mount is host-only even though contacts' other
-    // Go links into tenants via RegisterTenant.
-    carddav: {
-        collection: 'contacts',
-        listFilter: "owner = {:ownerId} && deleted_at = ''",
-        sort: '-updated',
-        ownerField: 'owner',
-        uidField: 'vcard_uid',
-        softDeleteField: 'deleted_at',
-        vcard: {
-            version: '4.0',
-            name: { given: 'first_name', family: 'last_name' },
-            simple: {
-                EMAIL: 'email',
-                TEL: 'phone',
-                ORG: 'company',
-                TITLE: 'job_title',
-                NOTE: 'notes',
-            },
-            revField: 'updated',
-        },
-    },
     repository: { url: 'https://github.com/tinycld/contacts' },
     peerVersions: { '@tinycld/core': '>=0.6.1 <0.7.0' },
 }
