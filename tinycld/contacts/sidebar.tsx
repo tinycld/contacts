@@ -7,14 +7,14 @@ import {
     SidebarItem,
     SidebarNav,
 } from '@tinycld/core/components/sidebar-primitives'
-import { openHelpPackage } from '@tinycld/core/lib/help/open-help'
+import { openHelp, openHelpPackage } from '@tinycld/core/lib/help/open-help'
 import { appHref, useOrgHref } from '@tinycld/core/lib/org-routes'
 import { useStore } from '@tinycld/core/lib/pocketbase'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useMyLiveQuery } from '@tinycld/core/lib/use-my-live-query'
 import { useLabels } from '@tinycld/core/ui/hooks/useLabels'
 import { useGlobalSearchParams, usePathname, useRouter } from 'expo-router'
-import { Building2, HelpCircle, Settings, Star, Trash2, Users } from 'lucide-react-native'
+import { Building2, HelpCircle, Laptop, Settings, Star, Trash2, Users } from 'lucide-react-native'
 import { useMemo, useState } from 'react'
 import { Pressable } from 'react-native'
 
@@ -153,6 +153,13 @@ export default function ContactsSidebar(_props: ContactsSidebarProps) {
             {labelItems}
 
             <SidebarDivider />
+
+            <SidebarItem
+                label="Connect a device"
+                icon={Laptop}
+                closesDrawer
+                onPress={() => openHelp('contacts:carddav')}
+            />
 
             <SidebarItem
                 label="Help"

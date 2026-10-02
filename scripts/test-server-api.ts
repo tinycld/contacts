@@ -106,7 +106,7 @@ async function testCardDAV(config: Config, _auth: AuthResult) {
     const headers = { Authorization: `Basic ${basicAuth}` }
     // The single-org deployment serves one address book per user at a fixed
     // segment — see core/server/carddav/scope.go.
-    const addressBookPath = '/carddav/u/ab/default/'
+    const addressBookPath = '/contacts/u/ab/default/'
 
     try {
         const res = await fetch(`${config.url}/.well-known/carddav`, {

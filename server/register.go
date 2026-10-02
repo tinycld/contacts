@@ -99,7 +99,11 @@ var cardDAVSource = carddav.Source{
 // it via coreserver.GetEmbeddedContext — contacts has no such difference).
 func Register(app *pocketbase.PocketBase) {
 	registerShared(app)
-	carddav.Register(app, []carddav.Source{cardDAVSource})
+	// See calendar: a rejected prefix leaves CardDAV unmounted rather than
+	// taking the process down.
+	if err := carddav.Register(app, []carddav.Source{cardDAVSource}); err != nil {
+		app.Logger().Error("contacts: CardDAV registration failed", "error", err)
+	}
 
 	// vCard file export/import for the CLI. CardDAV cannot serve it: it is
 	// Basic-Auth only and mounted outside the API router, while the CLI carries
