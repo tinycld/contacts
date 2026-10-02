@@ -20,10 +20,10 @@ Your TinyCld contacts and your client's contacts merge into a single address boo
 The CardDAV endpoint is at:
 
 ```
-https://{{server-host}}/carddav/
+https://{{server-host}}/contacts/
 ```
 
-Authentication is HTTP Basic using your TinyCld username or email, and your password. Your contacts are exposed as a single address book at `/carddav/u/ab/default/`. There's also a `/.well-known/carddav` URL that redirects to the right place, which most clients auto-discover.
+Authentication is HTTP Basic using your TinyCld username or email, and your password. Your contacts are exposed as a single address book at `/contacts/u/ab/default/`. There's also a `/.well-known/carddav` URL that redirects to the right place, which most clients auto-discover.
 
 ## Connecting Apple Contacts (macOS)
 
@@ -55,7 +55,7 @@ DAVx5 is the standard third-party CardDAV/CalDAV client for Android.
 
 1. Open **DAVx5** and tap **+ Add account**.
 2. Choose **Login with URL and user name**.
-3. Base URL: `https://{{server-host}}/carddav/`.
+3. Base URL: `https://{{server-host}}/contacts/`.
 4. User name: your TinyCld username or email.
 5. Password: your TinyCld password.
 6. Tap **Login**, then **Create account**.
@@ -67,7 +67,7 @@ DAVx5 exposes the contacts to Android's system address book; any contacts app pi
 
 1. **Address Book → File → New → CardDAV Address Book**.
 2. User name: your TinyCld username or email.
-3. Location: `https://{{server-host}}/carddav/`.
+3. Location: `https://{{server-host}}/contacts/`.
 4. Click **Continue**, enter your password when prompted.
 5. Tick the TinyCld address book to subscribe to it.
 6. Click **Continue**, then **Done**.
@@ -76,7 +76,7 @@ DAVx5 exposes the contacts to Android's system address book; any contacts app pi
 
 1. Open **Evolution** (or **GNOME Online Accounts** in Settings).
 2. **Edit → Accounts → Add → CardDAV**.
-3. URL: `https://{{server-host}}/carddav/`.
+3. URL: `https://{{server-host}}/contacts/`.
 4. Username: your TinyCld username or email.
 5. Password: your TinyCld password.
 6. Click **Find** to discover the address book(s), then check the ones you want.
