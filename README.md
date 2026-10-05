@@ -6,7 +6,7 @@ A feature package for the [tinycld](https://tinycld.org/) ecosystem. Lives as a 
 
 ## What it does
 
-Stores contacts in a single `contacts` PocketBase collection, owned by the user who created them. CardDAV exposes the same collection at `/carddav/` as a single address book per user.
+Stores contacts in a single `contacts` PocketBase collection, owned by the user who created them. CardDAV exposes the same collection at `/contacts/` as a single address book per user.
 
 User-facing features:
 
@@ -19,7 +19,7 @@ User-facing features:
 - **Search** — SQLite FTS5 across `first_name`, `last_name`, `email`, `company`, `phone`, and `notes` (HTML-stripped). Porter stemmer for English, prefix matches (typing `joh` matches `john`, `johnson`) via `"term"*` syntax. **Not indexed**: `job_title`, `favorite`, labels, `deleted_at`. Contacts has no search route of its own: it registers a source with core's federated `GET /api/search`, so the same index serves the contacts screen's search box (scoped with `pkg=contacts`), the cross-app search palette (`/` anywhere in the app, or a `contacts:` scope chip), and `tinycld contacts search`. The source never returns soft-deleted rows, so search matches the sidebar's main-list view; the Deleted view filters client-side.
 - **Stable vCard identity** — every contact has a `vcard_uid` (UUID v4 with `urn:uuid:` prefix), auto-generated on create via an `OnRecordCreate` hook if the client didn't set one. A partial unique index (`WHERE vcard_uid != ''`) guarantees uniqueness without breaking the empty-string fallback. This is how [Google Takeout import](https://tinycld.org/docs), vCard file import, and CardDAV re-syncs dedupe instead of creating duplicates.
 - **vCard file export / import** — `GET /api/contacts/export` streams the caller's live contacts as one `.vcf`; `POST /api/contacts/import` upserts a `.vcf` on `UID`. Both are OAuth-bearer API routes (`server/vcard_endpoints.go`) that reuse the CardDAV field map, and they exist for the CLI's `export` / `import` commands — there is no in-app UI for them.
-- **CardDAV** — full read-write CardDAV server at `/carddav/`, served via `github.com/emersion/go-webdav/carddav` over HTTP Basic auth. A single address book is exposed per user, at `/carddav/u/ab/default/`. There's a `/.well-known/carddav` redirect for auto-discovery.
+- **CardDAV** — full read-write CardDAV server at `/contacts/`, served via `github.com/emersion/go-webdav/carddav` over HTTP Basic auth. It is mounted from Go (`carddav.Register` in `server/register.go`), not declared in `manifest.ts`. A single address book is exposed per user, at `/contacts/u/ab/default/`. There's a `/.well-known/carddav` redirect for auto-discovery.
 - **Keyboard shortcuts** — `t o` jumps to Contacts; `j` / `k` navigate the list; `Enter` opens the focused contact; `c` creates a new one.
 - **Realtime updates** — edits made anywhere (web UI, mobile UI, CardDAV client) appear in other open sessions within seconds via PocketBase's built-in collection-realtime subscriptions, consumed through `pbtsdb`'s `useLiveQuery`.
 - **Audit logging** — every contact mutation goes through `core/audit`, labeled with the contact's first + last name.
@@ -76,8 +76,8 @@ The short version: contacts is a single `contacts` PocketBase collection plus a 
 │     POST   /api/contacts/import    (contacts:write, .vcf upsert)     │
 │                                                                      │
 │   CardDAV                                                            │
-│     ANY    /carddav  /  /carddav/{path...}                           │
-│     GET    /.well-known/carddav → 301 /carddav/                      │
+│     ANY    /contacts  /  /contacts/{path...}                          │
+│     GET    /.well-known/carddav → 301 /contacts/                      │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -102,10 +102,10 @@ The route handler in core's `carddav/register.go` does the HTTP-Basic challenge 
 
 The path layout is hand-rolled rather than auto-derived from the carddav library, so client behavior is predictable:
 
-- `/carddav/u/` — `CurrentUserPrincipal`. Returned to clients that ask "who am I?".
-- `/carddav/u/ab/` — `AddressBookHomeSetPath`. The collection of address books.
-- `/carddav/u/ab/default/` — the caller's single address book (`Name = "Contacts"`). Its objects are the contacts the authenticated user owns.
-- `/carddav/u/ab/default/<vcard_uid>.vcf` — individual contact path. `vcard_uid` is the `urn:uuid:` value.
+- `/contacts/u/` — `CurrentUserPrincipal`. Returned to clients that ask "who am I?".
+- `/contacts/u/ab/` — `AddressBookHomeSetPath`. The collection of address books.
+- `/contacts/u/ab/default/` — the caller's single address book (`Name = "Contacts"`). Its objects are the contacts the authenticated user owns.
+- `/contacts/u/ab/default/<vcard_uid>.vcf` — individual contact path. `vcard_uid` is the `urn:uuid:` value.
 
 `CreateAddressBook` and `DeleteAddressBook` return errors — there is exactly one book per user and the set can't be mutated from a CardDAV client.
 
@@ -229,7 +229,7 @@ Go module: `tinycld.org/packages/contacts`. Imports `tinycld.org/core/{audit,car
 
 ```
 manifest.ts                     package manifest, at the repo root (slug, nav, routes,
-                                search, automation, cli, carddav, hooks, collections,
+                                search, automation, cli, hooks, collections,
                                 migrations, seed, tests, help, server)
 tinycld/contacts/
     sidebar.tsx                 Contacts / Favorites / Directory / Deleted + Labels
@@ -337,7 +337,7 @@ package only, exactly what you'd run locally. A separate `e2e` job runs
 
 ## Package anatomy
 
-- `manifest.ts` — single source of truth for capabilities (routes, nav, sidebar, search, automation, cli, carddav, hooks, collections, migrations, seed, tests, server module, help)
+- `manifest.ts` — single source of truth for capabilities (routes, nav, sidebar, search, automation, cli, hooks, collections, migrations, seed, tests, server module, help). CardDAV is not a manifest capability: `server/register.go` mounts it from Go (`carddav.Register`)
 - `package.json` — name and exports map; framework deps are not declared here (devDependencies only — the workspace root provides them)
 - `tsconfig.json` — typecheck config (a thin extend of core's `tsconfig.package-base.json`, at `tinycld/core/`)
 - `pb-migrations/` — PocketBase migrations (symlinked into the app shell's server on `packages:generate`)
