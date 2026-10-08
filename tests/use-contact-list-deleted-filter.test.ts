@@ -27,11 +27,10 @@
 // read `deleted_at > ""` for the deleted view and contain no `!`.
 
 import { and, eq, gt, not } from '@tanstack/db'
-import { QueryClient } from '@tanstack/query-core'
 import { useLiveQuery } from '@tanstack/react-db'
 import { cleanup, renderHook, waitFor } from '@testing-library/react'
-import { createCollection } from 'pbtsdb/core'
-import type PocketBase from 'pocketbase'
+import { createCollection, disconnectRealtime } from 'pbtsdb/core'
+import PocketBase, { BaseAuthStore } from 'pocketbase'
 import { afterEach, describe, expect, it } from 'vitest'
 
 interface Row {
@@ -47,10 +46,11 @@ const rows: Row[] = [
 ]
 
 /**
- * A PocketBase stub whose `getFullList` records the `filter` string pbtsdb
- * compiled for it, and answers from the in-memory fixture so the fetch
- * still resolves. `subscribe` resolves immediately with a no-op unsubscribe
- * — this test only exercises the fetch path, not realtime.
+ * A real PocketBase client whose record service is replaced: `getFullList`
+ * records the `filter` string pbtsdb compiled for it, and answers from the
+ * in-memory fixture so the fetch still resolves. pbtsdb runs its own realtime
+ * connection on the client; it is kept closed with `disconnectRealtime` — this
+ * test only exercises the fetch path, not realtime.
  */
 function makeStubPb() {
     const seenFilters: string[] = []
@@ -80,12 +80,14 @@ function makeStubPb() {
             throw new Error('not used by this test')
         },
     }
-    const pb = { collection: () => collectionApi } as unknown as PocketBase
+    const pb = new PocketBase('http://127.0.0.1:9', new BaseAuthStore())
+    Object.defineProperty(pb, 'collection', { value: () => collectionApi })
+    disconnectRealtime(pb)
     return { pb, seenFilters }
 }
 
-function makeContacts(pb: PocketBase, queryClient: QueryClient) {
-    const c = createCollection(pb, queryClient)
+function makeContacts(pb: PocketBase) {
+    const c = createCollection(pb)
     return c('contacts', {
         getKey: (r: Row) => r.id,
         syncMode: 'on-demand',
@@ -97,8 +99,7 @@ afterEach(() => cleanup())
 
 async function compiledFilterFor(isDeleted: boolean) {
     const { pb, seenFilters } = makeStubPb()
-    const queryClient = new QueryClient()
-    const contacts = makeContacts(pb, queryClient)
+    const contacts = makeContacts(pb)
 
     const { result } = renderHook(() =>
         useLiveQuery(q =>
@@ -139,8 +140,7 @@ describe('useContactList deleted-view predicate — compiled PocketBase filter',
     // this fails.
     it('a not()-based predicate compiles to deleted_at != "" by negation push-down', async () => {
         const { pb, seenFilters } = makeStubPb()
-        const queryClient = new QueryClient()
-        const contacts = makeContacts(pb, queryClient)
+        const contacts = makeContacts(pb)
 
         const { result } = renderHook(() =>
             useLiveQuery(q =>
