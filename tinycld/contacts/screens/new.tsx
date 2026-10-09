@@ -7,7 +7,7 @@ import { useOrgHref } from '@tinycld/core/lib/org-routes'
 import { useStore } from '@tinycld/core/lib/pocketbase'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useNavigateBack } from '@tinycld/core/lib/use-navigate-back'
-import { Button, ButtonText } from '@tinycld/core/ui/button'
+import { ButtonText, ServerActionButton } from '@tinycld/core/ui/button'
 import { useForm, type z, zodResolver } from '@tinycld/core/ui/form'
 import { ArrowLeft } from 'lucide-react-native'
 import { newRecordId } from 'pbtsdb/core'
@@ -86,11 +86,11 @@ export default function NewContactScreen() {
                             </Text>
                             <HelpIcon topic="contacts:adding-contacts" size={18} />
                         </View>
-                        <Button onPress={onSubmit} isDisabled={!canSubmit} size="sm">
+                        <ServerActionButton onPress={onSubmit} isDisabled={!canSubmit} size="sm">
                             <ButtonText>
                                 {createContact.isPending ? 'Creating...' : 'Create'}
                             </ButtonText>
-                        </Button>
+                        </ServerActionButton>
                     </View>
 
                     <ContactForm control={control} errors={errors} isSubmitted={isSubmitted} />
