@@ -9,7 +9,7 @@ import { useOrgHref } from '@tinycld/core/lib/org-routes'
 import { useStore } from '@tinycld/core/lib/pocketbase'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useNavigateBack } from '@tinycld/core/lib/use-navigate-back'
-import { Button, ButtonText } from '@tinycld/core/ui/button'
+import { ButtonText, ServerActionButton } from '@tinycld/core/ui/button'
 import { useForm, zodResolver } from '@tinycld/core/ui/form'
 import { useLabelMutations } from '@tinycld/core/ui/hooks/useLabelMutations'
 import { useLabels, useLabelsForRecord } from '@tinycld/core/ui/hooks/useLabels'
@@ -154,7 +154,7 @@ export default function ContactDetailScreen() {
                             <Pressable onPress={() => toggleFavorite.mutate()}>
                                 <StarIcon isStarred={contact.favorite} size={24} />
                             </Pressable>
-                            <Button
+                            <ServerActionButton
                                 onPress={onSubmit}
                                 isDisabled={updateContact.isPending}
                                 size="sm"
@@ -162,7 +162,7 @@ export default function ContactDetailScreen() {
                                 <ButtonText>
                                     {updateContact.isPending ? 'Saving...' : 'Save'}
                                 </ButtonText>
-                            </Button>
+                            </ServerActionButton>
                         </View>
                     </View>
 

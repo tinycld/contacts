@@ -7,7 +7,7 @@ import { LoadingState } from '@tinycld/core/components/LoadingState'
 import { SwipeableRowProvider } from '@tinycld/core/components/SwipeableRow'
 import { useBreakpoint } from '@tinycld/core/components/workspace/useBreakpoint'
 import { useOrgHref } from '@tinycld/core/lib/org-routes'
-import { queryClient } from '@tinycld/core/lib/pocketbase'
+import { refreshAllData } from '@tinycld/core/lib/pocketbase'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useLabels } from '@tinycld/core/ui/hooks/useLabels'
 import { Menu } from '@tinycld/core/ui/menu'
@@ -82,7 +82,7 @@ export default function ContactListScreen() {
     const handleRefresh = useCallback(async () => {
         setIsRefreshing(true)
         try {
-            await queryClient.invalidateQueries()
+            await refreshAllData()
         } finally {
             setIsRefreshing(false)
         }
