@@ -145,7 +145,7 @@ A backfill loop in the `_add_vcard_uid` migration assigns UIDs to pre-existing r
 
 - **Empty string** — live contact. The default for new rows.
 - **A timestamp** — soft-deleted. Hidden from the main list, Favorites, and label views. Shown in the **Deleted** sidebar entry. Soft deletes still write to FTS (the row is updated, not deleted); the search source filters them out (`IncludeDeleted: false`), and the Deleted view's own search box filters client-side (`hooks/filter-contacts.ts`). CardDAV deletes a contact when the row hits `deleted_at`.
-- **Hard delete (row gone)** — only from the "Delete permanently" action in the Deleted view. Removes the row, the FTS entry (via the OnRecordAfterDelete hook), and the `vcard_uid`. There's no recovery path from this state.
+- **Hard delete (row gone)** — only from the "Delete permanently" action in the Deleted view, or from `tinycld contacts rm --permanent`. Removes the row, the FTS entry (via the OnRecordAfterDelete hook), and the `vcard_uid`. There's no recovery path from this state.
 
 Audit-log entries are retained even after permanent delete.
 
@@ -261,7 +261,7 @@ tinycld/contacts/
 
 ## Command line
 
-This package contributes its own command group to the `tinycld` binary. The Go source lives in `cli/` and is declared by a `cli` block in `manifest.ts` naming the Go module. The OAuth scopes it needs (`contacts:read` for list/search/show/export, `contacts:write` for add/edit/rm/import) are registered from the Go server by `server/oauth_scopes.go` via `oauth.RegisterPackage`, not by the manifest. The server cross-compiles the binary; users download it from **Settings → Personal → About**.
+This package contributes its own command group to the `tinycld` binary. The Go source lives in `cli/` and is declared by a `cli` block in `manifest.ts` naming the Go module. The OAuth scopes it needs (`contacts:read` for list/search/show/export, `contacts:write` for add/edit/rm/import) are registered from the Go server by `server/oauth_scopes.go` via `oauth.RegisterPackage`, not by the manifest. The server cross-compiles the binary; users download it from **Settings → About**.
 
 Eight commands, under `tinycld contacts` (or the `contact` group alias):
 
