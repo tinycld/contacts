@@ -19,7 +19,7 @@ import { useMemo } from 'react'
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native'
 import { ContactAvatar } from '../components/ContactAvatar'
 import { ContactForm } from '../components/ContactForm'
-import { contactSchema } from '../components/contactSchema'
+import { type ContactFormValues, contactSchema } from '../components/contactSchema'
 
 export default function ContactDetailScreen() {
     const orgHref = useOrgHref()
@@ -83,22 +83,14 @@ export default function ContactDetailScreen() {
     })
 
     const updateContact = useMutation({
-        mutationFn: mutation(function* (formData: {
-            first_name: string
-            last_name: string
-            email: string
-            phone: string
-            company: string
-            job_title: string
-            notes: string
-        }) {
+        mutationFn: mutation(function* (formData: ContactFormValues) {
             yield contactsCollection.update(id, draft => {
-                draft.first_name = formData.first_name.trim()
-                draft.last_name = formData.last_name.trim()
+                draft.first_name = formData.first_name
+                draft.last_name = formData.last_name
                 draft.email = formData.email
                 draft.phone = formData.phone
-                draft.company = formData.company.trim()
-                draft.job_title = formData.job_title.trim()
+                draft.company = formData.company
+                draft.job_title = formData.job_title
                 draft.notes = formData.notes
                 // favorite is intentionally not written here — it's owned by the
                 // star toggle in the header. Writing the (stale) form value would
