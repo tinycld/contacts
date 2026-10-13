@@ -8,12 +8,12 @@ import { useStore } from '@tinycld/core/lib/pocketbase'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useNavigateBack } from '@tinycld/core/lib/use-navigate-back'
 import { ButtonText, ServerActionButton } from '@tinycld/core/ui/button'
-import { useForm, type z, zodResolver } from '@tinycld/core/ui/form'
+import { useForm, zodResolver } from '@tinycld/core/ui/form'
 import { ArrowLeft } from 'lucide-react-native'
 import { newRecordId } from 'pbtsdb/core'
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native'
 import { ContactForm } from '../components/ContactForm'
-import { contactSchema } from '../components/contactSchema'
+import { type ContactFormValues, contactSchema } from '../components/contactSchema'
 
 export default function NewContactScreen() {
     const { user } = useAuth({ throwIfAnon: false })
@@ -43,16 +43,16 @@ export default function NewContactScreen() {
     })
 
     const createContact = useMutation({
-        mutationFn: mutation(function* (data: z.infer<typeof contactSchema>) {
+        mutationFn: mutation(function* (data: ContactFormValues) {
             if (!user) throw new Error('Not signed in')
             yield contactsCollection.insert({
                 id: newRecordId(),
-                first_name: data.first_name.trim(),
-                last_name: data.last_name.trim(),
+                first_name: data.first_name,
+                last_name: data.last_name,
                 email: data.email,
                 phone: data.phone,
-                company: data.company.trim(),
-                job_title: data.job_title.trim(),
+                company: data.company,
+                job_title: data.job_title,
                 notes: data.notes,
                 // New contacts start un-favorited; favoriting is done afterward
                 // via the star on the contact row or detail header.
