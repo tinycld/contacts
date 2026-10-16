@@ -23,7 +23,7 @@ The CardDAV endpoint is at:
 https://{{server-host}}/contacts/
 ```
 
-Authentication is HTTP Basic using your TinyCld username or email, and your password. Your contacts are exposed as a single address book at `/contacts/u/ab/default/`. There's also a `/.well-known/carddav` URL that redirects to the right place, which most clients auto-discover.
+Authentication is HTTP Basic using your TinyCld username or email, and your password. If you turned on [two-step verification](help://core:security-mfa), use an [app password](help://core:security-app-passwords) instead: your account password no longer works in these apps. Your contacts are exposed as a single address book at `/contacts/u/ab/default/`. There's also a `/.well-known/carddav` URL that redirects to the right place, which most clients auto-discover.
 
 ## Connecting Apple Contacts (macOS)
 
