@@ -10,7 +10,7 @@
  * Usage:
  *   pnpm exec tsx ../contacts/scripts/test-server-api.ts \
  *     --url http://127.0.0.1:7091 \
- *     --email user@tinycld.org \
+ *     --username tester \
  *     --password TestUser1234!
  */
 
@@ -20,7 +20,7 @@ loadEnv()
 
 interface Config {
     url: string
-    email: string
+    username: string
     password: string
 }
 
@@ -28,7 +28,7 @@ function parseArgs(): Config {
     const args = process.argv.slice(2)
     const config: Config = {
         url: process.env.SMOKE_TEST_ADDRESS || 'http://127.0.0.1:7090',
-        email: process.env.SMOKE_TEST_USER || '',
+        username: process.env.SMOKE_TEST_USER || '',
         password: process.env.SMOKE_TEST_PW || '',
     }
 
@@ -37,22 +37,22 @@ function parseArgs(): Config {
             case '--url':
                 config.url = args[++i]
                 break
-            case '--email':
-                config.email = args[++i]
+            case '--username':
+                config.username = args[++i]
                 break
             case '--password':
                 config.password = args[++i]
                 break
             case '--help':
                 console.log(
-                    'Usage: test-server-api.ts --url <server> --email <email> --password <pw>'
+                    'Usage: test-server-api.ts --url <server> --username <username> --password <pw>'
                 )
                 process.exit(0)
         }
     }
 
-    if (!config.email || !config.password) {
-        console.error('Missing --email/--password (or SMOKE_TEST_USER/SMOKE_TEST_PW)')
+    if (!config.username || !config.password) {
+        console.error('Missing --username/--password (or SMOKE_TEST_USER/SMOKE_TEST_PW)')
         process.exit(1)
     }
 
@@ -84,7 +84,7 @@ async function authenticate(config: Config): Promise<AuthResult | null> {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                identity: config.email,
+                identity: config.username,
                 password: config.password,
             }),
         })
@@ -102,7 +102,7 @@ async function authenticate(config: Config): Promise<AuthResult | null> {
 }
 
 async function testCardDAV(config: Config, _auth: AuthResult) {
-    const basicAuth = Buffer.from(`${config.email}:${config.password}`).toString('base64')
+    const basicAuth = Buffer.from(`${config.username}:${config.password}`).toString('base64')
     const headers = { Authorization: `Basic ${basicAuth}` }
     // The single-org deployment serves one address book per user at a fixed
     // segment — see core/server/carddav/scope.go.
