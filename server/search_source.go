@@ -41,6 +41,7 @@ func searchContactRows(app core.App, userID string, q search.Query) (search.Resu
 		// unintended capability of the old per-package endpoint, not a feature
 		// anyone asked for, so the federated path does not carry it forward.
 		IncludeDeleted: false,
+		Ctx:            q.Context(),
 	})
 	if err != nil {
 		return search.Result{}, err
