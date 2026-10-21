@@ -12,8 +12,9 @@ import { appHref, useOrgHref } from '@tinycld/core/lib/org-routes'
 import { useStore } from '@tinycld/core/lib/pocketbase'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useMyLiveQuery } from '@tinycld/core/lib/use-my-live-query'
+import { useUrl } from '@tinycld/core/lib/use-url'
 import { useLabels } from '@tinycld/core/ui/hooks/useLabels'
-import { useGlobalSearchParams, usePathname, useRouter } from 'expo-router'
+import { useRouter } from 'expo-router'
 import { Building2, HelpCircle, Laptop, Settings, Star, Trash2, Users } from 'lucide-react-native'
 import { useMemo, useState } from 'react'
 import { Pressable } from 'react-native'
@@ -24,12 +25,11 @@ interface ContactsSidebarProps {
 
 export default function ContactsSidebar(_props: ContactsSidebarProps) {
     const router = useRouter()
-    const pathname = usePathname()
+    const {
+        pathname,
+        params: { filter, label: activeLabel },
+    } = useUrl<{ filter?: string; label?: string }>()
     const orgHref = useOrgHref()
-    const { filter, label: activeLabel } = useGlobalSearchParams<{
-        filter?: string
-        label?: string
-    }>()
     const [labelManagerOpen, setLabelManagerOpen] = useState(false)
     const mutedColor = useThemeColor('muted-foreground')
 
