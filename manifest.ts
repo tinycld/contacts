@@ -40,7 +40,7 @@ const manifest = {
     // server exposes in server/bindings.go).
     hooks: { directory: 'pb-hooks' },
     repository: { url: 'https://github.com/tinycld/contacts' },
-    peerVersions: { '@tinycld/core': '>=0.8.0 <0.9.0' },
+    peerVersions: { '@tinycld/core': '>=0.8.1 <0.9.0' },
 }
 
 export default manifest
