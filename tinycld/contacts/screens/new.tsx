@@ -65,7 +65,7 @@ export default function NewContactScreen() {
         onError: handleMutationErrorsWithForm({ setError, getValues }),
     })
 
-    const onSubmit = handleSubmit(data => createContact.mutate(data))
+    const onSubmit = () => void handleSubmit(data => createContact.mutate(data))()
     const canSubmit = !createContact.isPending && !!user
 
     return (
