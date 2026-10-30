@@ -109,7 +109,7 @@ export default function ContactDetailScreen() {
         }),
     })
 
-    const onSubmit = handleSubmit(formData => updateContact.mutate(formData))
+    const onSubmit = () => void handleSubmit(formData => updateContact.mutate(formData))()
 
     const handleToggleLabel = (labelId: string) => {
         if (assignedLabelIds.has(labelId)) {
