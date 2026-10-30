@@ -18,7 +18,7 @@ import (
 //
 //	$contacts.search(userId, { q, limit, offset, includeDeleted }) -> { items, total }
 func registerJSVMBinding(_ *pocketbase.PocketBase) {
-	coreserver.RegisterJSVMBinder(func(vm *sobek.Runtime, app *pocketbase.PocketBase) error {
+	coreserver.RegisterJSVMBinder("contacts", func(vm *sobek.Runtime, app *pocketbase.PocketBase) error {
 		search := func(userID string, opts map[string]any) (map[string]any, error) {
 			so := fts.SearchOpts{Limit: 25}
 			if v, ok := opts["q"].(string); ok {
