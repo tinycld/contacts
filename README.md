@@ -11,7 +11,7 @@ Stores contacts in a single `contacts` PocketBase collection, owned by the user 
 User-facing features:
 
 - **Per-user address book** — contacts are owned by a `users` record (the `owner` relation), and PocketBase access rules (`@request.auth.disabled != true && owner = @request.auth.id`) enforce that other users can't see them and that a suspended account can't reach its own. CardDAV honors the same scope.
-- **Rich contact fields** — `first_name` (required), `last_name`, `company`, `job_title`, `email` (one), `phone` (one), `notes` (rich-text / HTML), `favorite` flag. A contact's avatar is core's `Avatar` (initials with a deterministic color) — contact records carry no avatar image and there is nothing to upload. (The Directory view below lists deployment *users*, which do have uploaded avatars, resolved through core's `useAvatarUrl`.)
+- **Rich contact fields** — `first_name` (required), `last_name`, `company`, `job_title`, `email` (one), `phone` (one), `notes` (an `editor`-type field, edited in the app as plain text), `favorite` flag. A contact's avatar is core's `Avatar` (initials with a deterministic color) — contact records carry no avatar image and there is nothing to upload. (The Directory view below lists deployment *users*, which do have uploaded avatars, resolved through core's `useAvatarUrl`.)
 - **Favorites** — toggle a star; the **Favorites** sidebar view filters to starred contacts.
 - **Soft delete with restore and permanent delete** — `deleted_at` is the source of truth; soft-deleted contacts move to a **Deleted** sidebar view; permanent delete removes the row, the FTS entry, and the vcard_uid.
 - **Labels** — colored tags that live in `core`'s `labels` / `label_assignments` collections and work across packages. Contacts contributes nothing to the label system itself; it consumes core's `useLabels`, `useLabelMutations`, and `LabelManagerDialog`. A `label_assignments` row has `(record_id, collection, label, user)`, so a label's meaning is consistent across mail, contacts, etc.
@@ -21,7 +21,7 @@ User-facing features:
 - **vCard file export / import** — `GET /api/contacts/export` streams the caller's live contacts as one `.vcf`; `POST /api/contacts/import` upserts a `.vcf` on `UID`. Both are OAuth-bearer API routes (`server/vcard_endpoints.go`) that reuse the CardDAV field map, and they exist for the CLI's `export` / `import` commands — there is no in-app UI for them.
 - **CardDAV** — full read-write CardDAV server at `/contacts/`, served via `github.com/emersion/go-webdav/carddav` over HTTP Basic auth. It is mounted from Go (`carddav.Register` in `server/register.go`), not declared in `manifest.ts`. A single address book is exposed per user, at `/contacts/u/ab/default/`. There's a `/.well-known/carddav` redirect for auto-discovery.
 - **Keyboard shortcuts** — `t o` jumps to Contacts; `j` / `k` navigate the list; `Enter` opens the focused contact; `c` creates a new one.
-- **Realtime updates** — edits made anywhere (web UI, mobile UI, CardDAV client) appear in other open sessions within seconds via PocketBase's built-in collection-realtime subscriptions, consumed through `pbtsdb`'s `useLiveQuery`.
+- **Realtime updates** — edits made anywhere (web UI, mobile UI, CardDAV client) appear in other open sessions within seconds via PocketBase's built-in collection-realtime subscriptions, consumed through `useLiveQuery` from `@tanstack/react-db` (core's `useMyLiveQuery` wraps it) over `pbtsdb` collections, which hold one realtime subscription per query.
 - **Audit logging** — every contact mutation goes through `core/audit`, labeled with the contact's first + last name.
 
 ## Automation rules
@@ -49,7 +49,8 @@ The short version: contacts is a single `contacts` PocketBase collection plus a 
 │   Sidebar  ContactList  ContactDetail  ContactForm  LabelManagerDialog│
 │                       │                                              │
 │                       ▼                                              │
-│   pbtsdb useLiveQuery  +  useLabels / useLabelMutations (core)       │
+│   useLiveQuery (TanStack DB) on pbtsdb collections                   │
+│   +  useLabels / useLabelMutations (core)                            │
 │                       │                                              │
 │                       ▼                                              │
 │   PocketBase REST + realtime subscriptions ──────┐                   │
@@ -120,7 +121,7 @@ The translation is intentionally one-of-each-field, not full multi-value vCard:
 | `phone` | `TEL` | one only |
 | `company` | `ORG` | |
 | `job_title` | `TITLE` | |
-| `notes` | `NOTE` | HTML in TinyCld, plain in vCard |
+| `notes` | `NOTE` | value copied as-is in both directions; only the FTS index strips HTML |
 | `vcard_uid` | `UID` | stable across exports |
 | `updated` (autodate) | `REV` | UTC, `20060102T150405Z` format |
 
@@ -177,7 +178,7 @@ Labels are shared with any other package that uses core's label system (mail, fo
 
 ### Realtime updates
 
-Contacts has no custom WebSocket layer. PocketBase ships with a built-in realtime channel over server-sent events; `pbtsdb`'s `useLiveQuery` subscribes to the `contacts` collection for the user and replays changes. The effect is that:
+Contacts has no custom WebSocket layer. PocketBase ships with a built-in realtime channel over server-sent events; the screens read through `useLiveQuery` from `@tanstack/react-db` (core's `useMyLiveQuery` wraps it), and the `pbtsdb` collection behind each query subscribes to the rows that query asks for and replays changes. The effect is that:
 
 - Editing a contact in tab A immediately updates tab B.
 - A CardDAV client `PUT`ing a contact causes the web UI to pick it up on the next realtime tick (typically <1 s).
@@ -223,7 +224,7 @@ server/
 
 The heavy, generic Go lives once in core: the CardDAV protocol server + vCard codec at `tinycld/core/server/carddav/`, the FTS5 index sync + query at `tinycld/core/server/fts/`, and the federated search endpoint at `tinycld/core/server/search/`. This package contributes the field maps, the search source, and the two vCard file routes.
 
-Go module: `tinycld.org/packages/contacts`. Imports `tinycld.org/core/{audit,carddav,fts,oauth,search}` via the standard go.mod replace directive the app shell installs.
+Go module: `tinycld.org/packages/contacts`. Imports `tinycld.org/core/{audit,carddav,coreserver,fts,oauth,search}` via the standard go.mod replace directive the app shell installs.
 
 ## Client package layout
 
