@@ -142,6 +142,8 @@ func registerShared(app *pocketbase.PocketBase) {
 
 	bindVCardUIDHook(app)
 
+	registerAddressBook()
+
 	// $contacts.* JS binding for TS hooks that need Go-backed contacts logic.
 	registerJSVMBinding(app)
 }
