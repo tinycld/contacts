@@ -19,7 +19,7 @@ func contactKnown(ctx context.Context, app core.App, userID, email string) (bool
 	err := app.DB().
 		Select("count(*)").
 		From("contacts").
-		Where(dbx.NewExp("owner = {:o} AND lower(email) = {:e} AND (deleted_at = '' OR deleted_at IS NULL)",
+		Where(dbx.NewExp("owner = {:o} AND email != '' AND lower(email) = {:e} AND (deleted_at = '' OR deleted_at IS NULL)",
 			dbx.Params{"o": userID, "e": email})).
 		WithContext(ctx).
 		Row(&n)

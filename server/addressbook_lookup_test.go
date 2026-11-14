@@ -36,8 +36,9 @@ func TestAddressBookLookup(t *testing.T) {
 	seedAddressBookContact(t, env.app, owner, "Ann@Example.com", false)
 	seedAddressBookContact(t, env.app, owner, "gone@example.com", true)
 	seedAddressBookContact(t, env.app, other.Id, "bob@example.com", false)
+	seedAddressBookContact(t, env.app, owner, "", false)
 
-	cases := map[string]bool{"ann@example.com": true, "gone@example.com": false, "bob@example.com": false}
+	cases := map[string]bool{"ann@example.com": true, "gone@example.com": false, "bob@example.com": false, "": false}
 	for email, want := range cases {
 		got, err := contactKnown(context.Background(), env.app, owner, email)
 		if err != nil || got != want {
