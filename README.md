@@ -40,7 +40,7 @@ Rules are declared with `automation: { definitions: 'automation' }` in `manifest
 
 ## Theory of operations
 
-The short version: contacts is a single `contacts` PocketBase collection plus a SQLite FTS5 virtual table that mirrors it. Access control is enforced via PocketBase's `@request.auth.disabled != true && owner = @request.auth.id` rule. The generic Go — the CardDAV protocol server + vCard codec, the FTS index sync + query, and the federated search endpoint — lives once in core (`tinycld.org/core/{carddav,fts,search}`); contacts' `server/` drives it with a contacts-shaped config (`register.go`), registers a search source (`search_source.go`) and its OAuth scopes (`oauth_scopes.go`), adds the `vcard_uid` autogen hook, and mounts the two vCard file routes (`vcard_endpoints.go`). The CardDAV adapter authenticates via HTTP Basic, scopes everything to the authenticated user's id as the `owner`, and translates between vCards and `contacts` records.
+The short version: contacts is a single `contacts` PocketBase collection plus a SQLite FTS5 virtual table that mirrors it. Access control is enforced via PocketBase's `@request.auth.disabled != true && owner = @request.auth.id` rule. The generic Go — the CardDAV protocol server + vCard codec, the FTS index sync + query, and the federated search endpoint — lives once in core (`tinycld.org/core/{carddav,fts,search}`); contacts' `server/` drives it with a contacts-shaped config (`register.go`), registers a search source (`search_source.go`) and its OAuth scopes (`oauth_scopes.go`), registers an address-book lookup (`addressbook_lookup.go`) that tells other packages whether an email address is in a user's live contacts, adds the `vcard_uid` autogen hook, and mounts the two vCard file routes (`vcard_endpoints.go`). The CardDAV adapter authenticates via HTTP Basic, scopes everything to the authenticated user's id as the `owner`, and translates between vCards and `contacts` records.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
@@ -142,7 +142,7 @@ A backfill loop in the `_add_vcard_uid` migration assigns UIDs to pre-existing r
 
 ### Soft delete
 
-`deleted_at` is a nullable `Date` field. The migration that added it (`1712000004`) also indexed it. Three states matter:
+`deleted_at` is an optional `Date` field. The migration that added it (`1712000004`) also indexed it. Three states matter:
 
 - **Empty string** — live contact. The default for new rows.
 - **A timestamp** — soft-deleted. Hidden from the main list, Favorites, and label views. Shown in the **Deleted** sidebar entry. Soft deletes still write to FTS (the row is updated, not deleted); the search source filters them out (`IncludeDeleted: false`), and the Deleted view's own search box filters client-side (`hooks/filter-contacts.ts`). CardDAV deletes a contact when the row hits `deleted_at`.
@@ -212,8 +212,11 @@ iPhone (small phone screens) isn't supported yet.
 server/
     register.go              Register — audit config, the core/fts config
                              (index sync only, via fts.RegisterSync), the
-                             core/carddav Source, the search source and OAuth
-                             registration, and the vcard_uid autogen hook
+                             core/carddav Source, the search source, OAuth and
+                             address-book lookup registration, and the
+                             vcard_uid autogen hook
+    addressbook_lookup.go    the core/addressbook lookup: is this email in the
+                             owner's live contacts (case-insensitive)
     oauth_scopes.go          oauth.RegisterPackage input: contacts:read /
                              contacts:write, the collections and routes they gate
     search_source.go         the search.Source behind GET /api/search?pkg=contacts
@@ -222,9 +225,9 @@ server/
     bindings.go              $contacts.* JS binding for server-side TS hooks
 ```
 
-The heavy, generic Go lives once in core: the CardDAV protocol server + vCard codec at `tinycld/core/server/carddav/`, the FTS5 index sync + query at `tinycld/core/server/fts/`, and the federated search endpoint at `tinycld/core/server/search/`. This package contributes the field maps, the search source, and the two vCard file routes.
+The heavy, generic Go lives once in core: the CardDAV protocol server + vCard codec at `tinycld/core/server/carddav/`, the FTS5 index sync + query at `tinycld/core/server/fts/`, and the federated search endpoint at `tinycld/core/server/search/`. This package contributes the field maps, the search source, the address-book lookup, and the two vCard file routes.
 
-Go module: `tinycld.org/packages/contacts`. Imports `tinycld.org/core/{audit,carddav,coreserver,fts,oauth,search}` via the standard go.mod replace directive the app shell installs.
+Go module: `tinycld.org/packages/contacts`. Imports `tinycld.org/core/{addressbook,audit,carddav,coreserver,fts,oauth,search}` via the standard go.mod replace directive the app shell installs.
 
 ## Client package layout
 
